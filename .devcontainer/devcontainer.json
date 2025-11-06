@@ -1,0 +1,12 @@
+{
+    "name": "broiler.dev",
+    "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ecmel.vscode-html-css",
+                "bradlc.vscode-tailwindcss"
+            ]
+        }
+    }
+}

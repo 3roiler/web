@@ -1,0 +1,27 @@
+{
+  "name": "web",
+  "version": "1.0.0",
+  "description": "broiler.dev",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx vite --host",
+    "build": "npx vite build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3roiler/web.git"
+  },
+  "author": "3roiler",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/3roiler/web/issues"
+  },
+  "homepage": "https://github.com/3roiler/web",
+  "devDependencies": {
+    "tailwindcss": "^4.1.17",
+    "vite": "^7.2.1"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.17"
+  }
+}
