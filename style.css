@@ -10,3 +10,21 @@ body {
   color: #e2e8f0;
   text-rendering: optimizeLegibility;
 }
+
+/* Component layer using Tailwind @apply (remove plain CSS fallbacks) */
+/* Fallback simple semantic classes (no @apply due to current lint setup). */
+.btn {display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:9999px;background:#06b6d4;padding:.75rem 1.5rem;font-size:.875rem;font-weight:600;color:#020617;box-shadow:0 20px 40px -40px rgba(15,194,207,.6);}
+.btn-outline {display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:9999px;border:1px solid rgba(255,255,255,0.1);background:transparent;padding:.5rem 1.25rem;font-size:.875rem;font-weight:600;color:#e2e8f0;}
+.nav-link {display:inline-flex;border-radius:9999px;border:1px solid rgba(255,255,255,0.1);background:transparent;padding:.5rem 1.25rem;font-size:.875rem;font-weight:600;color:#e2e8f0;}
+.badge-link {display:inline-flex;align-items:center;gap:.5rem;border-radius:9999px;border:1px solid rgba(255,255,255,0.25);background:#0f172a;padding:.5rem 1.25rem;font-size:.875rem;font-weight:600;color:#ffffff;}
+.card {position:relative;display:flex;flex-direction:column;gap:1.5rem;overflow:hidden;border-radius:1.5rem;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);padding:2rem;}
+.panel {border-radius:1rem;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);padding:1rem;}
+.section-panel {border-radius:1.5rem;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);padding:2rem;}
+
+/* Interactive states (replicating Tailwind hover/focus effects we removed) */
+.btn,.btn-outline,.nav-link,.badge-link {transition:background-color .2s,border-color .2s,box-shadow .3s,transform .2s;}
+.btn:hover {background:#22d3ee;}
+.btn:focus-visible {outline:2px solid #67e8f9;outline-offset:2px;}
+.btn-outline:hover,.nav-link:hover,.badge-link:hover {border-color:rgba(34,211,238,.4);background:rgba(6,182,212,.1);} /* cyan-500/10 */
+.btn-outline:focus-visible,.nav-link:focus-visible,.badge-link:focus-visible {outline:2px solid #22d3ee;outline-offset:2px;}
+.card:hover {transform:translateY(-4px);box-shadow:0 30px 90px -45px rgba(15,194,207,.65);border-color:rgba(34,211,238,.4);}
