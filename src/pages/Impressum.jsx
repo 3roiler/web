@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function ImpressumPage() {
   return (
     <main className="bg-slate-950/60 py-24" id="top">

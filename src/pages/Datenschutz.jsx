@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function DatenschutzPage() {
   return (
     <main className="mt-24 pb-24 bg-slate-950" id="top">

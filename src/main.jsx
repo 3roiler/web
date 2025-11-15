@@ -1,7 +1,5 @@
-import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import '../style.css';
 import { Header } from './components/Header.jsx';
 import { Footer } from './components/Footer.jsx';
 import { HomePage } from './pages/Home.jsx';
