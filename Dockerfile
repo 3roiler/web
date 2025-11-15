@@ -10,6 +10,7 @@ FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
 COPY --from=builder /app/dist/ ./
 COPY 404.html ./404.html
+COPY favicon.ico ./favicon.ico
 COPY nginx.conf /etc/nginx/nginx.conf
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
