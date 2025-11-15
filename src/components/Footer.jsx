@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export function Footer() {
-  const [year] = useState(() => new Date().getFullYear());
+  const year = new Date().getFullYear();
   return (
     <footer className="border-t border-white/10 bg-slate-950/80 py-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-xs text-slate-400 sm:flex-row sm:px-10 lg:px-16">

@@ -47,7 +47,7 @@ export function ImpressumPage() {
         <section className="space-y-6">
           <h2 className="text-2xl font-semibold text-slate-50">Urheberrecht</h2>
           <div className="section-panel space-y-4 text-sm leading-relaxed text-slate-300">
-            <p>Eigene Inhalte (Text / einfache Gestaltung) dürfen zum privaten Gebrauch referenziert werden. Weitergehende Nutzung, insbesondere automatisiertes Kopieren größerer Textteile, nur nach vorheriger vorheriger Zustimmung.</p>
+            <p>Eigene Inhalte (Text / einfache Gestaltung) dürfen zum privaten Gebrauch referenziert werden. Weitergehende Nutzung, insbesondere automatisiertes Kopieren größerer Textteile, nur nach vorheriger Zustimmung.</p>
             <p>Logos und Marken Dritter liegen bei den jeweiligen Rechteinhabern.</p>
             <p>Es werden keine Tracking-Cookies oder Analyse-Dienste eingesetzt.</p>
           </div>
