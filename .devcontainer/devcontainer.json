@@ -8,5 +8,6 @@
                 "bradlc.vscode-tailwindcss"
             ]
         }
-    }
+    },
+    "postStartCommand": "npm install"
 }
