@@ -2,7 +2,7 @@ FROM node:25-alpine AS builder
 ENV NODE_ENV=production
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --no-audit --no-fund --ignore-scripts
+RUN npm install
 COPY src ./src
 COPY index.html style.css vite.config.js tailwind.config.js ./
 RUN npm run build
