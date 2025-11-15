@@ -18,7 +18,7 @@
   },
   "homepage": "https://broiler.dev/",
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.2",
+    "@vitejs/plugin-react": "^5.1.1",
     "tailwindcss": "^4.1.17",
     "vite": "^7.2.2"
   },
