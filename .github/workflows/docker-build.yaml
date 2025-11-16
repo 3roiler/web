@@ -6,7 +6,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  REGISTRY_REPOSITORY: 3roiler
   REGISTRY_IMAGE_NAME: ${{ github.repository }}
 
 jobs:
@@ -33,7 +32,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.REGISTRY_REPOSITORY }}/${{ env.REGISTRY_IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.REGISTRY_IMAGE_NAME }}
 
       - name: Build and push Docker image
         id: push
