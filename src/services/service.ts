@@ -21,9 +21,9 @@ export interface User {
   displayName?: string;
   avatarUrl?: string;
   email?: string;
+  profileUrl?: string;
   createdAt?: string;
   updatedAt?: string;
-  // Extend with roles, permissions, etc.
 }
 
 // --- Internal state ---
@@ -81,7 +81,7 @@ export async function getCurrentUser(force = false): Promise<User | null> {
   if (!isAuthenticated()) return null;
   if (currentUser && !force) return currentUser;
   try {
-    const res = await fetch(`${API_BASE_URL}/auth/me`, {
+    const res = await fetch(`${API_BASE_URL}/users/me`, {
       credentials: 'include',
       headers: authHeaders()
     });
@@ -132,25 +132,19 @@ export function handleAuthCallback(): boolean {
   const params = url.searchParams;
   let updated = false;
 
-  const potentialToken = params.get('token') || params.get('access_token');
-  if (potentialToken) {
+  const token = params.get('token');
+  if (token) {
     authToken = {
-      accessToken: potentialToken,
+      accessToken: token,
       tokenType: params.get('token_type') || 'Bearer',
       expiresAt: params.get('expires_at') || undefined,
       refreshToken: params.get('refresh_token') || undefined
     };
     persistToken();
     updated = true;
-    // Clean URL (remove token params)
     params.delete('token');
-    params.delete('access_token');
-    params.delete('token_type');
-    params.delete('expires_at');
-    params.delete('refresh_token');
     const newUrl = url.origin + url.pathname + (params.toString() ? '?' + params.toString() : '') + url.hash;
     window.history.replaceState({}, '', newUrl);
-    // Optionally fetch current user
     getCurrentUser().catch(() => {});
   }
 
