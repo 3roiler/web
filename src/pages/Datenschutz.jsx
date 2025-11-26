@@ -7,7 +7,7 @@ export function DatenschutzPage() {
         <div className="space-y-4 text-sm leading-relaxed text-slate-300">
           <section className="panel p-5">
             <h2 className="font-semibold text-slate-50">Verantwortlich</h2>
-            <p>Privat: Paul Wechselberger<br/>38820 Halberstadt, Wehrstedter Str. 8<br/><a href="mailto:hello@broiler.dev" className="text-cyan-300 hover:text-cyan-200">hello@broiler.dev</a></p>
+            <p>Privat: Paul Wechselberger<br />38820 Halberstadt, Wehrstedter Str. 8<br /><a href="mailto:paul@broiler.dev" className="text-cyan-300 hover:text-cyan-200">hello@broiler.dev</a></p>
           </section>
           <section className="panel p-5">
             <h2 className="font-semibold text-slate-50">Daten</h2>
@@ -15,7 +15,7 @@ export function DatenschutzPage() {
           </section>
           <section className="panel p-5">
             <h2 className="font-semibold text-slate-50">Zweck & Rechtsgrundlage</h2>
-            <p>Kommunikation (Art. 6(1)(f)); bei konkreten Vertragsanfragen Art. 6(1)(b). Freiwillige Zusatzinfos: Einwilligung Art. 6(1)(a) – widerrufbar.</p>
+            <p>Kommunikation (Art. 6(1)(f)); bei konkreten Vertragsanfragen Art. 6(1)(b). Freiwillige Zusatzinfos: Einwilligung Art. 6(1)(a) - widerrufbar.</p>
           </section>
           <section className="panel p-5">
             <h2 className="font-semibold text-slate-50">Speicherung</h2>
@@ -43,7 +43,7 @@ export function DatenschutzPage() {
           </section>
           <p className="text-xs text-slate-400">Stand: 2025-11-15</p>
         </div>
-  <a href="/" className="nav-link">Zurück</a>
+        <a href="/" className="nav-link">Zurück</a>
       </div>
     </main>
   );
