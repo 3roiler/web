@@ -36,10 +36,12 @@ function GithubCallbackPage() {
       authenticateGithub(code, state).then(user => {
           localStorage.setItem('user', JSON.stringify(user));
           window.location.href = "/";
-        }).catch(() => {
+        }).catch((error) => {
+          console.error(error);
           window.location.href = "/auth/error";
         });
     } else {
+      console.error("Missing code or state in GitHub callback URL");
       window.location.href = "/auth/error";
     }
   }, []);
