@@ -21,7 +21,7 @@ export async function loginToGithub(path: string): Promise<void> {
 
   const params = new URLSearchParams({
     redirect_uri: `${protocol}//${host}/${path}`,
-    client_id: 'Ov23liTHLu0Wmad0PiKp',
+    client_id: 'Ov23liULYLUWCVnTGLLN',
     scope: 'read:user user:email',
     state: Math.random().toString(36).substring(2, 15)
   });
