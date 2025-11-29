@@ -16,8 +16,8 @@ export class ApiError extends Error {
 export const API_BASE_URL = 'https://api.broiler.dev/prod';
 
 export async function loginToGithub(path: string): Promise<void> {
-  var host = window.location.host;
-  var protocol = window.location.protocol;
+  const host = window.location.host;
+  const protocol = window.location.protocol;
 
   const params = new URLSearchParams({
     redirect_uri: `${protocol}//${host}/${path}`,
@@ -93,6 +93,24 @@ export async function authenticateGithub(code: string, state: string): Promise<U
       throw new ApiError(error.response.status, apiError.identifier, apiError.message);
     } else {
       throw new Error('An unknown error occurred during GitHub authentication.');
+    }
+  }
+}
+
+export async function logout(): Promise<void> {
+  try {
+    await axios.post(`${API_BASE_URL}/auth/github/logout`, {}, {
+      withCredentials: true,
+      fetchOptions: {
+        credentials: 'include'
+      }
+    });
+  } catch (error: any) {
+    if (axios.isAxiosError(error) && error.response) {
+      const apiError = error.response.data;
+      throw new ApiError(error.response.status, apiError.identifier, apiError.message);
+    } else {
+      throw new Error('An unknown error occurred during logout.');
     }
   }
 }
