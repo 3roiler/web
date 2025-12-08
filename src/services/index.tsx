@@ -76,7 +76,7 @@ export async function nuke(): Promise<void> {
 
 export async function authenticateGithub(code: string, state: string): Promise<User> {
   try {
-    const response = await axios.post<User>(`${API_BASE_URL}/auth/github`, {
+    const response = await axios.post<User>(`${API_BASE_URL}/github/oauth`, {
       code,
       state
     }, {
@@ -99,7 +99,7 @@ export async function authenticateGithub(code: string, state: string): Promise<U
 
 export async function logout(): Promise<void> {
   try {
-    await axios.post(`${API_BASE_URL}/auth/github/logout`, {}, {
+    await axios.post(`${API_BASE_URL}/logout`, {}, {
       withCredentials: true,
       fetchOptions: {
         credentials: 'include'
