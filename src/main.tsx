@@ -28,21 +28,21 @@ function AppRoot() {
 function GithubCallbackPage() {
 
   React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(globalThis.location.search);
     const code = params.get('code');
     const state = params.get('state');
 
     if (code && state) {
       authenticateGithub(code, state).then(user => {
           localStorage.setItem('user', JSON.stringify(user));
-          window.location.href = "/";
+          globalThis.location.href = "/";
         }).catch((error) => {
           console.error(error);
-          window.location.href = "/auth/error";
+          globalThis.location.href = "/auth/error";
         });
     } else {
       console.error("Missing code or state in GitHub callback URL");
-      window.location.href = "/auth/error";
+      globalThis.location.href = "/auth/error";
     }
   }, []);
 

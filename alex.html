@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alex - Die Legende</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(45deg, #212222, #1dffa1, #29644b, #09ff99);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 600px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .meme-text {
+            font-size: 1.5em;
+            margin: 20px 0;
+            color: #34495e;
+            line-height: 1.6;
+        }
+
+        .fun-facts {
+            background: #573601;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            transform: rotate(-2deg);
+        }
+
+        .fun-facts h2 {
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .fun-facts ul {
+            list-style: none;
+            color: white;
+        }
+
+        .fun-facts li {
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+
+        button {
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 20px 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.4);
+        }
+
+        .counter {
+            font-size: 2em;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ALEKS</h1>
+        <p class="meme-text">Die Airsoft Maschine!</p>
+        
+        <div class="fun-facts">
+            <h2>Aleks</h2>
+            <ul>
+                <li>Schneller als jede Suchmaschine</li>
+                <li>Oklahoma</li>
+                <li>1 Alexzimmer</li>
+                <li>Katze</li>
+            </ul>
+        </div>
+
+        <div class="counter">
+            Wie viele Banene kann Alex essen? <span id="yeet">1</span>
+        </div>
+
+        <button onclick="increaseYeet()">Noch mehr!</button>
+    </div>
+
+    <script>
+        let yeet = 1;
+
+        function increaseYeet() {
+            yeet += 1;
+            document.getElementById('yeet').textContent = yeet;
+            
+            if (yeet == 10) {
+                alert('ACHTUNG! Alex hat zu viele Banenen gegessen! Dann gehen die jetzt wo anders rein!');
+            }
+        }
+    </script>
+</body>
+</html>
