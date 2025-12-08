@@ -2,6 +2,12 @@ import { nuke } from "../services";
 
 async function handleNuke() {
   try {
+    const confirmation = confirm("Bist du sicher, dass du dein Konto löschen möchtest? Dieser Vorgang ist irreversibel. Naja, du willst es ja auch so :)");
+    
+    if (!confirmation) {
+      return;
+    }
+    
     await nuke();
     alert("Dein Konto wurde gelöscht. Du wirst zur Startseite weitergeleitet.");
     globalThis.location.href = "/";

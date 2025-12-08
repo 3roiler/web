@@ -20,7 +20,7 @@ function Countdown({ seconds, onComplete }) {
 }
 
 function RedirectToHome() {
-    window.location.href = "/";
+    globalThis.location.href = "/";
 }
 
 export function AuthErrorPage() {
