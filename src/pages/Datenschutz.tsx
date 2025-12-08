@@ -4,7 +4,7 @@ async function handleNuke() {
   try {
     await nuke();
     alert("Dein Konto wurde gelöscht. Du wirst zur Startseite weitergeleitet.");
-    window.location.href = "/";
+    globalThis.location.href = "/";
   } catch {
     alert("Beim Löschen deines Kontos ist ein Fehler aufgetreten. Bitte versuche es später erneut.");
   }
@@ -62,13 +62,13 @@ export function DatenschutzPage() {
         </div>
         <div className="flex flex-wrap gap-4">
           <a href="/" className="nav-link">Zurück</a>
-          <a
+          <button
             onClick={handleNuke}
             className="inline-flex items-center justify-center rounded-2xl bg-cyan-400/90 px-5 py-2 text-sm font-semibold text-slate-900 transition hover:bg-cyan-300"
             aria-label="Automatische Kontolöschung starten"
           >
             Konto-Löschung anstoßen
-          </a>
+          </button>
         </div>
       </div>
     </main>
