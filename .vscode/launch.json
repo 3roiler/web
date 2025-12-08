@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node-terminal",
+            "name": "Run Script: dev",
+            "request": "launch",
+            "command": "npm run dev",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "firefox",
+            "request": "launch",
+            "reAttach": true,
+            "name": "Launch localhost",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}"
+        }
+    ]
+}

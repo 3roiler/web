@@ -1,0 +1,21 @@
+{
+    "name": "broiler.dev",
+    "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ecmel.vscode-html-css",
+                "bradlc.vscode-tailwindcss",
+                "github.vscode-github-actions",
+                "dbaeumer.vscode-eslint",
+                "GitHub.vscode-pull-request-github",
+                "ckolkman.vscode-postgres",
+                "christian-kohler.npm-intellisense",
+                "firefox-devtools.vscode-firefox-debug",
+                "SonarSource.sonarlint-vscode",
+                "DavidAnson.vscode-markdownlint"
+            ]
+        }
+    },
+    "postStartCommand": "npm install"
+}
