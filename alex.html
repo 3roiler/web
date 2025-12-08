@@ -129,10 +129,16 @@
     <script>
         let yeet = 1;
 
+        if (localStorage.getItem('alex.yeet')) {
+            yeet = Number.parseInt(localStorage.getItem('alex.yeet'));
+            document.getElementById('yeet').textContent = yeet;
+        }
+
         function increaseYeet() {
             yeet += 1;
             document.getElementById('yeet').textContent = yeet;
-            
+            localStorage.setItem('alex.yeet', yeet);
+
             if (yeet == 10) {
                 alert('ACHTUNG! Alex hat zu viele Banenen gegessen! Dann gehen die jetzt wo anders rein!');
             }
