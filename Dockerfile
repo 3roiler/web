@@ -11,6 +11,7 @@ WORKDIR /usr/share/nginx/html
 COPY --from=builder /app/dist/ ./
 COPY huh.html ./huh.html
 COPY alex.html ./alex.html
+COPY sasu.html ./sasu.html
 COPY favicon.ico ./favicon.ico
 COPY nginx.conf /etc/nginx/nginx.conf
 EXPOSE 8080

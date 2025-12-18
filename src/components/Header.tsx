@@ -29,7 +29,7 @@ export function Header() {
         <button onClick={() => { logout().then(() => setUser(null)); }} className="btn btn-sm">Abmelden</button>
       </div>
     ) : (
-      <button onClick={() => loginToGithub("callback/github")} className="btn btn-sm">Mit GitHub anmelden</button>
+      <button onClick={() => loginToGithub()} className="btn btn-sm">Mit GitHub anmelden</button>
     ) }
     </nav>
   );

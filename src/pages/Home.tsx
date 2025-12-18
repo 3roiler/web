@@ -1,3 +1,5 @@
+import { Routes } from "../config/routes";
+
 export function HomePage() {
   return (
     <>
@@ -44,11 +46,11 @@ export function HomePage() {
             <div className="flex flex-col gap-10 sm:flex-row sm:items-end sm:justify-between">
               <h2 className="mt-4 text-3xl font-semibold text-slate-50 sm:text-4xl">Projekte &amp; Experimente</h2>
               
-              <a href="https://github.com/3roiler" className="btn-outline" target="_blank" rel="noopener">GitHub Profil</a>
+              <a href={Routes.External.GithubProfile} className="btn-outline" target="_blank" rel="noopener">GitHub Profil</a>
             </div>
             <p className="text-sm text-slate-400">Klick auf die Karten, um mehr zu erfahren</p>
             <div className="mt-16 grid gap-10 md:grid-cols-2 xl:grid-cols-3">
-              <a className="card" href="https://github.com/3roiler/web" target="_blank" rel="noopener">
+              <a className="card" href={Routes.External.GithubRepositoryWeb} target="_blank" rel="noopener">
                 <h3 className="text-lg font-semibold text-slate-50">broiler.dev</h3>
                 
                 <p className="mt-3 text-sm leading-relaxed text-slate-300">
@@ -58,9 +60,9 @@ export function HomePage() {
                 </p>
               </a>
               
-              <a className="card" href="https://github.com/3roiler/api" target="_blank" rel="noopener">
+              <a className="card" href={Routes.External.GithubRepositoryApi} target="_blank" rel="noopener">
                 <h3 className="text-lg font-semibold text-slate-50">api.broiler.dev</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-300">Eine öffentliche API-Gateway für diese Seite.<br></br> Jeder braucht doch seine eigene zentrale REST-API.. oder?</p>
+                <p className="mt-3 text-sm leading-relaxed text-slate-300">Eine öffentliche API für diese Seite.<br></br> Jeder braucht doch seine eigene zentrale REST-API.. oder?</p>
               </a>
             </div>
           </div>
@@ -72,10 +74,10 @@ export function HomePage() {
               <h2 className="mt-4 text-3xl font-semibold text-slate-50 sm:text-4xl">Kontakt &amp; Links</h2>
               
               <ul className="flex flex-wrap gap-3">
-                <li><a href="mailto:webmaster@broiler.dev" className="badge-link">E-Mail</a></li>
-                <li><a href="https://github.com/3roiler" className="badge-link" target="_blank" rel="noopener">GitHub</a></li>
-                <li><a href="https://www.linkedin.com/in/paul-wechselberger-6133b3282/" className="badge-link" target="_blank" rel="noopener">LinkedIn</a></li>
-                <li><a href="https://mastodon.social/@broiler" rel="me noopener" className="badge-link" target="_blank">Mastodon</a></li>
+                <li><a href={`mailto:${Routes.External.WebmasterEmail}`} className="badge-link">E-Mail</a></li>
+                <li><a href={Routes.External.GithubProfile} className="badge-link" target="_blank" rel="noopener">GitHub</a></li>
+                <li><a href={Routes.External.LinkedIn} className="badge-link" target="_blank" rel="noopener">LinkedIn</a></li>
+                <li><a href={Routes.External.Mastodon} rel="me noopener" className="badge-link" target="_blank">Mastodon</a></li>
               </ul>
             </div>
 
@@ -103,7 +105,7 @@ export function HomePage() {
                   <label className="inline-flex items-center gap-2">
                     <input type="checkbox" name="privacy" value="accepted" required className="accent-cyan-500" />Ich stimme der Verarbeitung meiner Daten zum Zweck der Kontaktaufnahme zu.
                   </label>
-                  <a href="/datenschutz" className="text-cyan-300 decoration-dotted hover:text-cyan-200">Datenschutz einsehen</a>
+                  <a href={Routes.Datenschutz} className="text-cyan-300 decoration-dotted hover:text-cyan-200">Datenschutz einsehen</a>
                 </div>
                 
                 <button type="submit" className="btn w-full sm:w-auto">Nachricht senden</button>

@@ -1,3 +1,4 @@
+import { navigateTo, Routes } from "../config/routes";
 import { nuke } from "../services";
 
 async function handleNuke() {
@@ -10,7 +11,7 @@ async function handleNuke() {
     
     await nuke();
     alert("Dein Konto wurde gelöscht. Du wirst zur Startseite weitergeleitet.");
-    globalThis.location.href = "/";
+    navigateTo(Routes.Home);
   } catch {
     alert("Beim Löschen deines Kontos ist ein Fehler aufgetreten. Bitte versuche es später erneut.");
   }
