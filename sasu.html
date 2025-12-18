@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sasukiris - Twitch Stream</title>
+    <title>Sasukiri</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         * {
@@ -382,42 +382,8 @@
         <div class="stream-container">
             <div id="twitch-embed"></div>
             
-            <!-- Schedule (shown when offline) -->
             <div class="schedule-container" id="scheduleContainer">
-                <h2><i class="fas fa-calendar-alt"></i> Stream Schedule</h2>
-                <p class="subtitle">Schau vorbei wenn ich live bin! 💕</p>
-                
-                <div class="schedule-grid">
-                    <div class="schedule-item">
-                        <div class="schedule-day">Montag</div>
-                        <div class="schedule-info">
-                            <div class="schedule-time">19:00 - 22:00</div>
-                            <div class="schedule-game">Just Chatting / Gaming</div>
-                        </div>
-                    </div>
-                    <div class="schedule-item">
-                        <div class="schedule-day">Mittwoch</div>
-                        <div class="schedule-info">
-                            <div class="schedule-time">20:00 - 23:00</div>
-                            <div class="schedule-game">Variety Gaming</div>
-                        </div>
-                    </div>
-                    <div class="schedule-item">
-                        <div class="schedule-day">Freitag</div>
-                        <div class="schedule-info">
-                            <div class="schedule-time">19:00 - 00:00</div>
-                            <div class="schedule-game">Chill Stream 🎮</div>
-                        </div>
-                    </div>
-                    <div class="schedule-item">
-                        <div class="schedule-day">Sonntag</div>
-                        <div class="schedule-info">
-                            <div class="schedule-time">15:00 - 19:00</div>
-                            <div class="schedule-game">Community Day</div>
-                        </div>
-                    </div>
-                </div>
-                
+                <h2>Schau vorbei wenn ich live bin!</h2>
                 <p class="schedule-note">⚡ Spontane Streams werden auf Discord angekündigt!</p>
             </div>
         </div>
@@ -426,7 +392,7 @@
             <div class="chat-header">💬 Chat</div>
             <iframe
                 title="Sasukiris Twitch Chat"
-                src="https://www.twitch.tv/embed/sasukiris/chat?parent=localhost&parent=127.0.0.1&darkpopout"
+                src="https://www.twitch.tv/embed/sasukiris/chat?parent=broiler.dev&parent=localhost&darkpopout"
                 allowfullscreen>
             </iframe>
         </div>
@@ -436,51 +402,39 @@
         <a href="https://www.twitch.tv/sasukiris" target="_blank">twitch.tv/sasukiris</a>
     </footer>
 
-    <!-- Twitch Embed Script -->
     <script src="https://embed.twitch.tv/embed/v1.js"></script>
     <script>
-        // Initialize Twitch Embed
         const embed = new Twitch.Embed("twitch-embed", {
             width: "100%",
             height: "100%",
             channel: "sasukiris",
-            parent: ["localhost", "127.0.0.1"],
+            parent: ["broiler.dev", "localhost"],
             layout: "video",
-            autoplay: true,
-            muted: false
+            theme: "dark"
         });
 
         const liveIndicator = document.getElementById('liveIndicator');
         const offlineIndicator = document.getElementById('offlineIndicator');
         const scheduleContainer = document.getElementById('scheduleContainer');
 
-        // Check if stream is online/offline
         embed.addEventListener(Twitch.Embed.VIDEO_READY, () => {
             const player = embed.getPlayer();
-            
-            // Check initial state after a short delay
             setTimeout(() => {
                 checkStreamStatus(player);
             }, 2000);
 
-            // Periodically check stream status
             setInterval(() => {
                 checkStreamStatus(player);
             }, 30000); // Check every 30 seconds
         });
 
         function checkStreamStatus(player) {
-            // Check if there's actual video playing (not just the offline screen)
             const playback = player.getPlaybackStats();
             const isPaused = player.isPaused();
-            
-            // A more reliable check - if video FPS is 0 or very low, likely offline
             if (playback && playback.videoFrameRate > 0 && !isPaused) {
                 setOnlineState();
             } else {
-                // Additional check using channel info
                 player.getChannel().then(channel => {
-                    // If we can't determine, default to showing schedule
                     setOfflineState();
                 }).catch(() => {
                     setOfflineState();
@@ -500,12 +454,10 @@
             scheduleContainer.classList.add('show');
         }
 
-        // Listen for online event
         embed.addEventListener(Twitch.Embed.ONLINE, () => {
             setOnlineState();
         });
 
-        // Listen for offline event
         embed.addEventListener(Twitch.Embed.OFFLINE, () => {
             setOfflineState();
         });
