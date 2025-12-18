@@ -1,4 +1,9 @@
 import axios from 'axios';
+import { getApiBaseUrl } from '../config/api';
+import { Routes } from '../config/routes';
+
+const ClientId = 'Ov23liULYLUWCVnTGLLN';
+const Scope = 'read:user user:email';
 
 export class ApiError extends Error {
   status: number;
@@ -13,22 +18,6 @@ export class ApiError extends Error {
   }
 }
 
-export const API_BASE_URL = 'https://api.broiler.dev/prod';
-
-export async function loginToGithub(path: string): Promise<void> {
-  const host = globalThis.location.host;
-  const protocol = globalThis.location.protocol;
-
-  const params = new URLSearchParams({
-    redirect_uri: `${protocol}//${host}/${path}`,
-    client_id: 'Ov23liULYLUWCVnTGLLN',
-    scope: 'read:user user:email',
-    state: Math.random().toString(36).substring(2, 15)
-  });
-
-  globalThis.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
-}
-
 export class User {
   id: string;
   name: string;
@@ -38,7 +27,7 @@ export class User {
 
 export async function getMe(): Promise<User> {
   try {
-    const response = await axios.get<User>(`${API_BASE_URL}/user/me`, {
+    const response = await axios.get<User>(`${getApiBaseUrl()}/user/me`, {
       withCredentials: true,
       fetchOptions: {
         credentials: 'include'
@@ -58,7 +47,7 @@ export async function getMe(): Promise<User> {
 
 export async function nuke(): Promise<void> {
   try {
-    await axios.post(`${API_BASE_URL}/user/nuke`, {}, {
+    await axios.post(`${getApiBaseUrl()}/user/nuke`, {}, {
       withCredentials: true,
       fetchOptions: {
         credentials: 'include'
@@ -74,9 +63,23 @@ export async function nuke(): Promise<void> {
   }
 }
 
+export async function loginToGithub(): Promise<void> {
+  const host = globalThis.location.host;
+  const protocol = globalThis.location.protocol;
+
+  const params = new URLSearchParams({
+    redirect_uri: `${protocol}//${host}/${Routes.Callback.Github}`,
+    client_id: ClientId,
+    scope: Scope,
+    state: Math.random().toString(36).substring(2, 15)
+  });
+
+  globalThis.location.href = `${Routes.External.GithubOauth}?${params.toString()}`;
+}
+
 export async function authenticateGithub(code: string, state: string): Promise<User> {
   try {
-    const response = await axios.post<User>(`${API_BASE_URL}/github/oauth`, {
+    const response = await axios.post<User>(`${getApiBaseUrl()}/github/oauth`, {
       code,
       state
     }, {
@@ -99,7 +102,7 @@ export async function authenticateGithub(code: string, state: string): Promise<U
 
 export async function logout(): Promise<void> {
   try {
-    await axios.post(`${API_BASE_URL}/logout`, {}, {
+    await axios.post(`${getApiBaseUrl()}/logout`, {}, {
       withCredentials: true,
       fetchOptions: {
         credentials: 'include'

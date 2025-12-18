@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sasukiris - Twitch Stream</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #FFA8C2;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #FF85A8 0%, #FFA8C2 100%);
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid white;
+            object-fit: cover;
+        }
+
+        .header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-title {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .live-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            background: #e91916;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            animation: pulse 2s infinite;
+        }
+
+        .live-indicator.show {
+            display: flex;
+        }
+
+        .live-indicator .dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .offline-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #6b7280;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .offline-indicator.hide {
+            display: none;
+        }
+
+        /* Social Links */
+        .social-links {
+            display: flex;
+            gap: 12px;
+            margin-left: auto;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .social-link.discord:hover { color: #5865F2; }
+        .social-link.tiktok:hover { color: #000000; }
+        .social-link.instagram:hover { color: #E4405F; }
+        .social-link.youtube:hover { color: #FF0000; }
+
+        /* Stream Container */
+        .stream-wrapper {
+            flex: 1;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            min-height: 0;
+        }
+
+        .stream-container {
+            flex: 1;
+            background: #1a1a2e;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .stream-container iframe,
+        .stream-container #twitch-embed {
+            width: 100%;
+            flex: 1;
+            border: none;
+        }
+
+        /* Schedule Overlay (shown when offline) */
+        .schedule-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .schedule-container.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .schedule-container h2 {
+            color: #FFA8C2;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .schedule-container .subtitle {
+            color: #9ca3af;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .schedule-grid {
+            display: grid;
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .schedule-item {
+            background: rgba(255, 168, 194, 0.1);
+            border: 1px solid rgba(255, 168, 194, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .schedule-item:hover {
+            background: rgba(255, 168, 194, 0.15);
+            transform: translateX(5px);
+        }
+
+        .schedule-day {
+            background: linear-gradient(135deg, #FF85A8 0%, #FFA8C2 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .schedule-info {
+            flex: 1;
+        }
+
+        .schedule-time {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .schedule-game {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .schedule-note {
+            color: #6b7280;
+            font-size: 0.85rem;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .chat-container {
+            width: 340px;
+            background: #1a1a2e;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #FF85A8 0%, #FFA8C2 100%);
+            padding: 12px 20px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .chat-container iframe {
+            flex: 1;
+            border: none;
+        }
+
+        /* Footer */
+        .footer {
+            background: linear-gradient(135deg, #FF85A8 0%, #FFA8C2 100%);
+            padding: 10px 30px;
+            text-align: center;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .header {
+                flex-wrap: wrap;
+            }
+
+            .social-links {
+                width: 100%;
+                justify-content: center;
+                margin-left: 0;
+                margin-top: 10px;
+            }
+
+            .stream-wrapper {
+                flex-direction: column;
+            }
+
+            .stream-container {
+                min-height: 300px;
+            }
+
+            .chat-container {
+                width: 100%;
+                height: 400px;
+            }
+
+            .schedule-container {
+                padding: 20px;
+            }
+
+            .schedule-container h2 {
+                font-size: 1.5rem;
+            }
+
+            .schedule-item {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <img 
+                src="https://broiler.fra1.cdn.digitaloceanspaces.com/sasu-bild.png" 
+                alt="Sasukiris Logo" 
+                class="header-logo"
+            >
+            <div class="header-info">
+                <h1 class="header-title">
+                    Sasukiris
+                    <span class="live-indicator" id="liveIndicator">
+                        <span class="dot"></span>
+                        LIVE
+                    </span>
+                    <span class="offline-indicator" id="offlineIndicator">
+                        OFFLINE
+                    </span>
+                </h1>
+            </div>
+        </div>
+
+        <div class="social-links">
+            <a href="https://discord.gg/DEIN_DISCORD" target="_blank" class="social-link discord" title="Discord">
+                <i class="fab fa-discord"></i>
+            </a>
+            <a href="https://tiktok.com/@sasukiris" target="_blank" class="social-link tiktok" title="TikTok">
+                <i class="fab fa-tiktok"></i>
+            </a>
+            <a href="https://instagram.com/sasukiris" target="_blank" class="social-link instagram" title="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://youtube.com/@sasukiris" target="_blank" class="social-link youtube" title="YouTube">
+                <i class="fab fa-youtube"></i>
+            </a>
+        </div>
+    </header>
+
+    <div class="stream-wrapper">
+        <div class="stream-container">
+            <div id="twitch-embed"></div>
+            
+            <!-- Schedule (shown when offline) -->
+            <div class="schedule-container" id="scheduleContainer">
+                <h2><i class="fas fa-calendar-alt"></i> Stream Schedule</h2>
+                <p class="subtitle">Schau vorbei wenn ich live bin! 💕</p>
+                
+                <div class="schedule-grid">
+                    <div class="schedule-item">
+                        <div class="schedule-day">Montag</div>
+                        <div class="schedule-info">
+                            <div class="schedule-time">19:00 - 22:00</div>
+                            <div class="schedule-game">Just Chatting / Gaming</div>
+                        </div>
+                    </div>
+                    <div class="schedule-item">
+                        <div class="schedule-day">Mittwoch</div>
+                        <div class="schedule-info">
+                            <div class="schedule-time">20:00 - 23:00</div>
+                            <div class="schedule-game">Variety Gaming</div>
+                        </div>
+                    </div>
+                    <div class="schedule-item">
+                        <div class="schedule-day">Freitag</div>
+                        <div class="schedule-info">
+                            <div class="schedule-time">19:00 - 00:00</div>
+                            <div class="schedule-game">Chill Stream 🎮</div>
+                        </div>
+                    </div>
+                    <div class="schedule-item">
+                        <div class="schedule-day">Sonntag</div>
+                        <div class="schedule-info">
+                            <div class="schedule-time">15:00 - 19:00</div>
+                            <div class="schedule-game">Community Day</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="schedule-note">⚡ Spontane Streams werden auf Discord angekündigt!</p>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-header">💬 Chat</div>
+            <iframe
+                title="Sasukiris Twitch Chat"
+                src="https://www.twitch.tv/embed/sasukiris/chat?parent=localhost&parent=127.0.0.1&darkpopout"
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <a href="https://www.twitch.tv/sasukiris" target="_blank">twitch.tv/sasukiris</a>
+    </footer>
+
+    <!-- Twitch Embed Script -->
+    <script src="https://embed.twitch.tv/embed/v1.js"></script>
+    <script>
+        // Initialize Twitch Embed
+        const embed = new Twitch.Embed("twitch-embed", {
+            width: "100%",
+            height: "100%",
+            channel: "sasukiris",
+            parent: ["localhost", "127.0.0.1"],
+            layout: "video",
+            autoplay: true,
+            muted: false
+        });
+
+        const liveIndicator = document.getElementById('liveIndicator');
+        const offlineIndicator = document.getElementById('offlineIndicator');
+        const scheduleContainer = document.getElementById('scheduleContainer');
+
+        // Check if stream is online/offline
+        embed.addEventListener(Twitch.Embed.VIDEO_READY, () => {
+            const player = embed.getPlayer();
+            
+            // Check initial state after a short delay
+            setTimeout(() => {
+                checkStreamStatus(player);
+            }, 2000);
+
+            // Periodically check stream status
+            setInterval(() => {
+                checkStreamStatus(player);
+            }, 30000); // Check every 30 seconds
+        });
+
+        function checkStreamStatus(player) {
+            // Check if there's actual video playing (not just the offline screen)
+            const playback = player.getPlaybackStats();
+            const isPaused = player.isPaused();
+            
+            // A more reliable check - if video FPS is 0 or very low, likely offline
+            if (playback && playback.videoFrameRate > 0 && !isPaused) {
+                setOnlineState();
+            } else {
+                // Additional check using channel info
+                player.getChannel().then(channel => {
+                    // If we can't determine, default to showing schedule
+                    setOfflineState();
+                }).catch(() => {
+                    setOfflineState();
+                });
+            }
+        }
+
+        function setOnlineState() {
+            liveIndicator.classList.add('show');
+            offlineIndicator.classList.add('hide');
+            scheduleContainer.classList.remove('show');
+        }
+
+        function setOfflineState() {
+            liveIndicator.classList.remove('show');
+            offlineIndicator.classList.remove('hide');
+            scheduleContainer.classList.add('show');
+        }
+
+        // Listen for online event
+        embed.addEventListener(Twitch.Embed.ONLINE, () => {
+            setOnlineState();
+        });
+
+        // Listen for offline event
+        embed.addEventListener(Twitch.Embed.OFFLINE, () => {
+            setOfflineState();
+        });
+    </script>
+</body>
+</html>

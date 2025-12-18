@@ -1,3 +1,5 @@
+import { Routes } from "../config/routes";
+
 export function ImpressumPage() {
   return (
     <main className="bg-slate-950/60 py-24" id="top">
@@ -10,7 +12,7 @@ export function ImpressumPage() {
           <h2 className="text-2xl font-semibold text-slate-50">Verantwortlich gemäß § 5 TMG</h2>
           <div className="section-panel space-y-4 text-sm leading-relaxed text-slate-300">
             <p><strong className="text-slate-200">Name:</strong> (Privat) Paul Wechselberger</p>
-            <p><strong className="text-slate-200">E-Mail:</strong> <a href="mailto:paul@broiler.dev" className="text-cyan-300 hover:text-cyan-200">paul@broiler.dev</a></p>
+            <p><strong className="text-slate-200">E-Mail:</strong> <a href={`mailto:${Routes.External.PaulEmail}`} className="text-cyan-300 hover:text-cyan-200">paul@broiler.dev</a></p>
             <p><strong className="text-slate-200">Web:</strong> <a href="https://broiler.dev" className="text-cyan-300 hover:text-cyan-200" rel="noopener">https://broiler.dev</a></p>
             <p>Private Hobby-Seite (HomeLab / Experimente). Keine gewerbliche Tätigkeit, kein Angebot kostenpflichtiger Leistungen.</p>
             <p>Keine journalistisch-redaktionellen Inhalte i.S.d. § 18 MStV.</p>
@@ -69,7 +71,7 @@ export function ImpressumPage() {
           <h2 className="text-2xl font-semibold text-slate-50">Technische Hinweise</h2>
           <div className="section-panel space-y-4 text-sm leading-relaxed text-slate-300">
             <p>Bereitstellung über eine Cloud-Umgebung. Logs zur Betriebs- und Sicherheitsanalyse können zeitlich begrenzt IP-bezogene Verbindungsdaten enthalten.</p>
-            <p>Quelltext: <a href="https://github.com/3roiler/web" target="_blank" rel="noopener" className="text-cyan-300 hover:text-cyan-200">Repository</a></p>
+            <p>Quelltext: <a href={Routes.External.GithubRepositoryWeb} target="_blank" rel="noopener" className="text-cyan-300 hover:text-cyan-200">Repository</a></p>
           </div>
         </section>
 
