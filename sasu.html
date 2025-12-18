@@ -36,7 +36,6 @@
             position: relative;
         }
 
-        /* Animated Background */
         .animated-bg {
             position: fixed;
             top: 0;
@@ -64,7 +63,6 @@
             50% { opacity: 0.8; transform: scale(1.05); }
         }
 
-        /* Floating Particles */
         .particles {
             position: absolute;
             width: 100%;
@@ -94,7 +92,6 @@
             75% { transform: translateY(-40px) rotate(270deg); opacity: 0.7; }
         }
 
-        /* Sparkle Stars */
         .sparkle {
             position: absolute;
             width: 4px;
@@ -136,7 +133,6 @@
             50% { opacity: 1; transform: scale(1); }
         }
 
-        /* Main Content */
         .main-content {
             position: relative;
             z-index: 1;
@@ -145,7 +141,6 @@
             min-height: 100vh;
         }
 
-        /* Header */
         .header {
             background: linear-gradient(135deg, rgba(255, 107, 157, 0.9) 0%, rgba(233, 30, 140, 0.8) 100%);
             backdrop-filter: blur(10px);
@@ -293,7 +288,6 @@
             display: none;
         }
 
-        /* Cinema Mode Toggle */
         .cinema-toggle {
             width: 45px;
             height: 45px;
@@ -326,7 +320,6 @@
             content: "\f066";
         }
 
-        /* Social Links */
         .social-links {
             display: flex;
             gap: 12px;
@@ -388,7 +381,6 @@
             box-shadow: 0 10px 25px rgba(255, 0, 0, 0.4);
         }
 
-        /* Stream Container */
         .stream-wrapper {
             flex: 1;
             display: flex;
@@ -413,7 +405,6 @@
             background-clip: padding-box;
         }
 
-        /* Vine Border Animation */
         .stream-container::before {
             content: '';
             position: absolute;
@@ -434,7 +425,6 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* Corner Decorations - Vine Style */
         .vine-corner {
             position: absolute;
             width: 80px;
@@ -495,7 +485,6 @@
             border: none;
         }
 
-        /* Schedule Overlay */
         .schedule-container {
             position: absolute;
             top: 0;
@@ -603,7 +592,6 @@
             margin-right: 8px;
         }
 
-        /* Chat Container */
         .chat-container {
             width: 360px;
             background: var(--dark-card);
@@ -664,7 +652,6 @@
             border: none;
         }
 
-        /* Footer */
         .footer {
             background: url('https://broiler.fra1.cdn.digitaloceanspaces.com/sasu-banner.png') center center / cover no-repeat;
             padding: 30px 30px;
@@ -751,7 +738,6 @@
             50% { transform: scale(1.2); }
         }
 
-        /* Cinema Mode */
         body.cinema-mode .stream-wrapper {
             padding: 0;
             gap: 0;
@@ -778,7 +764,6 @@
             display: none;
         }
 
-        /* Overlay Chat */
         .overlay-chat {
             position: fixed;
             width: 400px;
@@ -827,7 +812,6 @@
             display: none !important;
         }
 
-        /* Header chat toggle button (when chat is hidden in cinema mode) */
         .chat-toggle-header {
             width: 45px;
             height: 45px;
@@ -854,7 +838,6 @@
             display: flex;
         }
 
-        /* Hide corner indicators when chat is hidden */
         body.chat-hidden .corner-indicator {
             display: none !important;
         }
@@ -875,7 +858,6 @@
             background: transparent;
         }
 
-        /* Corner Indicators */
         .corner-indicator {
             position: fixed;
             width: 120px;
@@ -927,13 +909,11 @@
         .corner-indicator.bottom-left { bottom: 0; left: 0; }
         .corner-indicator.bottom-right { bottom: 0; right: 0; }
         
-        /* Position the dot in the correct corner */
         .corner-indicator.top-left { justify-content: flex-start; align-items: flex-start; padding: 15px; }
         .corner-indicator.top-right { justify-content: flex-end; align-items: flex-start; padding: 15px; }
         .corner-indicator.bottom-left { justify-content: flex-start; align-items: flex-end; padding: 15px; }
         .corner-indicator.bottom-right { justify-content: flex-end; align-items: flex-end; padding: 15px; }
 
-        /* Easter Egg */
         .easter-egg {
             position: absolute;
             right: 10px;
@@ -949,7 +929,6 @@
             transform: scale(1.5) rotate(20deg);
         }
 
-        /* Responsive */
         @media (max-width: 1000px) {
             .header {
                 flex-wrap: wrap;
@@ -1037,7 +1016,6 @@
             }
         }
 
-        /* Scrollbar Styling */
         ::-webkit-scrollbar {
             width: 10px;
         }
@@ -1057,7 +1035,6 @@
     </style>
 </head>
 <body>
-    <!-- Animated Background -->
     <div class="animated-bg">
         <div class="bg-gradient"></div>
         <div class="particles">
@@ -1130,7 +1107,6 @@
 
         <div class="stream-wrapper">
             <div class="stream-container">
-                <!-- Vine Corner Decorations -->
                 <div class="vine-corner top-left">
                     <svg viewBox="0 0 80 80">
                         <path class="vine-path" d="M 5 40 Q 15 35, 25 25 T 45 15 T 65 5"/>
@@ -1219,7 +1195,6 @@
         </footer>
     </div>
 
-    <!-- Overlay Chat for Cinema Mode -->
     <div class="overlay-chat bottom-right" id="overlayChat">
         <button class="overlay-chat-close" id="overlayChatClose" title="Chat ausblenden">
             <i class="fas fa-times"></i>
@@ -1231,7 +1206,6 @@
         </iframe>
     </div>
 
-    <!-- Corner Position Indicators -->
     <div class="corner-indicator top-left" data-position="top-left"></div>
     <div class="corner-indicator top-right" data-position="top-right"></div>
     <div class="corner-indicator bottom-left" data-position="bottom-left"></div>
@@ -1297,7 +1271,6 @@
             setOfflineState();
         });
 
-        // Add some interactive sparkle effect on mouse move
         document.addEventListener('mousemove', (e) => {
             if (Math.random() > 0.97) {
                 createSparkle(e.clientX, e.clientY);
@@ -1334,7 +1307,6 @@
         `;
         document.head.appendChild(style);
 
-        // Cinema Mode
         const cinemaToggle = document.getElementById('cinemaToggle');
         const overlayChat = document.getElementById('overlayChat');
         const cornerIndicators = document.querySelectorAll('.corner-indicator');
@@ -1345,29 +1317,24 @@
             cinemaToggle.classList.toggle('active');
         });
 
-        // Corner position selection
         cornerIndicators.forEach(indicator => {
             indicator.addEventListener('click', () => {
                 const newPosition = indicator.dataset.position;
                 
-                // Update active indicator - hide the one where chat is
                 cornerIndicators.forEach(ind => {
                     ind.classList.remove('active');
                     ind.classList.remove('hidden');
                 });
                 indicator.classList.add('hidden');
                 
-                // Move overlay chat
                 overlayChat.classList.remove('top-left', 'top-right', 'bottom-left', 'bottom-right');
                 overlayChat.classList.add(newPosition);
                 currentPosition = newPosition;
             });
         });
         
-        // Hide the default corner indicator (bottom-right)
         document.querySelector('.corner-indicator.bottom-right').classList.add('hidden');
 
-        // Close/Show overlay chat
         const overlayChatClose = document.getElementById('overlayChatClose');
         const chatToggleHeader = document.getElementById('chatToggleHeader');
 
@@ -1383,10 +1350,8 @@
             document.body.classList.remove('chat-hidden');
         });
 
-        // Keyboard shortcut for cinema mode (press 'F' or 'K')
         document.addEventListener('keydown', (e) => {
             if (e.key === 'f' || e.key === 'F' || e.key === 'k' || e.key === 'K') {
-                // Don't trigger if typing in an input
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
                 document.body.classList.toggle('cinema-mode');
                 cinemaToggle.classList.toggle('active');
