@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sasukiri</title>
+    <title>✨ Sasukiri - Live Stream ✨</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,22 +13,166 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --pink-100: #FFF0F5;
+            --pink-200: #FFD6E5;
+            --pink-300: #FFA8C2;
+            --pink-400: #FF85A8;
+            --pink-500: #FF6B9D;
+            --pink-600: #E91E8C;
+            --pink-glow: rgba(255, 107, 157, 0.6);
+            --dark-bg: #0d0d1a;
+            --dark-card: #1a1a2e;
+            --dark-card-light: #252540;
+        }
+
         body {
-            background-color: #FFA8C2;
+            background: var(--dark-bg);
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Poppins', sans-serif;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-gradient {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(255, 107, 157, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(233, 30, 140, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(255, 133, 168, 0.05) 0%, transparent 70%);
+            animation: bgPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
+        /* Floating Particles */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: float 15s infinite ease-in-out;
+            opacity: 0.6;
+        }
+
+        .particle:nth-child(1) { width: 20px; height: 20px; background: var(--pink-400); left: 10%; top: 20%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 15px; height: 15px; background: var(--pink-300); left: 20%; top: 80%; animation-delay: 2s; }
+        .particle:nth-child(3) { width: 25px; height: 25px; background: var(--pink-500); left: 70%; top: 30%; animation-delay: 4s; }
+        .particle:nth-child(4) { width: 10px; height: 10px; background: var(--pink-200); left: 80%; top: 70%; animation-delay: 6s; }
+        .particle:nth-child(5) { width: 18px; height: 18px; background: var(--pink-400); left: 50%; top: 10%; animation-delay: 8s; }
+        .particle:nth-child(6) { width: 12px; height: 12px; background: var(--pink-600); left: 30%; top: 50%; animation-delay: 10s; }
+        .particle:nth-child(7) { width: 22px; height: 22px; background: var(--pink-300); left: 90%; top: 40%; animation-delay: 12s; }
+        .particle:nth-child(8) { width: 8px; height: 8px; background: var(--pink-500); left: 5%; top: 60%; animation-delay: 14s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
+            25% { transform: translateY(-30px) rotate(90deg); opacity: 0.8; }
+            50% { transform: translateY(-10px) rotate(180deg); opacity: 0.4; }
+            75% { transform: translateY(-40px) rotate(270deg); opacity: 0.7; }
+        }
+
+        /* Sparkle Stars */
+        .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            animation: sparkle 3s infinite;
+        }
+
+        .sparkle::before, .sparkle::after {
+            content: '';
+            position: absolute;
+            background: white;
+        }
+
+        .sparkle::before {
+            width: 12px;
+            height: 2px;
+            top: 1px;
+            left: -4px;
+        }
+
+        .sparkle::after {
+            width: 2px;
+            height: 12px;
+            top: -4px;
+            left: 1px;
+        }
+
+        .sparkle:nth-child(9) { left: 15%; top: 25%; animation-delay: 0s; }
+        .sparkle:nth-child(10) { left: 85%; top: 15%; animation-delay: 0.5s; }
+        .sparkle:nth-child(11) { left: 45%; top: 85%; animation-delay: 1s; }
+        .sparkle:nth-child(12) { left: 75%; top: 55%; animation-delay: 1.5s; }
+        .sparkle:nth-child(13) { left: 25%; top: 75%; animation-delay: 2s; }
+        .sparkle:nth-child(14) { left: 65%; top: 5%; animation-delay: 2.5s; }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Main Content */
+        .main-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         /* Header */
         .header {
-            background: linear-gradient(135deg, #FF85A8 0%, #FFA8C2 100%);
+            background: linear-gradient(135deg, rgba(255, 107, 157, 0.9) 0%, rgba(233, 30, 140, 0.8) 100%);
+            backdrop-filter: blur(10px);
             padding: 15px 30px;
             display: flex;
             align-items: center;
             gap: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 30px rgba(255, 107, 157, 0.4);
+            border-bottom: 2px solid var(--pink-400);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: headerShine 4s infinite;
+        }
+
+        @keyframes headerShine {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
 
         .header-left {
@@ -36,12 +181,39 @@
             gap: 15px;
         }
 
+        .logo-container {
+            position: relative;
+        }
+
         .header-logo {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             border: 3px solid white;
             object-fit: cover;
+            position: relative;
+            z-index: 2;
+            transition: transform 0.3s ease;
+        }
+
+        .header-logo:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .logo-ring {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 70px;
+            height: 70px;
+            border: 2px solid var(--pink-200);
+            border-radius: 50%;
+            animation: ringPulse 2s infinite;
+        }
+
+        @keyframes ringPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0; }
         }
 
         .header-info {
@@ -52,25 +224,35 @@
 
         .header-title {
             color: white;
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 2px 2px 4px rgba(0, 0, 0, 0.3);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            letter-spacing: 2px;
+        }
+
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 1px;
         }
 
         .live-indicator {
             display: none;
             align-items: center;
-            gap: 5px;
-            background: #e91916;
-            padding: 3px 10px;
-            border-radius: 4px;
+            gap: 6px;
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            padding: 5px 12px;
+            border-radius: 20px;
             font-size: 0.75rem;
             font-weight: bold;
             text-transform: uppercase;
-            animation: pulse 2s infinite;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            animation: livePulse 1.5s infinite;
         }
 
         .live-indicator.show {
@@ -82,20 +264,26 @@
             height: 8px;
             background: white;
             border-radius: 50%;
+            animation: dotBlink 1s infinite;
         }
 
-        @keyframes pulse {
+        @keyframes livePulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(255, 0, 0, 0.8); }
+        }
+
+        @keyframes dotBlink {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+            50% { opacity: 0.3; }
         }
 
         .offline-indicator {
             display: flex;
             align-items: center;
-            gap: 5px;
-            background: #6b7280;
-            padding: 3px 10px;
-            border-radius: 4px;
+            gap: 6px;
+            background: linear-gradient(135deg, #4a4a6a, #3a3a5a);
+            padding: 5px 12px;
+            border-radius: 20px;
             font-size: 0.75rem;
             font-weight: bold;
             text-transform: uppercase;
@@ -113,47 +301,158 @@
         }
 
         .social-link {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             text-decoration: none;
             transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .social-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .social-link:hover::before {
+            left: 100%;
         }
 
         .social-link:hover {
-            background: white;
-            transform: scale(1.1);
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
         }
 
-        .social-link.discord:hover { color: #5865F2; }
-        .social-link.tiktok:hover { color: #000000; }
-        .social-link.instagram:hover { color: #E4405F; }
-        .social-link.youtube:hover { color: #FF0000; }
+        .social-link.discord:hover { 
+            background: #5865F2; 
+            box-shadow: 0 10px 25px rgba(88, 101, 242, 0.4);
+        }
+        .social-link.tiktok:hover { 
+            background: linear-gradient(135deg, #00f2ea, #ff0050); 
+            box-shadow: 0 10px 25px rgba(255, 0, 80, 0.4);
+        }
+        .social-link.instagram:hover { 
+            background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); 
+            box-shadow: 0 10px 25px rgba(253, 29, 29, 0.4);
+        }
+        .social-link.youtube:hover { 
+            background: #FF0000; 
+            box-shadow: 0 10px 25px rgba(255, 0, 0, 0.4);
+        }
 
         /* Stream Container */
         .stream-wrapper {
             flex: 1;
             display: flex;
-            padding: 20px;
-            gap: 20px;
+            padding: 25px;
+            gap: 25px;
             min-height: 0;
         }
 
         .stream-container {
             flex: 1;
-            background: #1a1a2e;
-            border-radius: 15px;
+            background: var(--dark-card);
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 
+                0 8px 40px rgba(0, 0, 0, 0.4),
+                0 0 60px rgba(255, 107, 157, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
             display: flex;
             flex-direction: column;
             position: relative;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+
+        /* Vine Border Animation */
+        .stream-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--pink-400), var(--pink-600), var(--pink-300), var(--pink-500), var(--pink-400));
+            background-size: 400% 400%;
+            border-radius: 22px;
+            z-index: -1;
+            animation: borderGlow 8s linear infinite;
+        }
+
+        @keyframes borderGlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Corner Decorations - Vine Style */
+        .vine-corner {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .vine-corner svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .vine-corner.top-left { top: 0; left: 0; }
+        .vine-corner.top-right { top: 0; right: 0; transform: scaleX(-1); }
+        .vine-corner.bottom-left { bottom: 0; left: 0; transform: scaleY(-1); }
+        .vine-corner.bottom-right { bottom: 0; right: 0; transform: scale(-1, -1); }
+
+        .vine-path {
+            fill: none;
+            stroke: var(--pink-400);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: drawVine 3s ease forwards;
+        }
+
+        .vine-leaf {
+            fill: var(--pink-300);
+            opacity: 0;
+            animation: leafAppear 0.5s ease forwards;
+        }
+
+        .vine-corner.top-left .vine-path { animation-delay: 0s; }
+        .vine-corner.top-right .vine-path { animation-delay: 0.5s; }
+        .vine-corner.bottom-left .vine-path { animation-delay: 1s; }
+        .vine-corner.bottom-right .vine-path { animation-delay: 1.5s; }
+
+        .vine-corner.top-left .vine-leaf { animation-delay: 2s; }
+        .vine-corner.top-right .vine-leaf { animation-delay: 2.5s; }
+        .vine-corner.bottom-left .vine-leaf { animation-delay: 3s; }
+        .vine-corner.bottom-right .vine-leaf { animation-delay: 3.5s; }
+
+        @keyframes drawVine {
+            to { stroke-dashoffset: 0; }
+        }
+
+        @keyframes leafAppear {
+            to { opacity: 1; }
         }
 
         .stream-container iframe,
@@ -163,14 +462,14 @@
             border: none;
         }
 
-        /* Schedule Overlay (shown when offline) */
+        /* Schedule Overlay */
         .schedule-container {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+            background: linear-gradient(135deg, var(--dark-bg) 0%, var(--dark-card) 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -186,93 +485,137 @@
             visibility: visible;
         }
 
+        .schedule-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
         .schedule-container h2 {
-            color: #FFA8C2;
+            color: var(--pink-300);
+            font-family: 'Orbitron', sans-serif;
             font-size: 2rem;
             margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            text-align: center;
+            text-shadow: 0 0 30px var(--pink-glow);
         }
 
         .schedule-container .subtitle {
             color: #9ca3af;
             margin-bottom: 30px;
             font-size: 1.1rem;
+            text-align: center;
         }
 
-        .schedule-grid {
-            display: grid;
-            gap: 15px;
-            width: 100%;
-            max-width: 500px;
+        .gaming-icons {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
-        .schedule-item {
-            background: rgba(255, 168, 194, 0.1);
-            border: 1px solid rgba(255, 168, 194, 0.2);
-            border-radius: 12px;
-            padding: 20px;
+        .gaming-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 107, 157, 0.1);
+            border: 2px solid var(--pink-400);
+            border-radius: 15px;
             display: flex;
             align-items: center;
-            gap: 20px;
+            justify-content: center;
+            font-size: 1.8rem;
+            animation: iconFloat 3s ease-in-out infinite;
             transition: all 0.3s ease;
         }
 
-        .schedule-item:hover {
-            background: rgba(255, 168, 194, 0.15);
-            transform: translateX(5px);
+        .gaming-icon:nth-child(1) { animation-delay: 0s; }
+        .gaming-icon:nth-child(2) { animation-delay: 0.5s; }
+        .gaming-icon:nth-child(3) { animation-delay: 1s; }
+        .gaming-icon:nth-child(4) { animation-delay: 1.5s; }
+
+        .gaming-icon:hover {
+            background: rgba(255, 107, 157, 0.3);
+            transform: scale(1.1) rotate(5deg);
         }
 
-        .schedule-day {
-            background: linear-gradient(135deg, #FF85A8 0%, #FFA8C2 100%);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-weight: bold;
-            min-width: 100px;
-            text-align: center;
-        }
-
-        .schedule-info {
-            flex: 1;
-        }
-
-        .schedule-time {
-            color: white;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .schedule-game {
-            color: #9ca3af;
-            font-size: 0.9rem;
-            margin-top: 4px;
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
         }
 
         .schedule-note {
-            color: #6b7280;
-            font-size: 0.85rem;
-            margin-top: 20px;
+            color: #9ca3af;
+            font-size: 0.95rem;
             text-align: center;
+            background: rgba(255, 107, 157, 0.1);
+            padding: 15px 25px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 107, 157, 0.3);
         }
 
+        .schedule-note i {
+            color: var(--pink-400);
+            margin-right: 8px;
+        }
+
+        /* Chat Container */
         .chat-container {
-            width: 340px;
-            background: #1a1a2e;
-            border-radius: 15px;
+            width: 360px;
+            background: var(--dark-card);
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 
+                0 8px 40px rgba(0, 0, 0, 0.4),
+                0 0 40px rgba(255, 107, 157, 0.1);
             display: flex;
             flex-direction: column;
+            position: relative;
+            border: 2px solid var(--pink-400);
         }
 
         .chat-header {
-            background: linear-gradient(135deg, #FF85A8 0%, #FFA8C2 100%);
-            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--pink-400) 0%, var(--pink-600) 100%);
+            padding: 15px 20px;
             color: white;
             font-weight: bold;
             text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, white, transparent);
+            animation: chatHeaderLine 2s infinite;
+        }
+
+        @keyframes chatHeaderLine {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .chat-header i {
+            animation: chatPulse 2s infinite;
+        }
+
+        @keyframes chatPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
         }
 
         .chat-container iframe {
@@ -282,47 +625,119 @@
 
         /* Footer */
         .footer {
-            background: linear-gradient(135deg, #FF85A8 0%, #FFA8C2 100%);
-            padding: 10px 30px;
-            text-align: center;
-            color: white;
-            font-size: 0.9rem;
+            background: linear-gradient(135deg, var(--dark-card) 0%, var(--dark-bg) 100%);
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            border-top: 2px solid var(--pink-400);
+            position: relative;
+            overflow: hidden;
         }
 
-        .footer a {
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--pink-400), var(--pink-600), var(--pink-400), transparent);
+            background-size: 200% 100%;
+            animation: footerLine 3s linear infinite;
+        }
+
+        @keyframes footerLine {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .footer-link {
             color: white;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 25px;
+            background: linear-gradient(135deg, var(--pink-400), var(--pink-600));
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
         }
 
-        .footer a:hover {
-            text-decoration: underline;
+        .footer-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 107, 157, 0.5);
+        }
+
+        .footer-link i {
+            font-size: 1.2rem;
+        }
+
+        .footer-text {
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+
+        .footer-heart {
+            color: var(--pink-400);
+            animation: heartBeat 1.5s infinite;
+        }
+
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* Easter Egg */
+        .easter-egg {
+            position: absolute;
+            right: 10px;
+            bottom: 8px;
+            font-size: 0.7rem;
+            opacity: 0.15;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .easter-egg:hover {
+            opacity: 1;
+            transform: scale(1.5) rotate(20deg);
         }
 
         /* Responsive */
-        @media (max-width: 900px) {
+        @media (max-width: 1000px) {
             .header {
                 flex-wrap: wrap;
+                padding: 15px 20px;
+            }
+
+            .header-title {
+                font-size: 1.4rem;
             }
 
             .social-links {
                 width: 100%;
                 justify-content: center;
                 margin-left: 0;
-                margin-top: 10px;
+                margin-top: 15px;
             }
 
             .stream-wrapper {
                 flex-direction: column;
+                padding: 15px;
             }
 
             .stream-container {
-                min-height: 300px;
+                min-height: 350px;
             }
 
             .chat-container {
                 width: 100%;
-                height: 400px;
+                height: 450px;
             }
 
             .schedule-container {
@@ -330,77 +745,224 @@
             }
 
             .schedule-container h2 {
+                font-size: 1.3rem;
+            }
+
+            .gaming-icons {
+                gap: 10px;
+            }
+
+            .gaming-icon {
+                width: 50px;
+                height: 50px;
                 font-size: 1.5rem;
             }
 
-            .schedule-item {
-                flex-direction: column;
-                text-align: center;
+            .vine-corner {
+                width: 50px;
+                height: 50px;
             }
+        }
+
+        @media (max-width: 600px) {
+            .header-logo {
+                width: 45px;
+                height: 45px;
+            }
+
+            .logo-ring {
+                width: 55px;
+                height: 55px;
+            }
+
+            .header-title {
+                font-size: 1.2rem;
+            }
+
+            .social-link {
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
+            }
+
+            .footer {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark-bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--pink-400), var(--pink-600));
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-left">
-            <img 
-                src="https://broiler.fra1.cdn.digitaloceanspaces.com/sasu-bild.png" 
-                alt="Sasukiris Logo" 
-                class="header-logo"
-            >
-            <div class="header-info">
-                <h1 class="header-title">
-                    Sasukiris
-                    <span class="live-indicator" id="liveIndicator">
-                        <span class="dot"></span>
-                        LIVE
-                    </span>
-                    <span class="offline-indicator" id="offlineIndicator">
-                        OFFLINE
-                    </span>
-                </h1>
-            </div>
-        </div>
-
-        <div class="social-links">
-            <a href="https://discord.gg/p3B2GeYYfC" target="_blank" class="social-link discord" title="Discord">
-                <i class="fab fa-discord"></i>
-            </a>
-            <a href="https://www.tiktok.com/@sasukiris" target="_blank" class="social-link tiktok" title="TikTok">
-                <i class="fab fa-tiktok"></i>
-            </a>
-            <a href="https://www.instagram.com/sasukiris" target="_blank" class="social-link instagram" title="Instagram">
-                <i class="fab fa-instagram"></i>
-            </a>
-            <a href="https://www.youtube.com/@Sasukiris" target="_blank" class="social-link youtube" title="YouTube">
-                <i class="fab fa-youtube"></i>
-            </a>
-        </div>
-    </header>
-
-    <div class="stream-wrapper">
-        <div class="stream-container">
-            <div id="twitch-embed"></div>
-            
-            <div class="schedule-container" id="scheduleContainer">
-                <h2>Schau vorbei wenn ich live bin!</h2>
-                <p class="schedule-note">⚡ Spontane Streams werden auf Discord angekündigt!</p>
-            </div>
-        </div>
-
-        <div class="chat-container">
-            <div class="chat-header">💬 Chat</div>
-            <iframe
-                title="Sasukiris Twitch Chat"
-                src="https://www.twitch.tv/embed/sasukiris/chat?parent=broiler.dev&parent=localhost&darkpopout"
-                allowfullscreen>
-            </iframe>
+    <!-- Animated Background -->
+    <div class="animated-bg">
+        <div class="bg-gradient"></div>
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="sparkle"></div>
+            <div class="sparkle"></div>
+            <div class="sparkle"></div>
+            <div class="sparkle"></div>
+            <div class="sparkle"></div>
+            <div class="sparkle"></div>
         </div>
     </div>
 
-    <footer class="footer">
-        <a href="https://www.twitch.tv/sasukiris" target="_blank">twitch.tv/sasukiris</a>
-    </footer>
+    <div class="main-content">
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-container">
+                    <div class="logo-ring"></div>
+                    <img 
+                        src="https://broiler.fra1.cdn.digitaloceanspaces.com/sasu-bild.png" 
+                        alt="Sasukiris Logo" 
+                        class="header-logo"
+                    >
+                </div>
+                <div class="header-info">
+                    <h1 class="header-title">
+                        SASUKIRIS
+                        <span class="live-indicator" id="liveIndicator">
+                            <span class="dot"></span>
+                            LIVE
+                        </span>
+                        <span class="offline-indicator" id="offlineIndicator">
+                            OFFLINE
+                        </span>
+                    </h1>
+                    <span class="header-subtitle">✨ Gaming & Just Chatting ✨</span>
+                </div>
+            </div>
+
+            <div class="social-links">
+                <a href="https://discord.gg/p3B2GeYYfC" target="_blank" class="social-link discord" title="Discord">
+                    <i class="fab fa-discord"></i>
+                </a>
+                <a href="https://www.tiktok.com/@sasukiris" target="_blank" class="social-link tiktok" title="TikTok">
+                    <i class="fab fa-tiktok"></i>
+                </a>
+                <a href="https://www.instagram.com/sasukiris" target="_blank" class="social-link instagram" title="Instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                <a href="https://www.youtube.com/@Sasukiris" target="_blank" class="social-link youtube" title="YouTube">
+                    <i class="fab fa-youtube"></i>
+                </a>
+            </div>
+        </header>
+
+        <div class="stream-wrapper">
+            <div class="stream-container">
+                <!-- Vine Corner Decorations -->
+                <div class="vine-corner top-left">
+                    <svg viewBox="0 0 80 80">
+                        <path class="vine-path" d="M 5 40 Q 15 35, 25 25 T 45 15 T 65 5"/>
+                        <path class="vine-path" d="M 40 5 Q 35 15, 25 25 T 15 45 T 5 65"/>
+                        <circle class="vine-leaf" cx="25" cy="25" r="6"/>
+                        <circle class="vine-leaf" cx="45" cy="15" r="4"/>
+                        <circle class="vine-leaf" cx="15" cy="45" r="5"/>
+                        <ellipse class="vine-leaf" cx="35" cy="35" rx="8" ry="5" transform="rotate(-45 35 35)"/>
+                    </svg>
+                </div>
+                <div class="vine-corner top-right">
+                    <svg viewBox="0 0 80 80">
+                        <path class="vine-path" d="M 5 40 Q 15 35, 25 25 T 45 15 T 65 5"/>
+                        <path class="vine-path" d="M 40 5 Q 35 15, 25 25 T 15 45 T 5 65"/>
+                        <circle class="vine-leaf" cx="25" cy="25" r="6"/>
+                        <circle class="vine-leaf" cx="45" cy="15" r="4"/>
+                        <circle class="vine-leaf" cx="15" cy="45" r="5"/>
+                        <ellipse class="vine-leaf" cx="35" cy="35" rx="8" ry="5" transform="rotate(-45 35 35)"/>
+                    </svg>
+                </div>
+                <div class="vine-corner bottom-left">
+                    <svg viewBox="0 0 80 80">
+                        <path class="vine-path" d="M 5 40 Q 15 35, 25 25 T 45 15 T 65 5"/>
+                        <path class="vine-path" d="M 40 5 Q 35 15, 25 25 T 15 45 T 5 65"/>
+                        <circle class="vine-leaf" cx="25" cy="25" r="6"/>
+                        <circle class="vine-leaf" cx="45" cy="15" r="4"/>
+                        <circle class="vine-leaf" cx="15" cy="45" r="5"/>
+                        <ellipse class="vine-leaf" cx="35" cy="35" rx="8" ry="5" transform="rotate(-45 35 35)"/>
+                    </svg>
+                </div>
+                <div class="vine-corner bottom-right">
+                    <svg viewBox="0 0 80 80">
+                        <path class="vine-path" d="M 5 40 Q 15 35, 25 25 T 45 15 T 65 5"/>
+                        <path class="vine-path" d="M 40 5 Q 35 15, 25 25 T 15 45 T 5 65"/>
+                        <circle class="vine-leaf" cx="25" cy="25" r="6"/>
+                        <circle class="vine-leaf" cx="45" cy="15" r="4"/>
+                        <circle class="vine-leaf" cx="15" cy="45" r="5"/>
+                        <ellipse class="vine-leaf" cx="35" cy="35" rx="8" ry="5" transform="rotate(-45 35 35)"/>
+                    </svg>
+                </div>
+
+                <div id="twitch-embed"></div>
+                
+                <div class="schedule-container" id="scheduleContainer">
+                    <div class="schedule-icon">🎮</div>
+                    <h2>Der Stream ist gerade offline</h2>
+                    <p class="subtitle">Schau vorbei wenn ich live bin!</p>
+                    
+                    <div class="gaming-icons">
+                        <div class="gaming-icon">🎯</div>
+                        <div class="gaming-icon">🎲</div>
+                        <div class="gaming-icon">🏆</div>
+                        <div class="gaming-icon">💎</div>
+                    </div>
+                    
+                    <p class="schedule-note">
+                        <i class="fab fa-discord"></i>
+                        Spontane Streams werden auf Discord angekündigt!
+                    </p>
+                </div>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-header">
+                    <i class="fas fa-comments"></i>
+                    CHAT
+                </div>
+                <iframe
+                    title="Sasukiris Twitch Chat"
+                    src="https://www.twitch.tv/embed/sasukiris/chat?parent=broiler.dev&parent=localhost&darkpopout"
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <a href="https://www.twitch.tv/sasukiris" target="_blank" class="footer-link">
+                <i class="fab fa-twitch"></i>
+                twitch.tv/sasukiris
+            </a>
+            <span class="footer-text">
+                Made with <span class="footer-heart">♥</span> for the Community
+            </span>
+            <span class="easter-egg" title="Du hast mich gefunden! 🎉">🥒</span>
+        </footer>
+    </div>
 
     <script src="https://embed.twitch.tv/embed/v1.js"></script>
     <script>
@@ -425,7 +987,7 @@
 
             setInterval(() => {
                 checkStreamStatus(player);
-            }, 30000); // Check every 30 seconds
+            }, 30000);
         });
 
         function checkStreamStatus(player) {
@@ -461,6 +1023,43 @@
         embed.addEventListener(Twitch.Embed.OFFLINE, () => {
             setOfflineState();
         });
+
+        // Add some interactive sparkle effect on mouse move
+        document.addEventListener('mousemove', (e) => {
+            if (Math.random() > 0.97) {
+                createSparkle(e.clientX, e.clientY);
+            }
+        });
+
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.style.cssText = `
+                position: fixed;
+                left: ${x}px;
+                top: ${y}px;
+                width: 8px;
+                height: 8px;
+                background: linear-gradient(135deg, #FFA8C2, #FF6B9D);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 9999;
+                animation: sparkleAnim 1s ease forwards;
+            `;
+            document.body.appendChild(sparkle);
+            
+            setTimeout(() => sparkle.remove(), 1000);
+        }
+
+        // Add sparkle animation style
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes sparkleAnim {
+                0% { transform: scale(0) rotate(0deg); opacity: 1; }
+                50% { transform: scale(1.5) rotate(180deg); opacity: 0.8; }
+                100% { transform: scale(0) rotate(360deg); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
