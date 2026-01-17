@@ -68,7 +68,7 @@ export async function loginToGithub(): Promise<void> {
   const protocol = globalThis.location.protocol;
 
   const params = new URLSearchParams({
-    redirect_uri: `${protocol}//${host}/${Routes.Callback.Github}`,
+    redirect_uri: `${protocol}//${host}${Routes.Callback.Github}`,
     client_id: ClientId,
     scope: Scope,
     state: Math.random().toString(36).substring(2, 15)

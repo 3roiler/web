@@ -133,6 +133,12 @@
             50% { opacity: 1; transform: scale(1); }
         }
 
+        @keyframes sparkleAnim {
+            0% { transform: scale(0) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.5) rotate(180deg); opacity: 0.8; }
+            100% { transform: scale(0) rotate(360deg); opacity: 0; }
+        }
+
         .main-content {
             position: relative;
             z-index: 1;
@@ -144,10 +150,9 @@
         .header {
             background: linear-gradient(135deg, rgba(255, 107, 157, 0.9) 0%, rgba(233, 30, 140, 0.8) 100%);
             backdrop-filter: blur(10px);
-            padding: 15px 30px;
+            padding: 10px 30px;
             display: flex;
             align-items: center;
-            gap: 15px;
             box-shadow: 0 4px 30px rgba(255, 107, 157, 0.4);
             border-bottom: 2px solid var(--pink-400);
             position: relative;
@@ -176,15 +181,77 @@
             gap: 15px;
         }
 
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: auto;
+        }
+
+        .header-right-button {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-right-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .header-right-button:hover::before {
+            left: 100%;
+        }
+
+        .header-right-button:hover {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-right-button.discord:hover { 
+            background: #5865F2; 
+            box-shadow: 0 10px 25px rgba(88, 101, 242, 0.4);
+        }
+        .header-right-button.tiktok:hover { 
+            background: linear-gradient(135deg, #00f2ea, #ff0050); 
+            box-shadow: 0 10px 25px rgba(255, 0, 80, 0.4);
+        }
+        .header-right-button.instagram:hover { 
+            background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); 
+            box-shadow: 0 10px 25px rgba(253, 29, 29, 0.4);
+        }
+        .header-right-button.youtube:hover { 
+            background: #FF0000; 
+            box-shadow: 0 10px 25px rgba(255, 0, 0, 0.4);
+        }
+
         .logo-container {
             position: relative;
         }
 
         .header-logo {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            border: 3px solid white;
+            border: 2px solid white;
             object-fit: cover;
             position: relative;
             z-index: 2;
@@ -199,11 +266,11 @@
             position: absolute;
             top: -5px;
             left: -5px;
-            width: 70px;
-            height: 70px;
-            border: 2px solid var(--pink-200);
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--pink-200);
             border-radius: 50%;
-            animation: ringPulse 2s infinite;
+            animation: ringPulse 4s infinite;
         }
 
         @keyframes ringPulse {
@@ -320,67 +387,6 @@
             content: "\f066";
         }
 
-        .social-links {
-            display: flex;
-            gap: 12px;
-            margin-left: 12px;
-        }
-
-        .social-link {
-            width: 45px;
-            height: 45px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.3rem;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .social-link::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .social-link:hover::before {
-            left: 100%;
-        }
-
-        .social-link:hover {
-            transform: translateY(-5px) scale(1.1);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .social-link.discord:hover { 
-            background: #5865F2; 
-            box-shadow: 0 10px 25px rgba(88, 101, 242, 0.4);
-        }
-        .social-link.tiktok:hover { 
-            background: linear-gradient(135deg, #00f2ea, #ff0050); 
-            box-shadow: 0 10px 25px rgba(255, 0, 80, 0.4);
-        }
-        .social-link.instagram:hover { 
-            background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); 
-            box-shadow: 0 10px 25px rgba(253, 29, 29, 0.4);
-        }
-        .social-link.youtube:hover { 
-            background: #FF0000; 
-            box-shadow: 0 10px 25px rgba(255, 0, 0, 0.4);
-        }
-
         .stream-wrapper {
             flex: 1;
             display: flex;
@@ -451,13 +457,13 @@
             stroke-linecap: round;
             stroke-dasharray: 200;
             stroke-dashoffset: 200;
-            animation: drawVine 3s ease forwards;
+            animation: drawVine 5s ease forwards;
         }
 
         .vine-leaf {
             fill: var(--pink-300);
             opacity: 0;
-            animation: leafAppear 0.5s ease forwards;
+            animation: leafAppear 0.6s ease forwards;
         }
 
         .vine-corner.top-left .vine-path { animation-delay: 0s; }
@@ -593,7 +599,7 @@
         }
 
         .chat-container {
-            width: 360px;
+            width: 450px;
             background: var(--dark-card);
             border-radius: 20px;
             overflow: hidden;
@@ -608,7 +614,7 @@
 
         .chat-header {
             background: linear-gradient(135deg, var(--pink-400) 0%, var(--pink-600) 100%);
-            padding: 15px 20px;
+            padding: 10px 20px;
             color: white;
             font-weight: bold;
             text-align: center;
@@ -630,7 +636,7 @@
             right: 0;
             height: 2px;
             background: linear-gradient(90deg, transparent, white, transparent);
-            animation: chatHeaderLine 2s infinite;
+            animation: chatHeaderLine 4s infinite;
         }
 
         @keyframes chatHeaderLine {
@@ -639,7 +645,7 @@
         }
 
         .chat-header i {
-            animation: chatPulse 2s infinite;
+            animation: chatPulse 4s infinite;
         }
 
         @keyframes chatPulse {
@@ -685,7 +691,7 @@
             height: 3px;
             background: linear-gradient(90deg, transparent, var(--pink-400), var(--pink-600), var(--pink-400), transparent);
             background-size: 200% 100%;
-            animation: footerLine 3s linear infinite;
+            animation: footerLine 20s linear infinite;
             z-index: 1;
         }
 
@@ -766,8 +772,8 @@
 
         .overlay-chat {
             position: fixed;
-            width: 400px;
-            height: 160px;
+            width: 450px;
+            height: 400px;
             background: rgba(13, 13, 26, 0.4);
             border-radius: 12px;
             border: 2px solid var(--pink-400);
@@ -776,7 +782,7 @@
             overflow: hidden;
             backdrop-filter: blur(8px);
             transition: all 0.3s ease;
-            opacity: 0.85;
+            opacity: 0.2;
         }
 
         .overlay-chat:hover {
@@ -786,8 +792,10 @@
 
         .overlay-chat-close {
             position: absolute;
-            width: 20px;
-            height: 20px;
+            margin-top: 5px;
+            margin-left: 5px;
+            width: 25px;
+            height: 25px;
             background: linear-gradient(135deg, var(--pink-400), var(--pink-600));
             border: 2px solid white;
             border-radius: 50%;
@@ -918,41 +926,38 @@
             position: absolute;
             right: 10px;
             bottom: 8px;
-            font-size: 0.7rem;
-            opacity: 0.15;
+            font-size: 1rem;
+            opacity: 0.2;
             cursor: pointer;
             transition: all 0.3s ease;
+            background: transparent;
+            border: transparent;
         }
 
         .easter-egg:hover {
             opacity: 1;
-            transform: scale(1.5) rotate(20deg);
+            right: 30px;
+            bottom: 40px;
+            transform: scale(4) rotate(20deg);
         }
 
-        @media (max-width: 1000px) {
+        @media (max-width: 1200px) {
             .header {
                 flex-wrap: wrap;
                 padding: 15px 20px;
             }
 
             .header-title {
-                font-size: 1.4rem;
-            }
-
-            .social-links {
-                width: 100%;
-                justify-content: center;
-                margin-left: 0;
-                margin-top: 15px;
+                font-size: 1.2rem;
             }
 
             .stream-wrapper {
                 flex-direction: column;
-                padding: 15px;
+                padding: 10px;
             }
 
             .stream-container {
-                min-height: 350px;
+                min-height: 600px;
             }
 
             .chat-container {
@@ -965,7 +970,7 @@
             }
 
             .schedule-container h2 {
-                font-size: 1.3rem;
+                font-size: 1.2rem;
             }
 
             .gaming-icons {
@@ -984,7 +989,7 @@
             }
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 800px) {
             .header-logo {
                 width: 45px;
                 height: 45px;
@@ -999,9 +1004,25 @@
                 font-size: 1.2rem;
             }
 
-            .social-link {
+            .cinema-toggle {
                 width: 40px;
                 height: 40px;
+                font-size: 1rem;
+            }
+
+            .chat-toggle-header {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+
+            .header-right {
+                gap: 10px;
+            }
+
+            .header-right-button {
+                width: 30px;
+                height: 30px;
                 font-size: 1.1rem;
             }
 
@@ -1011,8 +1032,8 @@
             }
 
             .overlay-chat {
-                width: 320px;
-                height: 120px;
+                width: 300px;
+                height: 500px;
             }
         }
 
@@ -1073,14 +1094,14 @@
                             <span class="dot"></span>
                             LIVE
                         </span>
-                        <span class="offline-indicator" id="offlineIndicator">
-                            OFFLINE
+                        <span class="offline-indicator" id="offlineIndicator" title="... aber bald wieder Online :)">
+                            OFFLINE ;-;
                         </span>
                     </h1>
-                    <span class="header-subtitle">✨ Gaming & Just Chatting ✨</span>
                 </div>
             </div>
 
+            <div class="header-right">
             <button class="cinema-toggle" id="cinemaToggle" title="Kino-Modus (K)">
                 <i class="fas fa-expand"></i>
             </button>
@@ -1089,19 +1110,21 @@
                 <i class="fas fa-comments"></i>
             </button>
 
-            <div class="social-links">
-                <a href="https://discord.gg/p3B2GeYYfC" target="_blank" class="social-link discord" title="Discord">
-                    <i class="fab fa-discord"></i>
-                </a>
-                <a href="https://www.tiktok.com/@sasukiris" target="_blank" class="social-link tiktok" title="TikTok">
-                    <i class="fab fa-tiktok"></i>
-                </a>
-                <a href="https://www.instagram.com/sasukiris" target="_blank" class="social-link instagram" title="Instagram">
-                    <i class="fab fa-instagram"></i>
-                </a>
-                <a href="https://www.youtube.com/@Sasukiris" target="_blank" class="social-link youtube" title="YouTube">
-                    <i class="fab fa-youtube"></i>
-                </a>
+            <a href="https://discord.gg/p3B2GeYYfC" target="_blank" class="header-right-button discord" title="Discord">
+                <i class="fab fa-discord"></i>
+            </a>
+            
+            <a href="https://www.tiktok.com/@sasukiris" target="_blank" class="header-right-button tiktok" title="TikTok">
+                <i class="fab fa-tiktok"></i>
+            </a>
+            
+            <a href="https://www.instagram.com/sasukiris" target="_blank" class="header-right-button instagram" title="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            
+            <a href="https://www.youtube.com/@Sasukiris" target="_blank" class="header-right-button youtube" title="YouTube">
+                <i class="fab fa-youtube"></i>
+            </a>
             </div>
         </header>
 
@@ -1191,7 +1214,7 @@
             <span class="footer-text">
                 Made with <span class="footer-heart">♥</span> for the Community
             </span>
-            <span class="easter-egg" title="Du hast mich gefunden! 🎉">🥒</span>
+            <button id="easter-egg-1" class="easter-egg" title="Du hast mich gefunden! 🎉">🥒</button>
         </footer>
     </div>
 
@@ -1296,16 +1319,6 @@
             setTimeout(() => sparkle.remove(), 1000);
         }
 
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes sparkleAnim {
-                0% { transform: scale(0) rotate(0deg); opacity: 1; }
-                50% { transform: scale(1.5) rotate(180deg); opacity: 0.8; }
-                100% { transform: scale(0) rotate(360deg); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-
         const cinemaToggle = document.getElementById('cinemaToggle');
         const overlayChat = document.getElementById('overlayChat');
         const cornerIndicators = document.querySelectorAll('.corner-indicator');
@@ -1356,6 +1369,45 @@
                 cinemaToggle.classList.toggle('active');
             }
         });
+
+        const easterEgg1 = document.getElementById('easter-egg-1');
+        easterEgg1.addEventListener('click', () => {
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const cucumber = document.createElement('div');
+                    const x = Math.random() * window.innerWidth;
+                    const duration = 2 + Math.random() * 1;
+                    
+                    cucumber.textContent = '🥒';
+                    cucumber.style.cssText = `
+                    position: fixed;
+                    left: ${x}px;
+                    top: -50px;
+                    font-size: 2rem;
+                    pointer-events: none;
+                    z-index: 9999;
+                    animation: fall ${duration}s linear forwards;
+                    `;
+                    document.body.appendChild(cucumber);
+                    
+                    setTimeout(() => cucumber.remove(), duration * 1000);
+                }, i * 50);
+            }
+        });
+
+        const style = document.createElement('style');
+        style.textContent += `
+            @keyframes fall {
+            to { transform: translateY(${window.innerHeight + 100}px) rotate(360deg); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        console.log("|--------------------------------------------------------------------------------------------------------------------|")
+        console.log("|                                                                                                                    |")
+        console.log("|  Na, neugierig? Du willst auch dran arbeiten? Hilf mir doch :) https://github.com/3roiler/web/blob/main/sasu.html  |")
+        console.log("|                                                                                                                    |")
+        console.log("|--------------------------------------------------------------------------------------------------------------------|")
     </script>
 </body>
 </html>
