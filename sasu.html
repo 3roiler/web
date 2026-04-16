@@ -1602,9 +1602,9 @@
     <script>
         // ── Config ──
         const CHANNEL = 'sasukiris';
-        const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3000/api' : 'https://api.broiler.dev/api';
+        const API_BASE = globalThis.location.hostname === 'localhost' ? 'http://localhost:3000/api' : 'https://api.broiler.dev/api';
         const TWITCH_CLIENT_ID = ''; // TODO: Set your Twitch Client ID from https://dev.twitch.tv/console/apps
-        const TWITCH_REDIRECT_URI = window.location.origin + window.location.pathname;
+        const TWITCH_REDIRECT_URI = globalThis.location.origin + globalThis.location.pathname;
         const TWITCH_SCOPES = 'user:read:chat user:write:chat';
 
         // ── State ──
@@ -1666,11 +1666,11 @@
         }
 
         function startTwitchLogin() {
-            window.location.href = buildTwitchAuthUrl();
+            globalThis.location.href = buildTwitchAuthUrl();
         }
 
         async function handleOAuthCallback() {
-            const params = new URLSearchParams(window.location.search);
+            const params = new URLSearchParams(globalThis.location.search);
             const code = params.get('code');
             const state = params.get('state');
             const savedState = sessionStorage.getItem('twitch_oauth_state');
@@ -1678,7 +1678,7 @@
             if (!code) return;
 
             // Clean URL
-            window.history.replaceState({}, document.title, window.location.pathname);
+            globalThis.history.replaceState({}, document.title, globalThis.location.pathname);
 
             if (state !== savedState) {
                 console.error('OAuth state mismatch');
@@ -1817,7 +1817,16 @@
             if (msg.badges.includes('vip')) badgeIcons += '<i class="fas fa-gem" style="color:#e040fb;font-size:0.7rem;margin-right:2px" title="VIP"></i>';
             if (msg.badges.includes('subscriber')) badgeIcons += '<i class="fas fa-heart" style="color:#e91e63;font-size:0.7rem;margin-right:2px" title="Sub"></i>';
 
-            el.innerHTML = `${badgeIcons}<span class="chat-author" style="color:${msg.color}">${escapeHtml(msg.author)}</span>: <span class="chat-text">${escapeHtml(msg.text)}</span>`;
+            el.innerHTML = `${badgeIcons}<span class="chat-author"></span>: <span class="chat-text"></span>`;
+            const authorEl = el.querySelector('.chat-author');
+            const textEl = el.querySelector('.chat-text');
+            // Set color via DOM property (safe) rather than interpolating into a style attribute.
+            // Validate to a hex color to avoid CSS-level injection from a manipulated chat payload.
+            if (typeof msg.color === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(msg.color)) {
+                authorEl.style.color = msg.color;
+            }
+            authorEl.textContent = msg.author;
+            textEl.textContent = msg.text;
 
             chatMessages.appendChild(el);
             if (overlayChatMessages) {
