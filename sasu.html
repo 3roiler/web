@@ -1603,7 +1603,9 @@
         // ── Config ──
         const CHANNEL = 'sasukiris';
         const API_BASE = globalThis.location.hostname === 'localhost' ? 'http://localhost:3000/api' : 'https://api.broiler.dev/api';
-        const TWITCH_CLIENT_ID = ''; // TODO: Set your Twitch Client ID from https://dev.twitch.tv/console/apps
+        // Set via deploy env; when empty, OAuth login is disabled.
+        // Register an app at https://dev.twitch.tv/console/apps to obtain a Client ID.
+        const TWITCH_CLIENT_ID = '';
         const TWITCH_REDIRECT_URI = globalThis.location.origin + globalThis.location.pathname;
         const TWITCH_SCOPES = 'user:read:chat user:write:chat';
 
