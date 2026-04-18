@@ -21,7 +21,7 @@ FROM caddy:2-alpine
 RUN adduser -D -u 10001 -g caddyuser caddyuser \
     && mkdir -p /data/caddy /config/caddy \
     && chown -R 10001:10001 /data /config
-COPY --chown=10001:10001 Caddyfile /etc/caddy/Caddyfile
-COPY --from=static --chown=10001:10001 /static/ /srv/
+COPY --chown=10001:10001 --chmod=0444 Caddyfile /etc/caddy/Caddyfile
+COPY --from=static --chown=10001:10001 --chmod=0555 /static/ /srv/
 USER 10001
 EXPOSE 8080
