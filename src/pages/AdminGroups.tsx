@@ -7,7 +7,7 @@ import {
   ApiError,
   type AdminGroup
 } from "../services";
-import { AdminLayout } from "../components/AdminLayout";
+import { DashboardLayout } from "../components/DashboardLayout";
 import { Routes } from "../config/routes";
 
 /**
@@ -21,8 +21,9 @@ const GROUP_KEY_RE = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
 
 export function AdminGroupsPage() {
   return (
-    <AdminLayout
-      kicker="Admin · Gruppen"
+    <DashboardLayout
+      requiredPermission="dashboard.groups"
+      kicker="Dashboard · Gruppen"
       title="Gruppenverwaltung"
       description={
         <>
@@ -32,7 +33,7 @@ export function AdminGroupsPage() {
       }
     >
       {() => <GroupsContent />}
-    </AdminLayout>
+    </DashboardLayout>
   );
 }
 
@@ -115,7 +116,7 @@ function GroupsContent() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <Link
-                  to={Routes.AdminGroupDetail.replace(":id", g.id)}
+                  to={Routes.Dashboard.GroupDetail.replace(":id", g.id)}
                   className="btn-outline btn-sm"
                 >
                   Details

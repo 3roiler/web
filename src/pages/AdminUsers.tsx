@@ -11,17 +11,19 @@ import {
   type PermissionDefinition,
   type User
 } from "../services";
-import { AdminLayout } from "../components/AdminLayout";
+import { DashboardLayout } from "../components/DashboardLayout";
 
 /**
- * Admin UI for managing users: editing display name/email, revoking directly
- * granted permissions, and deleting accounts. `admin.manage` is enforced both
- * client-side (via AdminLayout) and server-side (on every /admin/* route).
+ * Dashboard UI for managing users: editing display name/email, revoking
+ * directly granted permissions, and deleting accounts. `dashboard.users` is
+ * enforced both client-side (via DashboardLayout) and server-side (on every
+ * /admin/* route the API exposes).
  */
 export function AdminUsersPage() {
   return (
-    <AdminLayout
-      kicker="Admin · Nutzer"
+    <DashboardLayout
+      requiredPermission="dashboard.users"
+      kicker="Dashboard · Nutzer"
       title="Benutzerverwaltung"
       description={
         <>
@@ -31,7 +33,7 @@ export function AdminUsersPage() {
       }
     >
       {({ me }) => <UsersContent me={me} />}
-    </AdminLayout>
+    </DashboardLayout>
   );
 }
 

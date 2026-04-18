@@ -1,6 +1,11 @@
 /**
  * Zentrale Routen-Definition
  * Alle Pfade werden hier definiert, um Änderungen an einer Stelle vornehmen zu können.
+ *
+ * Alle Admin-/Verwaltungsseiten liegen unter `/dashboard/*`. Die alten
+ * `/admin/*` und `/blog/admin` Pfade sind entfernt — ohne Redirects, weil
+ * nur Paul sie kennt und die Seiten ohnehin noch in aktiver Entwicklung
+ * sind.
  */
 
 export const Routes = {
@@ -9,13 +14,18 @@ export const Routes = {
   Datenschutz: "/datenschutz",
   Blog: "/blog",
   BlogPost: "/blog/:slug",
-  BlogAdmin: "/blog/admin",
-  BlogNew: "/blog/admin/new",
-  BlogEdit: "/blog/admin/edit/:id",
   Profile: "/profile",
-  AdminUsers: "/admin/users",
-  AdminGroups: "/admin/groups",
-  AdminGroupDetail: "/admin/groups/:id",
+
+  Dashboard: {
+    Home: "/dashboard",
+    Blog: "/dashboard/blog",
+    BlogNew: "/dashboard/blog/new",
+    BlogEdit: "/dashboard/blog/edit/:id",
+    Users: "/dashboard/users",
+    Groups: "/dashboard/groups",
+    GroupDetail: "/dashboard/groups/:id"
+  },
+
   Callback: {
     Github: "/callback/github",
     Error: "/callback/error",

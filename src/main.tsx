@@ -9,6 +9,7 @@ import { DatenschutzPage } from './pages/Datenschutz';
 import { GithubCallbackPage, AuthErrorPage } from './pages/Callbacks';
 import { BlogPage } from './pages/Blog';
 import { BlogAdminPage } from './pages/BlogAdmin';
+import { DashboardHomePage } from './pages/DashboardHome';
 import { AdminUsersPage } from './pages/AdminUsers';
 import { AdminGroupsPage } from './pages/AdminGroups';
 import { AdminGroupDetailPage } from './pages/AdminGroupDetail';
@@ -47,13 +48,18 @@ function AppRoot() {
           <Route path={Routes.Impressum} element={<ImpressumPage />} />
           <Route path={Routes.Datenschutz} element={<DatenschutzPage />} />
           <Route path={Routes.Blog} element={<BlogPage />} />
-          <Route path={Routes.BlogAdmin} element={<BlogAdminPage />} />
-          <Route path={Routes.BlogNew} element={<BlogEditPage />} />
-          <Route path={Routes.BlogEdit} element={<BlogEditPage />} />
-          <Route path={Routes.AdminUsers} element={<AdminUsersPage />} />
-          <Route path={Routes.AdminGroups} element={<AdminGroupsPage />} />
-          <Route path={Routes.AdminGroupDetail} element={<AdminGroupDetailPage />} />
           <Route path={Routes.Profile} element={<ProfilePage />} />
+
+          {/* Dashboard: zentrale Verwaltung. Alle Berechtigungsprüfungen
+              laufen sowohl im DashboardLayout (UX) als auch im API-Handler. */}
+          <Route path={Routes.Dashboard.Home} element={<DashboardHomePage />} />
+          <Route path={Routes.Dashboard.Blog} element={<BlogAdminPage />} />
+          <Route path={Routes.Dashboard.BlogNew} element={<BlogEditPage />} />
+          <Route path={Routes.Dashboard.BlogEdit} element={<BlogEditPage />} />
+          <Route path={Routes.Dashboard.Users} element={<AdminUsersPage />} />
+          <Route path={Routes.Dashboard.Groups} element={<AdminGroupsPage />} />
+          <Route path={Routes.Dashboard.GroupDetail} element={<AdminGroupDetailPage />} />
+
           <Route path={Routes.BlogPost} element={<BlogPostPage />} />
           <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />
           <Route path={Routes.Callback.Error} element={<AuthErrorPage />} />

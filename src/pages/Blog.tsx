@@ -41,7 +41,7 @@ export function BlogPage() {
             <h1 className="mt-4 text-4xl font-semibold text-slate-50 sm:text-5xl">Gedanken &amp; Notizen</h1>
           </div>
           {isAuthor && (
-            <Link to={Routes.BlogAdmin} className="btn-outline self-start sm:self-auto">Admin</Link>
+            <Link to={Routes.Dashboard.Blog} className="btn-outline self-start sm:self-auto">Admin</Link>
           )}
         </div>
 

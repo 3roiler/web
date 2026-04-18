@@ -6,9 +6,12 @@ import {
   createBlogPost,
   updateBlogPost,
   listBlogPosts,
+  listAdminGroups,
   getMe,
+  type AdminGroup,
   type BlogPost,
   type BlogPostInput,
+  type BlogPostVisibility,
   type User
 } from "../services";
 import { Routes } from "../config/routes";
@@ -21,6 +24,8 @@ interface FormState {
   excerpt: string;
   content: string;
   publish: boolean;
+  visibility: BlogPostVisibility;
+  groupIds: string[];
 }
 
 const EMPTY: FormState = {
@@ -28,8 +33,28 @@ const EMPTY: FormState = {
   title: "",
   excerpt: "",
   content: "",
-  publish: false
+  publish: false,
+  visibility: "public",
+  groupIds: []
 };
+
+const VISIBILITY_OPTIONS: { value: BlogPostVisibility; label: string; description: string }[] = [
+  {
+    value: "public",
+    label: "Öffentlich",
+    description: "Jede/r kann den Beitrag lesen, auch ohne Login."
+  },
+  {
+    value: "authenticated",
+    label: "Angemeldet",
+    description: "Nur eingeloggte Nutzer:innen sehen den Beitrag."
+  },
+  {
+    value: "group",
+    label: "Gruppe",
+    description: "Nur Mitglieder der ausgewählten Gruppen sehen den Beitrag."
+  }
+];
 
 function slugify(input: string): string {
   return input
@@ -53,18 +78,39 @@ export function BlogEditPage() {
   const [user, setUser] = React.useState<User | null | undefined>(undefined);
   const [form, setForm] = React.useState<FormState>(EMPTY);
   const [initial, setInitial] = React.useState<BlogPost | null>(null);
+  const [groups, setGroups] = React.useState<AdminGroup[] | null>(null);
+  const [groupsError, setGroupsError] = React.useState<string | null>(null);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [saveError, setSaveError] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
   const [slugTouched, setSlugTouched] = React.useState(false);
 
   const isAuthor = Boolean(user?.permissions?.includes("blog.write"));
+  const canListGroups = Boolean(
+    user?.permissions?.includes("dashboard.groups") || user?.permissions?.includes("admin.manage")
+  );
 
   React.useEffect(() => {
     getMe()
       .then(setUser)
       .catch(() => setUser(null));
   }, []);
+
+  /**
+   * Gruppenliste nur laden, wenn der Nutzer `dashboard.groups` hat —
+   * sonst würde der Fetch 403en, ohne dass die UI sinnvoll damit umgehen
+   * kann. Autoren ohne Gruppen-Einblick sehen statt Multi-Select einen
+   * Hinweis, wenn sie auf `group` umstellen wollen.
+   */
+  React.useEffect(() => {
+    if (!isAuthor || !canListGroups) return;
+    listAdminGroups()
+      .then(setGroups)
+      .catch((e: unknown) => {
+        console.error(e);
+        setGroupsError("Gruppen konnten nicht geladen werden.");
+      });
+  }, [isAuthor, canListGroups]);
 
   React.useEffect(() => {
     if (!isEdit || !isAuthor || !id) return;
@@ -81,7 +127,9 @@ export function BlogEditPage() {
           title: match.title,
           excerpt: match.excerpt ?? "",
           content: match.content,
-          publish: match.publishedAt !== null
+          publish: match.publishedAt !== null,
+          visibility: match.visibility,
+          groupIds: match.accessGroupIds ?? []
         });
         setSlugTouched(true);
       })
@@ -102,12 +150,27 @@ export function BlogEditPage() {
     }
   }
 
+  function toggleGroup(groupId: string) {
+    setForm((prev) => {
+      const has = prev.groupIds.includes(groupId);
+      return {
+        ...prev,
+        groupIds: has ? prev.groupIds.filter((g) => g !== groupId) : [...prev.groupIds, groupId]
+      };
+    });
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaveError(null);
 
     if (!form.title.trim() || !form.slug.trim() || !form.content.trim()) {
       setSaveError("Titel, Slug und Inhalt sind Pflichtfelder.");
+      return;
+    }
+
+    if (form.visibility === "group" && form.groupIds.length === 0) {
+      setSaveError("Wähle mindestens eine Gruppe, wenn die Sichtbarkeit auf „Gruppe“ steht.");
       return;
     }
 
@@ -118,7 +181,11 @@ export function BlogEditPage() {
         title: form.title.trim(),
         content: form.content,
         excerpt: form.excerpt.trim() ? form.excerpt.trim() : null,
-        publish: form.publish
+        publish: form.publish,
+        visibility: form.visibility,
+        // Für public/authenticated ein leeres Array mitschicken, damit der
+        // Server vorhandene Gruppen-Links beim Wechsel sauber abräumt.
+        groupIds: form.visibility === "group" ? form.groupIds : []
       };
 
       if (isEdit && initial) {
@@ -126,7 +193,7 @@ export function BlogEditPage() {
       } else {
         await createBlogPost(payload);
       }
-      navigate(Routes.BlogAdmin);
+      navigate(Routes.Dashboard.Blog);
     } catch (e: unknown) {
       console.error(e);
       setSaveError("Speichern fehlgeschlagen.");
@@ -165,7 +232,7 @@ export function BlogEditPage() {
       <main className="min-h-screen bg-slate-950 py-24">
         <div className="mx-auto max-w-4xl px-6 sm:px-10 lg:px-16 pt-16">
           <p className="text-sm text-red-300">{loadError}</p>
-          <Link to={Routes.BlogAdmin} className="btn-outline mt-8 inline-block">
+          <Link to={Routes.Dashboard.Blog} className="btn-outline mt-8 inline-block">
             Zurück
           </Link>
         </div>
@@ -186,8 +253,8 @@ export function BlogEditPage() {
   return (
     <main className="min-h-screen bg-slate-950 py-24" id="top">
       <div className="mx-auto max-w-4xl px-6 sm:px-10 lg:px-16 pt-16">
-        <Link to={Routes.BlogAdmin} className="text-xs text-slate-400 hover:text-cyan-300">
-          ← Zur Admin-Übersicht
+        <Link to={Routes.Dashboard.Blog} className="text-xs text-slate-400 hover:text-cyan-300">
+          ← Zur Beitragsübersicht
         </Link>
 
         <h1 className="mt-8 text-4xl font-semibold text-slate-50 sm:text-5xl">
@@ -242,6 +309,94 @@ export function BlogEditPage() {
             />
           </div>
 
+          <fieldset className="rounded-xl border border-white/10 bg-slate-900/40 p-5">
+            <legend className="px-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+              Sichtbarkeit
+            </legend>
+            <div className="space-y-3">
+              {VISIBILITY_OPTIONS.map((opt) => (
+                <label
+                  key={opt.value}
+                  className="flex cursor-pointer items-start gap-3 text-sm text-slate-200"
+                >
+                  <input
+                    type="radio"
+                    name="visibility"
+                    value={opt.value}
+                    checked={form.visibility === opt.value}
+                    onChange={() => update("visibility", opt.value)}
+                    className="mt-1 h-4 w-4 border-white/20 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
+                  />
+                  <span>
+                    <span className="font-medium text-slate-100">{opt.label}</span>
+                    <span className="block text-xs text-slate-500">{opt.description}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {form.visibility === "group" && (
+              <div className="mt-5 border-t border-white/5 pt-5">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                  Gruppen
+                </p>
+                {!canListGroups ? (
+                  <p className="mt-2 text-xs text-amber-200">
+                    Du kannst keine Gruppen auswählen, weil dir <code>dashboard.groups</code> fehlt.
+                    Ein Admin muss dir die Berechtigung geben oder die Gruppenwahl übernehmen.
+                  </p>
+                ) : groupsError ? (
+                  <p className="mt-2 text-xs text-red-300">{groupsError}</p>
+                ) : groups === null ? (
+                  <p className="mt-2 text-xs text-slate-400">Lade Gruppen…</p>
+                ) : groups.length === 0 ? (
+                  <p className="mt-2 text-xs text-slate-400">
+                    Es gibt noch keine Gruppen.{" "}
+                    <Link to={Routes.Dashboard.Groups} className="text-cyan-300 hover:text-cyan-200">
+                      Jetzt anlegen →
+                    </Link>
+                  </p>
+                ) : (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {groups.map((g) => {
+                      const checked = form.groupIds.includes(g.id);
+                      return (
+                        <button
+                          type="button"
+                          key={g.id}
+                          onClick={() => toggleGroup(g.id)}
+                          className={
+                            checked
+                              ? "inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-100"
+                              : "inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-white/30"
+                          }
+                          aria-pressed={checked}
+                        >
+                          <span
+                            className={
+                              checked
+                                ? "inline-block h-2 w-2 rounded-full bg-cyan-300"
+                                : "inline-block h-2 w-2 rounded-full bg-slate-600"
+                            }
+                          />
+                          {g.displayName}
+                          <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                            {g.memberCount}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {canListGroups && groups && form.groupIds.length === 0 && (
+                  <p className="mt-3 text-xs text-amber-200">
+                    Mindestens eine Gruppe wählen, sonst kann niemand den Beitrag sehen.
+                  </p>
+                )}
+              </div>
+            )}
+          </fieldset>
+
           <div>
             <div className="block text-xs font-semibold uppercase tracking-widest text-slate-400">
               Inhalt (Markdown / GFM)
@@ -282,7 +437,7 @@ export function BlogEditPage() {
             <button type="submit" className="btn" disabled={saving}>
               {saving ? "Speichere…" : isEdit ? "Speichern" : "Erstellen"}
             </button>
-            <Link to={Routes.BlogAdmin} className="btn-outline">
+            <Link to={Routes.Dashboard.Blog} className="btn-outline">
               Abbrechen
             </Link>
           </div>

@@ -26,8 +26,15 @@ export function Header() {
   const [user, setUser] = React.useState<User | null>(null);
   const [avatarBroken, setAvatarBroken] = React.useState(false);
 
-  const isAuthor = Boolean(user?.permissions?.includes('blog.write'));
-  const isAdmin = Boolean(user?.permissions?.includes('admin.manage'));
+  /**
+   * Zeigt den Dashboard-Link, sobald der Nutzer mindestens `dashboard.view`
+   * (direkt oder via `admin.manage`) besitzt. Die einzelnen Unterbereiche
+   * (Blog / Nutzer / Gruppen) werden im Dashboard selbst weiter gefiltert,
+   * damit der Header nicht zuwuchert.
+   */
+  const canSeeDashboard = Boolean(
+    user?.permissions?.some((p) => p === 'dashboard.view' || p === 'admin.manage')
+  );
 
   React.useEffect(() => {
     getMe().then(fetchedUser => {
@@ -51,14 +58,8 @@ export function Header() {
         <li><a href="/#projects" className="nav-link">Projekte</a></li>
         <li><Link to={Routes.Blog} className="nav-link">Blog</Link></li>
         <li><a href="/#contact" className="nav-link">Kontakt</a></li>
-        {isAuthor && (
-          <li><Link to={Routes.BlogAdmin} className="nav-link">Blog-Admin</Link></li>
-        )}
-        {isAdmin && (
-          <li><Link to={Routes.AdminUsers} className="nav-link">Nutzer</Link></li>
-        )}
-        {isAdmin && (
-          <li><Link to={Routes.AdminGroups} className="nav-link">Gruppen</Link></li>
+        {canSeeDashboard && (
+          <li><Link to={Routes.Dashboard.Home} className="nav-link">Dashboard</Link></li>
         )}
       </ul>
 
