@@ -2,8 +2,10 @@ import * as React from "react";
 import { Link, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
 import { getBlogPost, getMe, type BlogPost as BlogPostModel, type User } from "../services";
 import { Routes } from "../config/routes";
+import "highlight.js/styles/github-dark.css";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "Entwurf";
@@ -79,7 +81,12 @@ export function BlogPostPage() {
           {post.excerpt && <p className="mt-4 text-lg text-slate-300">{post.excerpt}</p>}
 
           <div className="prose prose-invert mt-10 max-w-none prose-headings:text-slate-50 prose-a:text-cyan-300 prose-strong:text-slate-50 prose-code:text-cyan-200 prose-pre:bg-slate-900/80">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeHighlight]}
+            >
+              {post.content}
+            </ReactMarkdown>
           </div>
         </article>
       </div>

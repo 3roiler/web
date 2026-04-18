@@ -1,5 +1,7 @@
 import * as React from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import MDEditor from "@uiw/react-md-editor";
+import rehypeHighlight from "rehype-highlight";
 import {
   createBlogPost,
   updateBlogPost,
@@ -10,6 +12,8 @@ import {
   type User
 } from "../services";
 import { Routes } from "../config/routes";
+import "@uiw/react-md-editor/markdown-editor.css";
+import "highlight.js/styles/github-dark.css";
 
 interface FormState {
   slug: string;
@@ -134,7 +138,7 @@ export function BlogEditPage() {
   if (user === undefined) {
     return (
       <main className="min-h-screen bg-slate-950 py-24">
-        <div className="mx-auto max-w-3xl px-6 sm:px-10 lg:px-16 pt-16 text-sm text-slate-400">
+        <div className="mx-auto max-w-4xl px-6 sm:px-10 lg:px-16 pt-16 text-sm text-slate-400">
           Lade…
         </div>
       </main>
@@ -144,7 +148,7 @@ export function BlogEditPage() {
   if (!isAuthor) {
     return (
       <main className="min-h-screen bg-slate-950 py-24">
-        <div className="mx-auto max-w-3xl px-6 sm:px-10 lg:px-16 pt-16">
+        <div className="mx-auto max-w-4xl px-6 sm:px-10 lg:px-16 pt-16">
           <p className="text-sm text-red-300">
             Kein Zugriff. Dir fehlt die Berechtigung <code>blog.write</code>.
           </p>
@@ -159,7 +163,7 @@ export function BlogEditPage() {
   if (isEdit && loadError) {
     return (
       <main className="min-h-screen bg-slate-950 py-24">
-        <div className="mx-auto max-w-3xl px-6 sm:px-10 lg:px-16 pt-16">
+        <div className="mx-auto max-w-4xl px-6 sm:px-10 lg:px-16 pt-16">
           <p className="text-sm text-red-300">{loadError}</p>
           <Link to={Routes.BlogAdmin} className="btn-outline mt-8 inline-block">
             Zurück
@@ -172,7 +176,7 @@ export function BlogEditPage() {
   if (isEdit && !initial) {
     return (
       <main className="min-h-screen bg-slate-950 py-24">
-        <div className="mx-auto max-w-3xl px-6 sm:px-10 lg:px-16 pt-16 text-sm text-slate-400">
+        <div className="mx-auto max-w-4xl px-6 sm:px-10 lg:px-16 pt-16 text-sm text-slate-400">
           Lade Beitrag…
         </div>
       </main>
@@ -181,7 +185,7 @@ export function BlogEditPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 py-24" id="top">
-      <div className="mx-auto max-w-3xl px-6 sm:px-10 lg:px-16 pt-16">
+      <div className="mx-auto max-w-4xl px-6 sm:px-10 lg:px-16 pt-16">
         <Link to={Routes.BlogAdmin} className="text-xs text-slate-400 hover:text-cyan-300">
           ← Zur Admin-Übersicht
         </Link>
@@ -239,17 +243,25 @@ export function BlogEditPage() {
           </div>
 
           <div>
-            <label htmlFor="content" className="block text-xs font-semibold uppercase tracking-widest text-slate-400">
+            <div className="block text-xs font-semibold uppercase tracking-widest text-slate-400">
               Inhalt (Markdown / GFM)
-            </label>
-            <textarea
-              id="content"
-              value={form.content}
-              onChange={(e) => update("content", e.target.value)}
-              rows={18}
-              className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 font-mono text-sm text-slate-50 outline-none focus:border-cyan-400/60"
-              required
-            />
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              Toolbar für Formatierung, Listen, Überschriften, Links, Bilder und Code-Blöcke.
+              Live-Vorschau lässt sich rechts umschalten.
+            </p>
+            <div className="mt-2 overflow-hidden rounded-xl border border-white/10" data-color-mode="dark">
+              <MDEditor
+                value={form.content}
+                onChange={(value) => update("content", value ?? "")}
+                height={560}
+                preview="live"
+                visibleDragbar={false}
+                previewOptions={{
+                  rehypePlugins: [[rehypeHighlight]]
+                }}
+              />
+            </div>
           </div>
 
           <label className="flex items-center gap-3 text-sm text-slate-300">
