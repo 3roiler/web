@@ -550,3 +550,89 @@ export async function deleteAppSecret(key: string): Promise<void> {
     toApiError(error, 'Secret konnte nicht gelöscht werden.');
   }
 }
+
+// ─── Dashboard · Metrics (DigitalOcean proxy) ──────────────────────────────
+
+/**
+ * Metric time window accepted by the backend proxy. Mirrors
+ * `VALID_WINDOWS` in `api/src/services/metrics.ts`.
+ */
+export type MetricsWindow = '1h' | '6h' | '24h';
+
+export interface MetricsStatus {
+  tokenConfigured: boolean;
+  appIdConfigured: boolean;
+  databaseIdConfigured: boolean;
+  refreshDefaultSeconds: number;
+}
+
+/**
+ * Prometheus-style time-series response DO returns for every monitoring
+ * metric. We keep the shape loose because different metrics label series
+ * with different keys — the chart only cares about `values`.
+ */
+export interface DoTimeSeriesResult {
+  metric: Record<string, string>;
+  values: [number, string][];
+}
+
+export interface DoTimeSeriesResponse {
+  status: string;
+  data: {
+    resultType: string;
+    result: DoTimeSeriesResult[];
+  };
+}
+
+export async function getMetricsStatus(): Promise<MetricsStatus> {
+  try {
+    const response = await axios.get<MetricsStatus>(
+      `${getApiBaseUrl()}/admin/metrics/status`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Metriken-Status konnte nicht geladen werden.');
+  }
+}
+
+export async function getAppSummary<T = unknown>(): Promise<T> {
+  try {
+    const response = await axios.get<T>(`${getApiBaseUrl()}/admin/metrics/app`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'App-Status konnte nicht geladen werden.');
+  }
+}
+
+export async function getDatabaseSummary<T = unknown>(): Promise<T> {
+  try {
+    const response = await axios.get<T>(`${getApiBaseUrl()}/admin/metrics/database`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Datenbank-Status konnte nicht geladen werden.');
+  }
+}
+
+async function fetchTimeSeries(path: string, window: MetricsWindow): Promise<DoTimeSeriesResponse> {
+  try {
+    const response = await axios.get<DoTimeSeriesResponse>(
+      `${getApiBaseUrl()}${path}?window=${encodeURIComponent(window)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Metrik konnte nicht geladen werden.');
+  }
+}
+
+export const getAppCpu = (window: MetricsWindow) =>
+  fetchTimeSeries('/admin/metrics/app/cpu', window);
+export const getAppMemory = (window: MetricsWindow) =>
+  fetchTimeSeries('/admin/metrics/app/memory', window);
+export const getDatabaseCpu = (window: MetricsWindow) =>
+  fetchTimeSeries('/admin/metrics/database/cpu', window);
+export const getDatabaseMemory = (window: MetricsWindow) =>
+  fetchTimeSeries('/admin/metrics/database/memory', window);
+export const getDatabaseDisk = (window: MetricsWindow) =>
+  fetchTimeSeries('/admin/metrics/database/disk', window);
