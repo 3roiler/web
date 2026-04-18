@@ -12,6 +12,7 @@ export const Routes = {
   BlogAdmin: "/blog/admin",
   BlogNew: "/blog/admin/new",
   BlogEdit: "/blog/admin/edit/:id",
+  Profile: "/profile",
   AdminUsers: "/admin/users",
   AdminGroups: "/admin/groups",
   AdminGroupDetail: "/admin/groups/:id",

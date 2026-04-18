@@ -17,12 +17,36 @@ export class ApiError extends Error {
   }
 }
 
+export interface SocialLink {
+  id: string;
+  userId: string;
+  label: string;
+  url: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface SocialLinkInput {
+  label: string;
+  url: string;
+}
+
 export interface User {
   id: string;
   name: string;
   display_name: string;
+  displayName?: string | null;
   email: string;
+  avatarUrl?: string | null;
   permissions?: string[];
+  socialLinks?: SocialLink[];
+}
+
+export interface UpdateMeInput {
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  socialLinks?: SocialLinkInput[];
 }
 
 export interface AdminUser {
@@ -128,6 +152,15 @@ export async function getMe(): Promise<User> {
     return response.data;
   } catch (error: unknown) {
     toApiError(error, 'An unknown error occurred while fetching user data.');
+  }
+}
+
+export async function updateMe(input: UpdateMeInput): Promise<User> {
+  try {
+    const response = await axios.put<User>(`${getApiBaseUrl()}/user/me`, input, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Profil konnte nicht gespeichert werden.');
   }
 }
 
