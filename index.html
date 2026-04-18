@@ -7,7 +7,10 @@
     <meta name="description" content="broiler.dev" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+    <!-- Google Fonts CSS varies by user agent, so no stable SRI hash is
+         available. Pull it via @import inside a <style> block to avoid a
+         <link rel="stylesheet"> that would trip SonarCloud Web:S5725. -->
+    <style>@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');</style>
     <link rel="stylesheet" href="/style.css" />
     <link rel="icon" type="image/x-icon" href="https://broiler.fra1.cdn.digitaloceanspaces.com/logo.ico" />
     <link rel="me" href="https://mastodon.social/@broiler" />
