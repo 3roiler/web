@@ -11,6 +11,8 @@ import { BlogPostPage } from './pages/BlogPost';
 import { BlogAdminPage } from './pages/BlogAdmin';
 import { BlogEditPage } from './pages/BlogEdit';
 import { AdminUsersPage } from './pages/AdminUsers';
+import { AdminGroupsPage } from './pages/AdminGroups';
+import { AdminGroupDetailPage } from './pages/AdminGroupDetail';
 import { Routes } from './config/routes';
 
 function AppRoot() {
@@ -26,6 +28,8 @@ function AppRoot() {
         <Route path={Routes.BlogNew} element={<BlogEditPage />} />
         <Route path={Routes.BlogEdit} element={<BlogEditPage />} />
         <Route path={Routes.AdminUsers} element={<AdminUsersPage />} />
+        <Route path={Routes.AdminGroups} element={<AdminGroupsPage />} />
+        <Route path={Routes.AdminGroupDetail} element={<AdminGroupDetailPage />} />
         <Route path={Routes.BlogPost} element={<BlogPostPage />} />
         <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />
         <Route path={Routes.Callback.Error} element={<AuthErrorPage />} />

@@ -1,38 +1,46 @@
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
 import {
   listAdminUsers,
   listGrantablePermissions,
   grantPermission,
   revokePermission,
-  getMe,
+  updateAdminUser,
+  deleteAdminUser,
   ApiError,
   type AdminUser,
   type PermissionDefinition,
   type User
 } from "../services";
-import { Routes } from "../config/routes";
+import { AdminLayout } from "../components/AdminLayout";
 
 /**
- * Admin UI for granting/revoking user permissions. Gated on `admin.manage`
- * — the gate also runs server-side (every /admin/* route requires it), but
- * hiding the page for unprivileged users is a nicer UX than a raw 403.
+ * Admin UI for managing users: editing display name/email, revoking directly
+ * granted permissions, and deleting accounts. `admin.manage` is enforced both
+ * client-side (via AdminLayout) and server-side (on every /admin/* route).
  */
 export function AdminUsersPage() {
-  const navigate = useNavigate();
-  const [me, setMe] = React.useState<User | null | undefined>(undefined);
+  return (
+    <AdminLayout
+      kicker="Admin · Nutzer"
+      title="Benutzerverwaltung"
+      description={
+        <>
+          Direkt erteilte Berechtigungen kannst du entziehen. Gruppen-Berechtigungen
+          sind grau und werden über die Gruppenzugehörigkeit verwaltet.
+        </>
+      }
+    >
+      {({ me }) => <UsersContent me={me} />}
+    </AdminLayout>
+  );
+}
+
+function UsersContent({ me }: { me: User }) {
   const [users, setUsers] = React.useState<AdminUser[] | null>(null);
   const [permissions, setPermissions] = React.useState<PermissionDefinition[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [busyKey, setBusyKey] = React.useState<string | null>(null);
-
-  const isAdmin = Boolean(me?.permissions?.includes("admin.manage"));
-
-  React.useEffect(() => {
-    getMe()
-      .then(setMe)
-      .catch(() => setMe(null));
-  }, []);
+  const [editing, setEditing] = React.useState<AdminUser | null>(null);
 
   const reload = React.useCallback(async () => {
     try {
@@ -50,9 +58,8 @@ export function AdminUsersPage() {
   }, []);
 
   React.useEffect(() => {
-    if (!isAdmin) return;
     void reload();
-  }, [isAdmin, reload]);
+  }, [reload]);
 
   async function handleGrant(userId: string, permission: string) {
     const key = `grant:${userId}:${permission}`;
@@ -84,90 +91,77 @@ export function AdminUsersPage() {
     }
   }
 
-  if (me === undefined) {
-    return (
-      <main className="min-h-screen bg-slate-950 py-24">
-        <div className="mx-auto max-w-5xl px-6 sm:px-10 lg:px-16 pt-16 text-sm text-slate-400">
-          Lade…
-        </div>
-      </main>
+  async function handleDelete(user: AdminUser) {
+    const label = user.displayName || user.name;
+    const ok = globalThis.confirm(
+      `Nutzer "${label}" wirklich löschen? Diese Aktion lässt sich nicht rückgängig machen.`
     );
-  }
-
-  if (!isAdmin) {
-    return (
-      <main className="min-h-screen bg-slate-950 py-24">
-        <div className="mx-auto max-w-5xl px-6 sm:px-10 lg:px-16 pt-16">
-          <p className="text-sm text-red-300">
-            Kein Zugriff. Dir fehlt die Berechtigung <code>admin.manage</code>.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate(Routes.Home)}
-            className="btn-outline mt-8 inline-block"
-          >
-            Zur Startseite
-          </button>
-        </div>
-      </main>
-    );
+    if (!ok) return;
+    const key = `delete:${user.id}`;
+    setBusyKey(key);
+    try {
+      await deleteAdminUser(user.id);
+      await reload();
+    } catch (e: unknown) {
+      console.error(e);
+      setError(e instanceof ApiError ? e.message : "Löschen fehlgeschlagen.");
+    } finally {
+      setBusyKey(null);
+    }
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 py-24" id="top">
-      <div className="mx-auto max-w-5xl px-6 sm:px-10 lg:px-16 pt-16">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-400">
-              Admin · Nutzer
-            </p>
-            <h1 className="mt-4 text-4xl font-semibold text-slate-50 sm:text-5xl">
-              Berechtigungen verwalten
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm text-slate-400">
-              Direkt erteilte Berechtigungen kannst du entziehen. Gruppen-Berechtigungen
-              sind grau und werden über die Gruppenzugehörigkeit verwaltet.
-            </p>
-          </div>
-        </div>
+    <div className="space-y-4">
+      {error && <p className="text-sm text-red-300">{error}</p>}
+      {!error && users === null && <p className="text-sm text-slate-400">Lade…</p>}
+      {!error && users !== null && users.length === 0 && (
+        <p className="text-sm text-slate-400">Noch keine Nutzer.</p>
+      )}
+      {users?.map((u) => (
+        <UserRow
+          key={u.id}
+          user={u}
+          me={me}
+          permissions={permissions ?? []}
+          busyKey={busyKey}
+          onGrant={handleGrant}
+          onRevoke={handleRevoke}
+          onEdit={setEditing}
+          onDelete={handleDelete}
+        />
+      ))}
 
-        <div className="mt-12 space-y-4">
-          {error && <p className="text-sm text-red-300">{error}</p>}
-          {!error && users === null && <p className="text-sm text-slate-400">Lade…</p>}
-          {!error && users !== null && users.length === 0 && (
-            <p className="text-sm text-slate-400">Noch keine Nutzer.</p>
-          )}
-          {users?.map((u) => (
-            <UserRow
-              key={u.id}
-              user={u}
-              me={me}
-              permissions={permissions ?? []}
-              busyKey={busyKey}
-              onGrant={handleGrant}
-              onRevoke={handleRevoke}
-            />
-          ))}
-        </div>
-      </div>
-    </main>
+      {editing && (
+        <EditUserDialog
+          user={editing}
+          onClose={() => setEditing(null)}
+          onSaved={async () => {
+            setEditing(null);
+            await reload();
+          }}
+        />
+      )}
+    </div>
   );
 }
 
 interface UserRowProps {
   user: AdminUser;
-  me: User | null;
+  me: User;
   permissions: PermissionDefinition[];
   busyKey: string | null;
   onGrant: (userId: string, permission: string) => Promise<void>;
   onRevoke: (userId: string, permission: string) => Promise<void>;
+  onEdit: (user: AdminUser) => void;
+  onDelete: (user: AdminUser) => Promise<void>;
 }
 
-function UserRow({ user, me, permissions, busyKey, onGrant, onRevoke }: UserRowProps) {
+function UserRow({ user, me, permissions, busyKey, onGrant, onRevoke, onEdit, onDelete }: UserRowProps) {
   const [pickerValue, setPickerValue] = React.useState<string>("");
   const direct = new Set(user.directPermissions);
   const grantable = permissions.filter((p) => !user.permissions.includes(p.key));
-  const isSelf = me?.id === user.id;
+  const isSelf = me.id === user.id;
+  const busyDelete = busyKey === `delete:${user.id}`;
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -185,6 +179,24 @@ function UserRow({ user, me, permissions, busyKey, onGrant, onRevoke }: UserRowP
             {user.displayName || user.name}
           </h2>
           <p className="text-xs text-slate-500">@{user.name}</p>
+        </div>
+        <div className="flex flex-shrink-0 flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => onEdit(user)}
+            className="btn-outline btn-sm"
+          >
+            Bearbeiten
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(user)}
+            disabled={isSelf || busyDelete}
+            className="rounded-full border border-red-500/40 bg-red-500/10 px-4 py-1.5 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+            title={isSelf ? "Du kannst dich hier nicht selbst löschen." : undefined}
+          >
+            {busyDelete ? "Lösche…" : "Löschen"}
+          </button>
         </div>
       </div>
 
@@ -256,6 +268,102 @@ function UserRow({ user, me, permissions, busyKey, onGrant, onRevoke }: UserRowP
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+interface EditUserDialogProps {
+  user: AdminUser;
+  onClose: () => void;
+  onSaved: () => void | Promise<void>;
+}
+
+function EditUserDialog({ user, onClose, onSaved }: EditUserDialogProps) {
+  const [displayName, setDisplayName] = React.useState(user.displayName ?? "");
+  const [email, setEmail] = React.useState(user.email ?? "");
+  const [name, setName] = React.useState(user.name);
+  const [error, setError] = React.useState<string | null>(null);
+  const [saving, setSaving] = React.useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      await updateAdminUser(user.id, {
+        name: name.trim(),
+        displayName: displayName.trim() === "" ? null : displayName.trim(),
+        email: email.trim() === "" ? null : email.trim()
+      });
+      await onSaved();
+    } catch (err: unknown) {
+      console.error(err);
+      setError(err instanceof ApiError ? err.message : "Speichern fehlgeschlagen.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-xl"
+      >
+        <h3 className="text-lg font-semibold text-slate-50">Nutzer bearbeiten</h3>
+        <p className="mt-1 text-xs text-slate-500">ID: {user.id}</p>
+
+        <div className="mt-5 space-y-4">
+          <div>
+            <label htmlFor="edit-name" className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+              Login-Name
+            </label>
+            <input
+              id="edit-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="mt-1 block w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
+            />
+          </div>
+          <div>
+            <label htmlFor="edit-display-name" className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+              Anzeigename
+            </label>
+            <input
+              id="edit-display-name"
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="mt-1 block w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
+            />
+          </div>
+          <div>
+            <label htmlFor="edit-email" className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+              E-Mail
+            </label>
+            <input
+              id="edit-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 block w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
+            />
+          </div>
+        </div>
+
+        {error && <p className="mt-4 text-sm text-red-300">{error}</p>}
+
+        <div className="mt-6 flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="btn-outline btn-sm" disabled={saving}>
+            Abbrechen
+          </button>
+          <button type="submit" className="btn btn-sm" disabled={saving}>
+            {saving ? "Speichere…" : "Speichern"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

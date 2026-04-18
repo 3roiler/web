@@ -33,6 +33,9 @@ export function Header() {
         {isAdmin && (
           <li><Link to={Routes.AdminUsers} className="nav-link">Nutzer</Link></li>
         )}
+        {isAdmin && (
+          <li><Link to={Routes.AdminGroups} className="nav-link">Gruppen</Link></li>
+        )}
       </ul>
 
     { user ? (
