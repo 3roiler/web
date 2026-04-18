@@ -43,6 +43,44 @@ export interface PermissionDefinition {
   description: string;
 }
 
+export interface UserUpdateInput {
+  name?: string;
+  displayName?: string | null;
+  email?: string | null;
+}
+
+export interface AdminGroup {
+  id: string;
+  basedOn: string | null;
+  key: string;
+  displayName: string;
+  createdAt: string;
+  updatedAt: string | null;
+  memberCount: number;
+  permissions: string[];
+}
+
+export interface AdminGroupMember {
+  id: string;
+  name: string;
+  displayName: string | null;
+  email: string | null;
+}
+
+export interface AdminGroupDetail extends AdminGroup {
+  members: AdminGroupMember[];
+}
+
+export interface GroupCreateInput {
+  key: string;
+  displayName: string;
+}
+
+export interface GroupUpdateInput {
+  key?: string;
+  displayName?: string;
+}
+
 export interface BlogPost {
   id: string;
   authorId: string;
@@ -230,6 +268,130 @@ export async function revokePermission(userId: string, permission: string): Prom
   try {
     await axios.delete(
       `${getApiBaseUrl()}/admin/users/${encodeURIComponent(userId)}/permissions/${encodeURIComponent(permission)}`,
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Berechtigung konnte nicht entzogen werden.');
+  }
+}
+
+export async function updateAdminUser(id: string, input: UserUpdateInput): Promise<AdminUser> {
+  try {
+    const response = await axios.put<AdminUser>(
+      `${getApiBaseUrl()}/admin/users/${encodeURIComponent(id)}`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Aktualisieren des Nutzers ist ein Fehler aufgetreten.');
+  }
+}
+
+export async function deleteAdminUser(id: string): Promise<void> {
+  try {
+    await axios.delete(`${getApiBaseUrl()}/admin/users/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Löschen des Nutzers ist ein Fehler aufgetreten.');
+  }
+}
+
+// Admin / Groups
+
+export async function listAdminGroups(): Promise<AdminGroup[]> {
+  try {
+    const response = await axios.get<AdminGroup[]>(`${getApiBaseUrl()}/admin/groups`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Laden der Gruppen ist ein Fehler aufgetreten.');
+  }
+}
+
+export async function getAdminGroup(id: string): Promise<AdminGroupDetail> {
+  try {
+    const response = await axios.get<AdminGroupDetail>(
+      `${getApiBaseUrl()}/admin/groups/${encodeURIComponent(id)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Laden der Gruppe ist ein Fehler aufgetreten.');
+  }
+}
+
+export async function createAdminGroup(input: GroupCreateInput): Promise<AdminGroup> {
+  try {
+    const response = await axios.post<AdminGroup>(
+      `${getApiBaseUrl()}/admin/groups`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Anlegen der Gruppe ist ein Fehler aufgetreten.');
+  }
+}
+
+export async function updateAdminGroup(id: string, input: GroupUpdateInput): Promise<AdminGroup> {
+  try {
+    const response = await axios.put<AdminGroup>(
+      `${getApiBaseUrl()}/admin/groups/${encodeURIComponent(id)}`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Aktualisieren der Gruppe ist ein Fehler aufgetreten.');
+  }
+}
+
+export async function deleteAdminGroup(id: string): Promise<void> {
+  try {
+    await axios.delete(`${getApiBaseUrl()}/admin/groups/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Löschen der Gruppe ist ein Fehler aufgetreten.');
+  }
+}
+
+export async function addGroupMember(groupId: string, userId: string): Promise<void> {
+  try {
+    await axios.post(
+      `${getApiBaseUrl()}/admin/groups/${encodeURIComponent(groupId)}/members`,
+      { userId },
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Mitglied konnte nicht hinzugefügt werden.');
+  }
+}
+
+export async function removeGroupMember(groupId: string, userId: string): Promise<void> {
+  try {
+    await axios.delete(
+      `${getApiBaseUrl()}/admin/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userId)}`,
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Mitglied konnte nicht entfernt werden.');
+  }
+}
+
+export async function grantGroupPermission(groupId: string, permission: string): Promise<void> {
+  try {
+    await axios.post(
+      `${getApiBaseUrl()}/admin/groups/${encodeURIComponent(groupId)}/permissions`,
+      { permission },
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Berechtigung konnte nicht erteilt werden.');
+  }
+}
+
+export async function revokeGroupPermission(groupId: string, permission: string): Promise<void> {
+  try {
+    await axios.delete(
+      `${getApiBaseUrl()}/admin/groups/${encodeURIComponent(groupId)}/permissions/${encodeURIComponent(permission)}`,
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
