@@ -41,7 +41,9 @@ body {
 .blog-content h2 {font-size:1.5rem;margin-top:2.25rem;}
 .blog-content h3 {font-size:1.25rem;margin-top:2rem;}
 .blog-content h4 {font-size:1.0625rem;margin-top:1.75rem;}
-.blog-content p {margin:0;}
+/* kein explizites `p { margin: 0 }` — Tailwind-Preflight erledigt das schon,
+   und eine eigene Regel hier hätte höhere Spezifität als `> * + *` und würde
+   den Absatz-Abstand wieder auf 0 ziehen. */
 .blog-content a {color:#67e8f9;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(103,232,249,.4);}
 .blog-content a:hover {color:#a5f3fc;text-decoration-color:currentColor;}
 .blog-content strong {color:#f1f5f9;font-weight:600;}
