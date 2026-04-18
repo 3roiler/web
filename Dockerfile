@@ -6,7 +6,9 @@ COPY index.html style.css vite.config.js tailwind.config.js ./
 RUN npm ci --ignore-scripts
 RUN npm run build
 
-FROM nginx:alpine
+# nginxinc/nginx-unprivileged runs as the non-root "nginx" user (UID 101)
+# out of the box and listens on 8080 — closes SonarCloud docker:S6471.
+FROM nginxinc/nginx-unprivileged:alpine
 WORKDIR /usr/share/nginx/html
 COPY --from=builder /app/dist/ ./
 COPY huh.html ./huh.html
