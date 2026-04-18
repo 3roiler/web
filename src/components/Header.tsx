@@ -13,7 +13,10 @@ function safeHttpUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   try {
     const parsed = new URL(url);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? url : null;
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    // Return the parser's canonical string so CodeQL's taint analysis
+    // considers the value sanitized (raw pass-through is not recognised).
+    return parsed.toString();
   } catch {
     return null;
   }

@@ -34,7 +34,11 @@ function safeHttpUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   try {
     const parsed = new URL(url);
-    return parsed.protocol === "http:" || parsed.protocol === "https:" ? url : null;
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    // Return the URL parser's canonical string, not the raw input — CodeQL's
+    // taint tracking only recognises a value as sanitized after it has gone
+    // through the `URL` constructor AND come back out via `.toString()`.
+    return parsed.toString();
   } catch {
     return null;
   }
