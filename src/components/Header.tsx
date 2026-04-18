@@ -4,6 +4,21 @@ import { loginToGithub, logout, getMe, User } from '../services';
 import { Routes } from '../config/routes';
 
 
+/**
+ * Only returns `url` if it parses as http(s). Prevents user-controlled
+ * strings from landing in an <img src=> that CodeQL would flag as
+ * "DOM text reinterpreted as HTML".
+ */
+function safeHttpUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 export function Header() {
   const [user, setUser] = React.useState<User | null>(null);
   const [avatarBroken, setAvatarBroken] = React.useState(false);
@@ -21,7 +36,7 @@ export function Header() {
   }, []);
 
   const displayName = user?.displayName || user?.display_name || user?.name || '';
-  const avatarUrl = user?.avatarUrl || null;
+  const avatarUrl = safeHttpUrl(user?.avatarUrl);
   const initial = displayName.slice(0, 1).toUpperCase() || '?';
 
   return (

@@ -22,6 +22,24 @@ import { Routes } from "../config/routes";
 const SOCIAL_LINKS_MAX = 12;
 const LABEL_MAX = 60;
 
+/**
+ * Returns `url` iff it parses as an http(s) URL, otherwise null.
+ * Used before dropping user-controlled strings into `src=` — CodeQL
+ * flags raw pass-through as "DOM text reinterpreted as HTML" because
+ * a `javascript:` URL in an <img src> won't fire in modern browsers
+ * but could still be a footgun if the same value is ever reused in a
+ * sink that does execute it.
+ */
+function safeHttpUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 export function ProfilePage() {
   const navigate = useNavigate();
   const [me, setMe] = React.useState<User | null | undefined>(undefined);
@@ -309,8 +327,9 @@ interface AvatarPreviewProps {
 function AvatarPreview({ url, name }: AvatarPreviewProps) {
   const [broken, setBroken] = React.useState(false);
   const initial = (name || "?").slice(0, 1).toUpperCase();
+  const safeUrl = safeHttpUrl(url);
 
-  if (!url || broken) {
+  if (!safeUrl || broken) {
     return (
       <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-slate-900 text-3xl font-semibold text-slate-300">
         {initial}
@@ -319,7 +338,7 @@ function AvatarPreview({ url, name }: AvatarPreviewProps) {
   }
   return (
     <img
-      src={url}
+      src={safeUrl}
       alt="Avatar"
       onError={() => setBroken(true)}
       className="h-24 w-24 flex-shrink-0 rounded-full border border-white/10 bg-slate-900 object-cover"
