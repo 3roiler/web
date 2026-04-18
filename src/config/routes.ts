@@ -12,6 +12,7 @@ export const Routes = {
   BlogAdmin: "/blog/admin",
   BlogNew: "/blog/admin/new",
   BlogEdit: "/blog/admin/edit/:id",
+  AdminUsers: "/admin/users",
   Callback: {
     Github: "/callback/github",
     Error: "/callback/error",

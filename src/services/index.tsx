@@ -25,6 +25,24 @@ export interface User {
   permissions?: string[];
 }
 
+export interface AdminUser {
+  id: string;
+  name: string;
+  displayName: string | null;
+  email: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  /** Direct + group-inherited permissions, distinct and sorted. */
+  permissions: string[];
+  /** Only the direct-grant subset (what the revoke endpoint can delete). */
+  directPermissions: string[];
+}
+
+export interface PermissionDefinition {
+  key: string;
+  description: string;
+}
+
 export interface BlogPost {
   id: string;
   authorId: string;
@@ -173,5 +191,48 @@ export async function deleteBlogPost(id: string): Promise<void> {
     await axios.delete(`${getApiBaseUrl()}/blog/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
   } catch (error: unknown) {
     toApiError(error, 'Beim Löschen des Blog-Posts ist ein Fehler aufgetreten.');
+  }
+}
+
+// Admin / Permissions
+
+export async function listAdminUsers(): Promise<AdminUser[]> {
+  try {
+    const response = await axios.get<AdminUser[]>(`${getApiBaseUrl()}/admin/users`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Laden der Benutzerliste ist ein Fehler aufgetreten.');
+  }
+}
+
+export async function listGrantablePermissions(): Promise<PermissionDefinition[]> {
+  try {
+    const response = await axios.get<PermissionDefinition[]>(`${getApiBaseUrl()}/admin/permissions`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Laden der Berechtigungsliste ist ein Fehler aufgetreten.');
+  }
+}
+
+export async function grantPermission(userId: string, permission: string): Promise<void> {
+  try {
+    await axios.post(
+      `${getApiBaseUrl()}/admin/users/${encodeURIComponent(userId)}/permissions`,
+      { permission },
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Berechtigung konnte nicht erteilt werden.');
+  }
+}
+
+export async function revokePermission(userId: string, permission: string): Promise<void> {
+  try {
+    await axios.delete(
+      `${getApiBaseUrl()}/admin/users/${encodeURIComponent(userId)}/permissions/${encodeURIComponent(permission)}`,
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Berechtigung konnte nicht entzogen werden.');
   }
 }

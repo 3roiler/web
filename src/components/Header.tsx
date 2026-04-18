@@ -8,6 +8,7 @@ export function Header() {
   const [user, setUser] = React.useState<User | null>(null);
 
   const isAuthor = Boolean(user?.permissions?.includes('blog.write'));
+  const isAdmin = Boolean(user?.permissions?.includes('admin.manage'));
 
   React.useEffect(() => {
     getMe().then(fetchedUser => {
@@ -26,7 +27,10 @@ export function Header() {
         <li><Link to={Routes.Blog} className="nav-link">Blog</Link></li>
         <li><a href="/#contact" className="nav-link">Kontakt</a></li>
         {isAuthor && (
-          <li><Link to={Routes.BlogAdmin} className="nav-link">Admin</Link></li>
+          <li><Link to={Routes.BlogAdmin} className="nav-link">Blog-Admin</Link></li>
+        )}
+        {isAdmin && (
+          <li><Link to={Routes.AdminUsers} className="nav-link">Nutzer</Link></li>
         )}
       </ul>
 
