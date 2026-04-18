@@ -14,9 +14,14 @@ COPY --from=builder /app/dist/ ./
 COPY favicon.ico ./favicon.ico
 COPY *.html ./
 
-# caddy:alpine runs as non-root by default and weighs in comparable to nginx,
-# but with a ~10-line Caddyfile instead of a 50+ line nginx.conf.
+# caddy:2-alpine's default user is root, so we create a non-privileged user
+# and hand over ownership of the writable dirs Caddy touches at startup.
+# Closes SonarCloud docker:S6471.
 FROM caddy:2-alpine
-COPY Caddyfile /etc/caddy/Caddyfile
-COPY --from=static /static/ /srv/
+RUN adduser -D -u 10001 -g caddyuser caddyuser \
+    && mkdir -p /data/caddy /config/caddy \
+    && chown -R 10001:10001 /data /config
+COPY --chown=10001:10001 Caddyfile /etc/caddy/Caddyfile
+COPY --from=static --chown=10001:10001 /static/ /srv/
+USER 10001
 EXPOSE 8080
