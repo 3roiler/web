@@ -7,6 +7,11 @@ export const Routes = {
   Home: "/",
   Impressum: "/impressum",
   Datenschutz: "/datenschutz",
+  Blog: "/blog",
+  BlogPost: "/blog/:slug",
+  BlogAdmin: "/blog/admin",
+  BlogNew: "/blog/admin/new",
+  BlogEdit: "/blog/admin/edit/:id",
   Callback: {
     Github: "/callback/github",
     Error: "/callback/error",

@@ -1,12 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { loginToGithub, logout, getMe, User } from '../services';
+import { Routes } from '../config/routes';
 
 
 export function Header() {
   const [user, setUser] = React.useState<User | null>(null);
 
-  React.useEffect(() => { 
+  const isAuthor = Boolean(user?.permissions?.includes('blog.write'));
+
+  React.useEffect(() => {
     getMe().then(fetchedUser => {
       setUser(fetchedUser);
     }).catch(() => {
@@ -20,7 +23,11 @@ export function Header() {
       <ul className="flex sm:gap-4">
         <li><a href="/#top" className="nav-link">Start</a></li>
         <li><a href="/#projects" className="nav-link">Projekte</a></li>
+        <li><Link to={Routes.Blog} className="nav-link">Blog</Link></li>
         <li><a href="/#contact" className="nav-link">Kontakt</a></li>
+        {isAuthor && (
+          <li><Link to={Routes.BlogAdmin} className="nav-link">Admin</Link></li>
+        )}
       </ul>
 
     { user ? (
