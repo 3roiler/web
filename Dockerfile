@@ -8,11 +8,17 @@ RUN npm run build
 
 # Bundle static HTML fallbacks (meme pages, 404, favicon) into a thin layer
 # so the runtime image only copies from one known path.
+#
+# IMPORTANT: do NOT COPY index.html from the repo root — that file is the
+# Vite source template and references /src/main.tsx directly. Vite rewrites
+# it during `npm run build` to reference the hashed bundle under /assets/.
+# The standalone HTML pages are enumerated explicitly to avoid a glob
+# (`COPY *.html ./`) clobbering the built index.html.
 FROM alpine:3 AS static
 WORKDIR /static
 COPY --from=builder /app/dist/ ./
 COPY favicon.ico ./favicon.ico
-COPY *.html ./
+COPY alex.html huh.html sasu.html ./
 
 # caddy:2-alpine defaults to root; we create a dedicated user and fix
 # ownership/permissions after the COPYs to avoid SonarCloud docker:S6504
