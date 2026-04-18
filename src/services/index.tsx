@@ -22,6 +22,27 @@ export interface User {
   name: string;
   display_name: string;
   email: string;
+  permissions?: string[];
+}
+
+export interface BlogPost {
+  id: string;
+  authorId: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  content: string;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface BlogPostInput {
+  slug: string;
+  title: string;
+  content: string;
+  excerpt?: string | null;
+  publish?: boolean;
 }
 
 interface ApiErrorPayload {
@@ -103,5 +124,54 @@ export async function logout(): Promise<void> {
     await axios.post(`${getApiBaseUrl()}/logout`, {}, AXIOS_OPTIONS);
   } catch (error: unknown) {
     toApiError(error, 'An unknown error occurred during logout.');
+  }
+}
+
+// Blog
+
+export async function listBlogPosts(includeDrafts = false): Promise<BlogPost[]> {
+  try {
+    const url = includeDrafts
+      ? `${getApiBaseUrl()}/blog?drafts=true`
+      : `${getApiBaseUrl()}/blog`;
+    const response = await axios.get<BlogPost[]>(url, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Laden der Blog-Liste ist ein Fehler aufgetreten.');
+  }
+}
+
+export async function getBlogPost(slug: string): Promise<BlogPost> {
+  try {
+    const response = await axios.get<BlogPost>(`${getApiBaseUrl()}/blog/${encodeURIComponent(slug)}`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Laden des Blog-Posts ist ein Fehler aufgetreten.');
+  }
+}
+
+export async function createBlogPost(input: BlogPostInput): Promise<BlogPost> {
+  try {
+    const response = await axios.post<BlogPost>(`${getApiBaseUrl()}/blog`, input, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Erstellen des Blog-Posts ist ein Fehler aufgetreten.');
+  }
+}
+
+export async function updateBlogPost(id: string, input: Partial<BlogPostInput>): Promise<BlogPost> {
+  try {
+    const response = await axios.put<BlogPost>(`${getApiBaseUrl()}/blog/${encodeURIComponent(id)}`, input, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Aktualisieren des Blog-Posts ist ein Fehler aufgetreten.');
+  }
+}
+
+export async function deleteBlogPost(id: string): Promise<void> {
+  try {
+    await axios.delete(`${getApiBaseUrl()}/blog/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
+  } catch (error: unknown) {
+    toApiError(error, 'Beim Löschen des Blog-Posts ist ein Fehler aufgetreten.');
   }
 }
