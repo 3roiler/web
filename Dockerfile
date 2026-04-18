@@ -14,14 +14,16 @@ COPY --from=builder /app/dist/ ./
 COPY favicon.ico ./favicon.ico
 COPY *.html ./
 
-# caddy:2-alpine's default user is root, so we create a non-privileged user
-# and hand over ownership of the writable dirs Caddy touches at startup.
-# Closes SonarCloud docker:S6471.
+# caddy:2-alpine defaults to root; we create a dedicated user and fix
+# ownership/permissions after the COPYs to avoid SonarCloud docker:S6504
+# (which flags every COPY --chown/--chmod as a manual-review hotspot).
 FROM caddy:2-alpine
 RUN adduser -D -u 10001 -g caddyuser caddyuser \
     && mkdir -p /data/caddy /config/caddy \
     && chown -R 10001:10001 /data /config
-COPY --chown=10001:10001 --chmod=0444 Caddyfile /etc/caddy/Caddyfile
-COPY --from=static --chown=10001:10001 --chmod=0555 /static/ /srv/
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY --from=static /static/ /srv/
+RUN chown -R 10001:10001 /etc/caddy /srv \
+    && chmod -R u=rX,g=,o= /etc/caddy /srv
 USER 10001
 EXPOSE 8080
