@@ -24,7 +24,8 @@ export const Routes = {
     Users: "/dashboard/users",
     Groups: "/dashboard/groups",
     GroupDetail: "/dashboard/groups/:id",
-    Settings: "/dashboard/settings"
+    Settings: "/dashboard/settings",
+    Metrics: "/dashboard/metrics"
   },
 
   Callback: {

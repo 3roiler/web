@@ -40,6 +40,12 @@ const TILES: DashboardTile[] = [
     description: "Site-Konfiguration und verschlüsselte Secrets (DigitalOcean-Token, Feature-Flags).",
     to: Routes.Dashboard.Settings,
     permission: "dashboard.settings"
+  },
+  {
+    title: "Metriken",
+    description: "DigitalOcean App-Platform und Managed-Postgres: CPU, Memory, Disk, Status.",
+    to: Routes.Dashboard.Metrics,
+    permission: "dashboard.metrics"
   }
 ];
 

@@ -49,7 +49,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Blog", to: Routes.Dashboard.Blog, permission: "dashboard.blog", prefixes: ["/dashboard/blog"] },
   { label: "Nutzer", to: Routes.Dashboard.Users, permission: "dashboard.users" },
   { label: "Gruppen", to: Routes.Dashboard.Groups, permission: "dashboard.groups", prefixes: ["/dashboard/groups"] },
-  { label: "Einstellungen", to: Routes.Dashboard.Settings, permission: "dashboard.settings" }
+  { label: "Einstellungen", to: Routes.Dashboard.Settings, permission: "dashboard.settings" },
+  { label: "Metriken", to: Routes.Dashboard.Metrics, permission: "dashboard.metrics" }
 ];
 
 /**

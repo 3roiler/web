@@ -14,6 +14,7 @@ import { AdminUsersPage } from './pages/AdminUsers';
 import { AdminGroupsPage } from './pages/AdminGroups';
 import { AdminGroupDetailPage } from './pages/AdminGroupDetail';
 import { DashboardSettingsPage } from './pages/DashboardSettings';
+import { DashboardMetricsPage } from './pages/DashboardMetrics';
 import { ProfilePage } from './pages/Profile';
 import { Routes } from './config/routes';
 
@@ -61,6 +62,7 @@ function AppRoot() {
           <Route path={Routes.Dashboard.Groups} element={<AdminGroupsPage />} />
           <Route path={Routes.Dashboard.GroupDetail} element={<AdminGroupDetailPage />} />
           <Route path={Routes.Dashboard.Settings} element={<DashboardSettingsPage />} />
+          <Route path={Routes.Dashboard.Metrics} element={<DashboardMetricsPage />} />
 
           <Route path={Routes.BlogPost} element={<BlogPostPage />} />
           <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />
