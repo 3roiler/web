@@ -444,3 +444,109 @@ export async function revokeGroupPermission(groupId: string, permission: string)
     toApiError(error, 'Berechtigung konnte nicht entzogen werden.');
   }
 }
+
+// ─── Dashboard · Settings & Secrets ────────────────────────────────────────
+
+export interface AppSetting<T = unknown> {
+  key: string;
+  value: T;
+  description: string | null;
+  updatedBy: string | null;
+  updatedAt: string;
+}
+
+export interface AppSecretMeta {
+  key: string;
+  preview: string | null;
+  description: string | null;
+  hasValue: true;
+  updatedBy: string | null;
+  updatedAt: string;
+}
+
+export async function listAppSettings(): Promise<AppSetting[]> {
+  try {
+    const response = await axios.get<AppSetting[]>(`${getApiBaseUrl()}/admin/settings`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Einstellungen konnten nicht geladen werden.');
+  }
+}
+
+export async function getAppSetting<T = unknown>(key: string): Promise<AppSetting<T> | null> {
+  try {
+    const response = await axios.get<AppSetting<T>>(
+      `${getApiBaseUrl()}/admin/settings/${encodeURIComponent(key)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) return null;
+    toApiError(error, 'Einstellung konnte nicht geladen werden.');
+  }
+}
+
+export async function upsertAppSetting<T = unknown>(
+  key: string,
+  value: T,
+  description?: string | null
+): Promise<AppSetting<T>> {
+  try {
+    const response = await axios.put<AppSetting<T>>(
+      `${getApiBaseUrl()}/admin/settings/${encodeURIComponent(key)}`,
+      { value, description: description ?? null },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Einstellung konnte nicht gespeichert werden.');
+  }
+}
+
+export async function deleteAppSetting(key: string): Promise<void> {
+  try {
+    await axios.delete(`${getApiBaseUrl()}/admin/settings/${encodeURIComponent(key)}`, AXIOS_OPTIONS);
+  } catch (error: unknown) {
+    toApiError(error, 'Einstellung konnte nicht gelöscht werden.');
+  }
+}
+
+export async function listAppSecrets(): Promise<AppSecretMeta[]> {
+  try {
+    const response = await axios.get<AppSecretMeta[]>(
+      `${getApiBaseUrl()}/admin/settings/secrets`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Secrets konnten nicht geladen werden.');
+  }
+}
+
+export async function writeAppSecret(
+  key: string,
+  plaintext: string,
+  description?: string | null
+): Promise<AppSecretMeta> {
+  try {
+    const response = await axios.put<AppSecretMeta>(
+      `${getApiBaseUrl()}/admin/settings/secrets/${encodeURIComponent(key)}`,
+      { plaintext, description: description ?? null },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Secret konnte nicht gespeichert werden.');
+  }
+}
+
+export async function deleteAppSecret(key: string): Promise<void> {
+  try {
+    await axios.delete(
+      `${getApiBaseUrl()}/admin/settings/secrets/${encodeURIComponent(key)}`,
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Secret konnte nicht gelöscht werden.');
+  }
+}

@@ -23,7 +23,8 @@ export const Routes = {
     BlogEdit: "/dashboard/blog/edit/:id",
     Users: "/dashboard/users",
     Groups: "/dashboard/groups",
-    GroupDetail: "/dashboard/groups/:id"
+    GroupDetail: "/dashboard/groups/:id",
+    Settings: "/dashboard/settings"
   },
 
   Callback: {
