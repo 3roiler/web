@@ -28,3 +28,35 @@ body {
 .btn-outline:hover,.nav-link:hover,.badge-link:hover {border-color:rgba(34,211,238,.4);background:rgba(6,182,212,.1);} /* cyan-500/10 */
 .btn-outline:focus-visible,.nav-link:focus-visible,.badge-link:focus-visible {outline:2px solid #22d3ee;outline-offset:2px;}
 .card:hover {transform:translateY(-4px);box-shadow:0 30px 90px -45px rgba(15,194,207,.65);border-color:rgba(34,211,238,.4);}
+
+/* Blog-Beitrag-Inhalt (Markdown-Rendering).
+   Tailwind-Preflight setzt alle Block-Margins auf 0, und wir benutzen
+   kein @tailwindcss/typography — deshalb hier minimale, handgepflegte
+   Abstände, damit Absätze/Listen/Headings beim Rendern überhaupt
+   auseinandergehen. Bewusst schlank gehalten, keine Schnörkel. */
+.blog-content {line-height:1.75;color:#cbd5e1;}
+.blog-content > * + * {margin-top:1.25rem;}
+.blog-content h1,.blog-content h2,.blog-content h3,.blog-content h4 {color:#f8fafc;font-weight:600;line-height:1.2;}
+.blog-content h1 {font-size:1.875rem;margin-top:2.5rem;}
+.blog-content h2 {font-size:1.5rem;margin-top:2.25rem;}
+.blog-content h3 {font-size:1.25rem;margin-top:2rem;}
+.blog-content h4 {font-size:1.0625rem;margin-top:1.75rem;}
+.blog-content p {margin:0;}
+.blog-content a {color:#67e8f9;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(103,232,249,.4);}
+.blog-content a:hover {color:#a5f3fc;text-decoration-color:currentColor;}
+.blog-content strong {color:#f1f5f9;font-weight:600;}
+.blog-content em {font-style:italic;}
+.blog-content ul,.blog-content ol {padding-left:1.5rem;}
+.blog-content ul {list-style:disc;}
+.blog-content ol {list-style:decimal;}
+.blog-content li + li {margin-top:.4rem;}
+.blog-content li > ul,.blog-content li > ol {margin-top:.4rem;}
+.blog-content blockquote {border-left:3px solid rgba(34,211,238,.4);padding-left:1rem;color:#94a3b8;font-style:italic;}
+.blog-content hr {border:none;border-top:1px solid rgba(255,255,255,.1);margin:2.5rem 0;}
+.blog-content code {background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.08);border-radius:.375rem;padding:.125rem .375rem;font-size:.875em;color:#a5f3fc;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;}
+.blog-content pre {background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.08);border-radius:.75rem;padding:1rem 1.25rem;overflow-x:auto;font-size:.875rem;line-height:1.6;}
+.blog-content pre code {background:transparent;border:0;padding:0;color:inherit;font-size:inherit;}
+.blog-content img {max-width:100%;height:auto;border-radius:.75rem;}
+.blog-content table {width:100%;border-collapse:collapse;font-size:.875rem;}
+.blog-content th,.blog-content td {border:1px solid rgba(255,255,255,.1);padding:.5rem .75rem;text-align:left;}
+.blog-content th {background:rgba(255,255,255,.04);color:#f1f5f9;font-weight:600;}

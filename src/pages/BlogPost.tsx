@@ -80,7 +80,7 @@ export function BlogPostPage() {
           <h1 className="mt-4 text-4xl font-semibold text-slate-50 sm:text-5xl">{post.title}</h1>
           {post.excerpt && <p className="mt-4 text-lg text-slate-300">{post.excerpt}</p>}
 
-          <div className="prose prose-invert mt-10 max-w-none prose-headings:text-slate-50 prose-a:text-cyan-300 prose-strong:text-slate-50 prose-code:text-cyan-200 prose-pre:bg-slate-900/80">
+          <div className="blog-content mt-10">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeHighlight]}
