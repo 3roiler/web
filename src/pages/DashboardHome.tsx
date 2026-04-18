@@ -34,6 +34,12 @@ const TILES: DashboardTile[] = [
     description: "Gruppen anlegen, Mitglieder zuordnen, Permissions auf Gruppenebene.",
     to: Routes.Dashboard.Groups,
     permission: "dashboard.groups"
+  },
+  {
+    title: "Einstellungen",
+    description: "Site-Konfiguration und verschlüsselte Secrets (DigitalOcean-Token, Feature-Flags).",
+    to: Routes.Dashboard.Settings,
+    permission: "dashboard.settings"
   }
 ];
 
