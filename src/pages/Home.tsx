@@ -1,4 +1,21 @@
+import type { FormEvent } from "react";
 import { Routes } from "../config/routes";
+
+function handleContactSubmit(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const data = new FormData(form);
+  const name = String(data.get('name') ?? '').trim();
+  const email = String(data.get('email') ?? '').trim();
+  const message = String(data.get('message') ?? '').trim();
+
+  const subject = encodeURIComponent(`Anfrage über broiler.dev — ${name || 'Unbekannt'}`);
+  const body = encodeURIComponent(
+    `Name: ${name}\nE-Mail: ${email}\n\n${message}`
+  );
+
+  globalThis.location.href = `mailto:${Routes.External.WebmasterEmail}?subject=${subject}&body=${body}`;
+}
 
 export function HomePage() {
   return (
@@ -81,9 +98,7 @@ export function HomePage() {
               </ul>
             </div>
 
-            <form className="group relative flex flex-col gap-8 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-10 shadow-[0_20px_40px_-40px_rgba(15,194,207,0.6)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/40 hover:shadow-[0_30px_90px_-45px_rgba(15,194,207,0.65)]" action="https://api.broiler.dev/hello" method="post">
-              <input type="hidden" name="_subject" value="Neue Anfrage über broiler.dev" />
-              <input type="hidden" name="_captcha" value="false" />
+            <form onSubmit={handleContactSubmit} className="group relative flex flex-col gap-8 overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-10 shadow-[0_20px_40px_-40px_rgba(15,194,207,0.6)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/40 hover:shadow-[0_30px_90px_-45px_rgba(15,194,207,0.65)]">
 
               <div className="space-y-8">
                 <div>

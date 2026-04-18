@@ -12,7 +12,7 @@ function GithubCallbackPage() {
       authenticateGithub(code, state).then(user => {
           localStorage.setItem('user', JSON.stringify(user));
           navigateTo(Routes.Home);
-        }).catch((error) => {
+        }).catch((error: unknown) => {
           console.error(error);
           navigateTo(Routes.Callback.Error);
         });
@@ -27,9 +27,14 @@ function GithubCallbackPage() {
       <p>Authentifizierung läuft...</p>
     </main>
   );
-};
+}
 
-function Countdown({ seconds, onComplete }) {
+interface CountdownProps {
+  seconds: number;
+  onComplete: () => void;
+}
+
+function Countdown({ seconds, onComplete }: CountdownProps) {
     const [timeLeft, setTimeLeft] = React.useState(seconds);
 
     React.useEffect(() => {
