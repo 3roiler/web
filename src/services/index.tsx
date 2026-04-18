@@ -105,6 +105,12 @@ export interface GroupUpdateInput {
   displayName?: string;
 }
 
+/**
+ * Same set the API's blog service validates against. Keep in sync with
+ * `VALID_VISIBILITIES` in `api/src/services/blog.ts`.
+ */
+export type BlogPostVisibility = "public" | "authenticated" | "group";
+
 export interface BlogPost {
   id: string;
   authorId: string;
@@ -113,6 +119,9 @@ export interface BlogPost {
   excerpt: string | null;
   content: string;
   publishedAt: string | null;
+  visibility: BlogPostVisibility;
+  /** Group UUIDs a `group`-visibility post is linked to. Empty otherwise. */
+  accessGroupIds: string[];
   createdAt: string;
   updatedAt: string | null;
 }
@@ -123,6 +132,10 @@ export interface BlogPostInput {
   content: string;
   excerpt?: string | null;
   publish?: boolean;
+  /** Omit to keep `public` on create / leave unchanged on update. */
+  visibility?: BlogPostVisibility;
+  /** Required (non-empty) when `visibility === "group"`. */
+  groupIds?: string[];
 }
 
 interface ApiErrorPayload {

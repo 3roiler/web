@@ -15,7 +15,7 @@ import {
   type AdminUser,
   type PermissionDefinition
 } from "../services";
-import { AdminLayout } from "../components/AdminLayout";
+import { DashboardLayout } from "../components/DashboardLayout";
 import { Routes } from "../config/routes";
 
 const GROUP_KEY_RE = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
@@ -35,9 +35,13 @@ export function AdminGroupDetailPage() {
 
   if (!id) {
     return (
-      <AdminLayout kicker="Admin · Gruppen" title="Gruppe nicht gefunden">
+      <DashboardLayout
+        requiredPermission="dashboard.groups"
+        kicker="Dashboard · Gruppen"
+        title="Gruppe nicht gefunden"
+      >
         {() => <p className="text-sm text-red-300">Keine Gruppen-ID angegeben.</p>}
-      </AdminLayout>
+      </DashboardLayout>
     );
   }
 
@@ -77,12 +81,13 @@ function LoadedGroupDetail({ id }: { id: string }) {
   }, [reload]);
 
   return (
-    <AdminLayout
-      kicker="Admin · Gruppen"
+    <DashboardLayout
+      requiredPermission="dashboard.groups"
+      kicker="Dashboard · Gruppen"
       title={group?.displayName ?? "Gruppe"}
       description={
         <>
-          <Link to={Routes.AdminGroups} className="text-cyan-300 hover:text-cyan-200">
+          <Link to={Routes.Dashboard.Groups} className="text-cyan-300 hover:text-cyan-200">
             ← Zurück zur Gruppenliste
           </Link>
         </>
@@ -98,7 +103,7 @@ function LoadedGroupDetail({ id }: { id: string }) {
               if (!ok) return;
               try {
                 await deleteAdminGroup(group.id);
-                navigate(Routes.AdminGroups);
+                navigate(Routes.Dashboard.Groups);
               } catch (e: unknown) {
                 console.error(e);
                 setError(e instanceof ApiError ? e.message : "Löschen fehlgeschlagen.");
@@ -125,7 +130,7 @@ function LoadedGroupDetail({ id }: { id: string }) {
           />
         );
       }}
-    </AdminLayout>
+    </DashboardLayout>
   );
 }
 

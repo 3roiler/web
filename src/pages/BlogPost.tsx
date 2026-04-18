@@ -71,7 +71,10 @@ export function BlogPostPage() {
               <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-amber-300">Draft</span>
             )}
             {isAuthor && (
-              <Link to={`/blog/admin/edit/${post.id}`} className="text-cyan-300 hover:text-cyan-200">
+              <Link
+                to={Routes.Dashboard.BlogEdit.replace(":id", post.id)}
+                className="text-cyan-300 hover:text-cyan-200"
+              >
                 Bearbeiten
               </Link>
             )}
