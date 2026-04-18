@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes as RouterRoutes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
@@ -7,33 +8,55 @@ import { ImpressumPage } from './pages/Impressum';
 import { DatenschutzPage } from './pages/Datenschutz';
 import { GithubCallbackPage, AuthErrorPage } from './pages/Callbacks';
 import { BlogPage } from './pages/Blog';
-import { BlogPostPage } from './pages/BlogPost';
 import { BlogAdminPage } from './pages/BlogAdmin';
-import { BlogEditPage } from './pages/BlogEdit';
 import { AdminUsersPage } from './pages/AdminUsers';
 import { AdminGroupsPage } from './pages/AdminGroups';
 import { AdminGroupDetailPage } from './pages/AdminGroupDetail';
 import { Routes } from './config/routes';
 
+/**
+ * Route-level code splitting. Both the Markdown editor and the rendered-post
+ * view depend on highlight.js (~400 KB), which we don't want to ship with the
+ * homepage. Lazy-loading here keeps the initial bundle around ~70 kB gzip.
+ */
+const BlogEditPage = React.lazy(() =>
+  import('./pages/BlogEdit').then((m) => ({ default: m.BlogEditPage }))
+);
+const BlogPostPage = React.lazy(() =>
+  import('./pages/BlogPost').then((m) => ({ default: m.BlogPostPage }))
+);
+
+function RouteFallback() {
+  return (
+    <main className="min-h-screen bg-slate-950 py-24">
+      <div className="mx-auto max-w-4xl px-6 sm:px-10 lg:px-16 pt-16 text-sm text-slate-400">
+        Lade…
+      </div>
+    </main>
+  );
+}
+
 function AppRoot() {
   return (
     <BrowserRouter>
       <Header />
-      <RouterRoutes>
-        <Route path={Routes.Home} element={<HomePage />} />
-        <Route path={Routes.Impressum} element={<ImpressumPage />} />
-        <Route path={Routes.Datenschutz} element={<DatenschutzPage />} />
-        <Route path={Routes.Blog} element={<BlogPage />} />
-        <Route path={Routes.BlogAdmin} element={<BlogAdminPage />} />
-        <Route path={Routes.BlogNew} element={<BlogEditPage />} />
-        <Route path={Routes.BlogEdit} element={<BlogEditPage />} />
-        <Route path={Routes.AdminUsers} element={<AdminUsersPage />} />
-        <Route path={Routes.AdminGroups} element={<AdminGroupsPage />} />
-        <Route path={Routes.AdminGroupDetail} element={<AdminGroupDetailPage />} />
-        <Route path={Routes.BlogPost} element={<BlogPostPage />} />
-        <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />
-        <Route path={Routes.Callback.Error} element={<AuthErrorPage />} />
-      </RouterRoutes>
+      <React.Suspense fallback={<RouteFallback />}>
+        <RouterRoutes>
+          <Route path={Routes.Home} element={<HomePage />} />
+          <Route path={Routes.Impressum} element={<ImpressumPage />} />
+          <Route path={Routes.Datenschutz} element={<DatenschutzPage />} />
+          <Route path={Routes.Blog} element={<BlogPage />} />
+          <Route path={Routes.BlogAdmin} element={<BlogAdminPage />} />
+          <Route path={Routes.BlogNew} element={<BlogEditPage />} />
+          <Route path={Routes.BlogEdit} element={<BlogEditPage />} />
+          <Route path={Routes.AdminUsers} element={<AdminUsersPage />} />
+          <Route path={Routes.AdminGroups} element={<AdminGroupsPage />} />
+          <Route path={Routes.AdminGroupDetail} element={<AdminGroupDetailPage />} />
+          <Route path={Routes.BlogPost} element={<BlogPostPage />} />
+          <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />
+          <Route path={Routes.Callback.Error} element={<AuthErrorPage />} />
+        </RouterRoutes>
+      </React.Suspense>
       <Footer />
     </BrowserRouter>
   );
