@@ -66,8 +66,21 @@ export function getApiBaseUrl(): string {
  * Debug-Hilfsfunktionen für die Browser-Konsole.
  * Verwendung: window.__api.switch("Staging")
  */
+interface ApiDebugHelper {
+  environments: typeof ApiEnvironments;
+  current: () => ApiEnvironment;
+  url: () => string;
+  switch: (env: ApiEnvironment) => void;
+  reset: () => void;
+}
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __api: ApiDebugHelper | undefined;
+}
+
 if (import.meta.env.DEV) {
-  (globalThis as any).__api = {
+  globalThis.__api = {
     environments: ApiEnvironments,
     current: () => getApiEnvironment(),
     url: () => getApiBaseUrl(),
