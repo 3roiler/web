@@ -561,9 +561,20 @@ export type MetricsWindow = '1h' | '6h' | '24h';
 
 export interface MetricsStatus {
   tokenConfigured: boolean;
-  appIdConfigured: boolean;
+  /** Count of configured apps (>= 1 means the user is good to render charts). */
+  appsConfigured: number;
   databaseIdConfigured: boolean;
   refreshDefaultSeconds: number;
+}
+
+/**
+ * One DigitalOcean app as returned by `/admin/metrics/apps`. `label` is a
+ * human-friendly tag the operator chose in the Settings page — always
+ * present (backend fills a UUID-prefix default when missing).
+ */
+export interface MetricsApp {
+  id: string;
+  label: string;
 }
 
 /**
@@ -596,9 +607,24 @@ export async function getMetricsStatus(): Promise<MetricsStatus> {
   }
 }
 
-export async function getAppSummary<T = unknown>(): Promise<T> {
+export async function listMetricsApps(): Promise<MetricsApp[]> {
   try {
-    const response = await axios.get<T>(`${getApiBaseUrl()}/admin/metrics/app`, AXIOS_OPTIONS);
+    const response = await axios.get<MetricsApp[]>(
+      `${getApiBaseUrl()}/admin/metrics/apps`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'App-Liste konnte nicht geladen werden.');
+  }
+}
+
+export async function getAppSummary<T = unknown>(appId: string): Promise<T> {
+  try {
+    const response = await axios.get<T>(
+      `${getApiBaseUrl()}/admin/metrics/app/${encodeURIComponent(appId)}`,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
     toApiError(error, 'App-Status konnte nicht geladen werden.');
@@ -626,10 +652,10 @@ async function fetchTimeSeries(path: string, window: MetricsWindow): Promise<DoT
   }
 }
 
-export const getAppCpu = (window: MetricsWindow) =>
-  fetchTimeSeries('/admin/metrics/app/cpu', window);
-export const getAppMemory = (window: MetricsWindow) =>
-  fetchTimeSeries('/admin/metrics/app/memory', window);
+export const getAppCpu = (appId: string, window: MetricsWindow) =>
+  fetchTimeSeries(`/admin/metrics/app/${encodeURIComponent(appId)}/cpu`, window);
+export const getAppMemory = (appId: string, window: MetricsWindow) =>
+  fetchTimeSeries(`/admin/metrics/app/${encodeURIComponent(appId)}/memory`, window);
 export const getDatabaseCpu = (window: MetricsWindow) =>
   fetchTimeSeries('/admin/metrics/database/cpu', window);
 export const getDatabaseMemory = (window: MetricsWindow) =>

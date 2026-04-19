@@ -48,13 +48,6 @@ interface CuratedSetting {
 
 const CURATED_DO_SETTINGS: CuratedSetting[] = [
   {
-    key: "digitalocean.app_id",
-    label: "App-ID",
-    description: "UUID der DigitalOcean App Platform App, von der Metriken gelesen werden.",
-    kind: "text",
-    placeholder: "z. B. 8f5c1a4b-…"
-  },
-  {
     key: "digitalocean.database_id",
     label: "Datenbank-ID",
     description: "UUID des DigitalOcean Managed-Postgres-Clusters.",
@@ -70,6 +63,23 @@ const CURATED_DO_SETTINGS: CuratedSetting[] = [
   }
 ];
 
+/**
+ * The apps list is stored as a JSON array under `digitalocean.apps`. Rendered
+ * by its own dedicated editor (see `DigitalOceanAppsEditor`) rather than the
+ * generic curated row because the shape — list of `{id, label}` — needs
+ * add/remove/reorder UI. The key is included in `CURATED_SETTING_KEYS` so the
+ * Advanced section doesn't also show it as a raw JSON blob.
+ */
+const CURATED_DO_APPS_KEY = "digitalocean.apps";
+
+/**
+ * Pre-multi-app deployments stored a single app UUID here. New code reads
+ * the list at `digitalocean.apps`; the server falls back to this key only if
+ * the list is empty. The settings UI surfaces it as a migration prompt and
+ * leaves it to the operator to decide when to delete it.
+ */
+const LEGACY_APP_ID_KEY = "digitalocean.app_id";
+
 const CURATED_DO_SECRETS: { key: string; label: string; description: string }[] = [
   {
     key: "digitalocean.token",
@@ -79,7 +89,11 @@ const CURATED_DO_SECRETS: { key: string; label: string; description: string }[] 
   }
 ];
 
-const CURATED_SETTING_KEYS = new Set(CURATED_DO_SETTINGS.map((s) => s.key));
+const CURATED_SETTING_KEYS = new Set<string>([
+  ...CURATED_DO_SETTINGS.map((s) => s.key),
+  CURATED_DO_APPS_KEY,
+  LEGACY_APP_ID_KEY
+]);
 const CURATED_SECRET_KEYS = new Set(CURATED_DO_SECRETS.map((s) => s.key));
 
 export function DashboardSettingsPage() {
@@ -170,6 +184,9 @@ interface SectionProps {
 }
 
 function DigitalOceanSection({ settings, secrets, onReload, onError, onInfo }: SectionProps) {
+  const appsSetting = settings.find((s) => s.key === CURATED_DO_APPS_KEY) ?? null;
+  const legacyAppId = settings.find((s) => s.key === LEGACY_APP_ID_KEY) ?? null;
+
   return (
     <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
       <header>
@@ -179,7 +196,15 @@ function DigitalOceanSection({ settings, secrets, onReload, onError, onInfo }: S
         </p>
       </header>
 
-      <div className="mt-5 space-y-4">
+      <div className="mt-5 space-y-6">
+        <DigitalOceanAppsEditor
+          current={appsSetting}
+          legacy={legacyAppId}
+          onReload={onReload}
+          onError={onError}
+          onInfo={onInfo}
+        />
+
         {CURATED_DO_SETTINGS.map((curated) => (
           <CuratedSettingRow
             key={curated.key}
@@ -206,6 +231,328 @@ function DigitalOceanSection({ settings, secrets, onReload, onError, onInfo }: S
       </div>
     </section>
   );
+}
+
+// ─── Apps list editor (digitalocean.apps) ───────────────────────────────────
+
+interface ConfiguredAppInput {
+  id: string;
+  label: string;
+}
+
+interface DigitalOceanAppsEditorProps {
+  current: AppSetting | null;
+  legacy: AppSetting | null;
+  onReload: () => Promise<void>;
+  onError: (msg: string | null) => void;
+  onInfo: (msg: string) => void;
+}
+
+/**
+ * Dynamic list editor for `digitalocean.apps`. The setting is a JSON array
+ * of `{id, label}` rows — App Platform UUID + a short human label used in
+ * the metrics dashboard. Rows can be added, removed, and reordered; an
+ * empty list is persisted as `[]` (distinct from "unset" via Delete).
+ *
+ * Local edit buffer is kept in state so re-ordering doesn't trigger an
+ * unsaved-save roundtrip per step. A single "Speichern" button commits the
+ * whole array. If the legacy single-UUID key (`digitalocean.app_id`) is
+ * still set, we surface a migration hint with a one-click "übernehmen"
+ * that seeds the list from the old value.
+ */
+function DigitalOceanAppsEditor({
+  current,
+  legacy,
+  onReload,
+  onError,
+  onInfo
+}: DigitalOceanAppsEditorProps) {
+  const stored = React.useMemo(() => parseAppsSetting(current?.value), [current?.value]);
+  const [rows, setRows] = React.useState<ConfiguredAppInput[]>(stored);
+  const [saving, setSaving] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
+
+  // Re-sync local buffer when a reload brings in a changed stored value.
+  // Comparing against a serialised copy keeps the effect stable under React's
+  // reference equality — the parsed array is recreated on every render.
+  const storedKey = React.useMemo(() => JSON.stringify(stored), [stored]);
+  React.useEffect(() => {
+    setRows(JSON.parse(storedKey) as ConfiguredAppInput[]);
+  }, [storedKey]);
+
+  const dirty = JSON.stringify(rows) !== storedKey;
+
+  function update(i: number, patch: Partial<ConfiguredAppInput>) {
+    setRows((prev) => prev.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
+  }
+
+  function add() {
+    setRows((prev) => [...prev, { id: "", label: "" }]);
+  }
+
+  function remove(i: number) {
+    setRows((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function move(i: number, dir: -1 | 1) {
+    setRows((prev) => {
+      const target = i + dir;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = prev.slice();
+      const tmp = next[i];
+      next[i] = next[target];
+      next[target] = tmp;
+      return next;
+    });
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    onError(null);
+
+    // Trim all inputs once, then validate. Empty rows (no UUID + no label)
+    // are dropped silently so the user can use "Zeile hinzufügen" freely
+    // without being forced to fill every slot before saving.
+    const cleaned = rows
+      .map((r) => ({ id: r.id.trim(), label: r.label.trim() }))
+      .filter((r) => r.id !== "" || r.label !== "");
+
+    for (const row of cleaned) {
+      if (row.id === "") {
+        onError("Jede App braucht eine UUID.");
+        return;
+      }
+      if (row.label === "") {
+        onError("Jede App braucht ein Label.");
+        return;
+      }
+    }
+
+    // Duplicate-id guard: server also rejects it, but catching it here gives
+    // a nicer message than whatever the upstream validation returns.
+    const seen = new Set<string>();
+    for (const row of cleaned) {
+      if (seen.has(row.id)) {
+        onError(`Doppelte App-UUID: ${row.id}`);
+        return;
+      }
+      seen.add(row.id);
+    }
+
+    setSaving(true);
+    try {
+      await upsertAppSetting(
+        CURATED_DO_APPS_KEY,
+        cleaned,
+        "Liste der DigitalOcean App Platform Apps, von denen Metriken gelesen werden."
+      );
+      await onReload();
+      onInfo(`Apps gespeichert (${cleaned.length}).`);
+      setRows(cleaned);
+    } catch (err: unknown) {
+      console.error(err);
+      onError(err instanceof ApiError ? err.message : "Speichern fehlgeschlagen.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    const ok = globalThis.confirm("Apps-Liste wirklich komplett entfernen?");
+    if (!ok) return;
+    setDeleting(true);
+    onError(null);
+    try {
+      await deleteAppSetting(CURATED_DO_APPS_KEY);
+      await onReload();
+      onInfo("Apps-Liste entfernt.");
+    } catch (err: unknown) {
+      console.error(err);
+      onError(err instanceof ApiError ? err.message : "Löschen fehlgeschlagen.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  async function handleAdoptLegacy() {
+    if (!legacy) return;
+    const legacyId = typeof legacy.value === "string" ? legacy.value.trim() : "";
+    if (legacyId === "") return;
+    setRows((prev) => {
+      if (prev.some((r) => r.id.trim() === legacyId)) return prev;
+      return [...prev, { id: legacyId, label: "App" }];
+    });
+    onInfo("Alte App-ID übernommen. Jetzt Label setzen und speichern.");
+  }
+
+  async function handleClearLegacy() {
+    if (!legacy) return;
+    const ok = globalThis.confirm(`Legacy-Key "${LEGACY_APP_ID_KEY}" wirklich entfernen?`);
+    if (!ok) return;
+    onError(null);
+    try {
+      await deleteAppSetting(LEGACY_APP_ID_KEY);
+      await onReload();
+      onInfo("Legacy-Key entfernt.");
+    } catch (err: unknown) {
+      console.error(err);
+      onError(err instanceof ApiError ? err.message : "Löschen fehlgeschlagen.");
+    }
+  }
+
+  const hasStored = current !== null;
+  const storedCount = stored.length;
+
+  return (
+    <form onSubmit={handleSave} className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+          DigitalOcean Apps
+        </label>
+        <p className="mt-1 text-xs text-slate-500">
+          Alle App-Platform-Apps, die im Metrics-Dashboard angezeigt werden sollen. Label ist nur
+          zur Anzeige — die UUID findest du in der DO-Console unter „Apps → Settings → App
+          Info".
+        </p>
+      </div>
+
+      {legacy && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+          <p>
+            Der alte Einzel-Key <code className="font-mono">{LEGACY_APP_ID_KEY}</code> ist noch
+            gesetzt. Das Backend nutzt ihn als Fallback — besser in die Liste übernehmen und den
+            Legacy-Key entfernen.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleAdoptLegacy}
+              className="rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold text-amber-100 transition hover:bg-amber-500/20"
+            >
+              In Liste übernehmen
+            </button>
+            <button
+              type="button"
+              onClick={handleClearLegacy}
+              className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-200 transition hover:bg-red-500/20"
+            >
+              Legacy-Key löschen
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {rows.length === 0 && (
+          <p className="rounded-lg border border-dashed border-white/10 bg-slate-950/30 px-3 py-4 text-center text-xs text-slate-500">
+            Keine Apps konfiguriert. Klick auf „Zeile hinzufügen", um eine App aufzunehmen.
+          </p>
+        )}
+        {rows.map((row, idx) => (
+          <div
+            key={idx}
+            className="flex flex-col gap-2 rounded-lg border border-white/10 bg-slate-950/40 p-3 sm:flex-row sm:items-start"
+          >
+            <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+              <input
+                type="text"
+                value={row.id}
+                onChange={(e) => update(idx, { id: e.target.value })}
+                placeholder="App-UUID (z. B. 8f5c1a4b-…)"
+                className="flex-[2] rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 font-mono text-xs text-slate-100"
+              />
+              <input
+                type="text"
+                value={row.label}
+                onChange={(e) => update(idx, { label: e.target.value })}
+                placeholder="Label (z. B. API, Web)"
+                className="flex-1 rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-xs text-slate-100"
+              />
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => move(idx, -1)}
+                disabled={idx === 0}
+                title="Nach oben"
+                className="rounded-full border border-white/10 px-2 py-1 text-xs text-slate-300 transition hover:bg-white/10 disabled:opacity-30"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                onClick={() => move(idx, 1)}
+                disabled={idx === rows.length - 1}
+                title="Nach unten"
+                className="rounded-full border border-white/10 px-2 py-1 text-xs text-slate-300 transition hover:bg-white/10 disabled:opacity-30"
+              >
+                ↓
+              </button>
+              <button
+                type="button"
+                onClick={() => remove(idx)}
+                title="Zeile entfernen"
+                className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-200 transition hover:bg-red-500/20"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={add}
+          className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-4 py-1.5 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-500/20"
+        >
+          Zeile hinzufügen
+        </button>
+        <button type="submit" className="btn btn-sm" disabled={saving || !dirty}>
+          {saving ? "Speichere…" : "Speichern"}
+        </button>
+        {hasStored && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="rounded-full border border-red-500/40 bg-red-500/10 px-4 py-1.5 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 disabled:opacity-50"
+          >
+            {deleting ? "…" : "Liste löschen"}
+          </button>
+        )}
+      </div>
+
+      {hasStored && current && (
+        <p className="text-[11px] text-slate-500">
+          <code className="font-mono text-slate-400">{CURATED_DO_APPS_KEY}</code> · {storedCount}{" "}
+          {storedCount === 1 ? "Eintrag" : "Einträge"} · zuletzt aktualisiert{" "}
+          {new Date(current.updatedAt).toLocaleString("de-DE")}
+        </p>
+      )}
+    </form>
+  );
+}
+
+/**
+ * Coerce the stored setting value back into a list of `{id, label}` rows.
+ * The API returns the raw JSON we wrote, but older writes or manual
+ * edits via the Advanced block can leave any shape there — we accept
+ * malformed entries and drop them rather than crashing the form.
+ */
+function parseAppsSetting(value: unknown): ConfiguredAppInput[] {
+  if (!Array.isArray(value)) return [];
+  const out: ConfiguredAppInput[] = [];
+  for (const entry of value) {
+    if (entry === null || typeof entry !== "object") continue;
+    const e = entry as Record<string, unknown>;
+    const id = typeof e.id === "string" ? e.id : "";
+    const label = typeof e.label === "string" ? e.label : "";
+    if (id === "" && label === "") continue;
+    out.push({ id, label });
+  }
+  return out;
 }
 
 interface CuratedSettingRowProps {

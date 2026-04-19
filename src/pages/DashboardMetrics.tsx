@@ -2,6 +2,7 @@ import * as React from "react";
 import {
   ApiError,
   getMetricsStatus,
+  listMetricsApps,
   getAppSummary,
   getDatabaseSummary,
   getAppCpu,
@@ -10,6 +11,7 @@ import {
   getDatabaseMemory,
   getDatabaseDisk,
   type DoTimeSeriesResponse,
+  type MetricsApp,
   type MetricsStatus,
   type MetricsWindow
 } from "../services";
@@ -18,12 +20,18 @@ import { Link } from "react-router-dom";
 import { Routes } from "../config/routes";
 
 /**
- * `/dashboard/metrics` — visualises the DigitalOcean proxy from PR 5.
+ * `/dashboard/metrics` — visualises the DigitalOcean proxy.
+ *
+ * The page is structured as:
+ *   - Toolbar (window, auto-refresh, manual refresh)
+ *   - Summary strip: one App-Platform card per configured app + one DB card
+ *   - One "App Platform · <label>" chart section per configured app
+ *   - One "Managed Postgres" chart section for the single cluster
  *
  * Why a hand-rolled SVG instead of Recharts/Chart.js?
  *   - We only draw a handful of line charts; the full chart lib pulls in
- *     ~80 kB gzip we'd otherwise ship on a route that already sits behind a
- *     permission gate.
+ *     ~80 kB gzip we'd otherwise ship on a route that already sits behind
+ *     a permission gate.
  *   - DO returns Prometheus-shape `[ts, "value"][]` per series — a simple
  *     polyline does the job and keeps deploys snappy.
  *
@@ -56,9 +64,9 @@ export function DashboardMetricsPage() {
       title="DigitalOcean Metriken"
       description={
         <>
-          CPU, Arbeitsspeicher und Disk-Auslastung der App Platform und des Managed-Postgres.
-          Werte werden 30 Sekunden API-seitig gecached, darum sind kurze Live-Intervalle hier
-          unbedenklich.
+          CPU, Arbeitsspeicher und Disk-Auslastung pro konfigurierter App Platform und des
+          Managed-Postgres. Werte werden 30 Sekunden API-seitig gecached, darum sind kurze
+          Live-Intervalle hier unbedenklich.
         </>
       }
     >
@@ -70,17 +78,20 @@ export function DashboardMetricsPage() {
 function MetricsContent() {
   const [status, setStatus] = React.useState<MetricsStatus | null>(null);
   const [statusError, setStatusError] = React.useState<string | null>(null);
+  const [apps, setApps] = React.useState<MetricsApp[] | null>(null);
   const [window, setWindow] = React.useState<MetricsWindow>("1h");
   const [refreshSeconds, setRefreshSeconds] = React.useState<number>(0);
   // `tick` bumps on every auto-refresh; children re-fetch when it changes.
   const [tick, setTick] = React.useState(0);
 
   React.useEffect(() => {
+    // Status tells us whether config is complete; the apps list powers every
+    // per-app widget. Running them in parallel keeps the page responsive and
+    // lets the UI render partial state (e.g. DB-only) if the apps call fails.
     getMetricsStatus()
       .then((s) => {
         setStatus(s);
         setStatusError(null);
-        // First load: if the operator saved a default refresh interval, use it.
         setRefreshSeconds((current) =>
           current === 0 && s.refreshDefaultSeconds > 0 ? s.refreshDefaultSeconds : current
         );
@@ -89,6 +100,10 @@ function MetricsContent() {
         console.error(e);
         setStatusError(e instanceof ApiError ? e.message : "Status konnte nicht geladen werden.");
       });
+
+    listMetricsApps()
+      .then((list) => setApps(list))
+      .catch(() => setApps([]));
   }, []);
 
   React.useEffect(() => {
@@ -100,13 +115,14 @@ function MetricsContent() {
   if (statusError) {
     return <p className="text-sm text-red-300">{statusError}</p>;
   }
-  if (!status) {
+  if (!status || !apps) {
     return <p className="text-sm text-slate-400">Lade…</p>;
   }
 
-  const fullyConfigured = status.tokenConfigured && status.appIdConfigured && status.databaseIdConfigured;
-
-  if (!fullyConfigured) {
+  // Show the config gate only when nothing is workable. Partial setups still
+  // render what they can — a missing DB shouldn't hide the apps block.
+  const anythingUsable = status.tokenConfigured && (status.appsConfigured > 0 || status.databaseIdConfigured);
+  if (!anythingUsable) {
     return <ConfigurationMissing status={status} />;
   }
 
@@ -120,54 +136,42 @@ function MetricsContent() {
         onManualRefresh={() => setTick((t) => t + 1)}
       />
 
-      <SummariesBlock tick={tick} appIdConfigured={status.appIdConfigured} dbIdConfigured={status.databaseIdConfigured} />
+      <SummariesBlock tick={tick} apps={apps} dbIdConfigured={status.databaseIdConfigured} />
 
-      <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-cyan-300">App Platform</h2>
-        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <ChartCard
-            title="CPU"
-            unit="%"
-            window={window}
-            tick={tick}
-            fetcher={getAppCpu}
-          />
-          <ChartCard
-            title="Memory"
-            unit="%"
-            window={window}
-            tick={tick}
-            fetcher={getAppMemory}
-          />
-        </div>
-      </section>
+      {apps.map((app) => (
+        <section key={app.id}>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-cyan-300">
+            App Platform · {app.label}
+          </h2>
+          <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <ChartCard
+              title="CPU"
+              unit="%"
+              window={window}
+              tick={tick}
+              fetcher={(w) => getAppCpu(app.id, w)}
+            />
+            <ChartCard
+              title="Memory"
+              unit="%"
+              window={window}
+              tick={tick}
+              fetcher={(w) => getAppMemory(app.id, w)}
+            />
+          </div>
+        </section>
+      ))}
 
-      <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-cyan-300">Managed Postgres</h2>
-        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <ChartCard
-            title="CPU"
-            unit="%"
-            window={window}
-            tick={tick}
-            fetcher={getDatabaseCpu}
-          />
-          <ChartCard
-            title="Memory"
-            unit="%"
-            window={window}
-            tick={tick}
-            fetcher={getDatabaseMemory}
-          />
-          <ChartCard
-            title="Disk"
-            unit="%"
-            window={window}
-            tick={tick}
-            fetcher={getDatabaseDisk}
-          />
-        </div>
-      </section>
+      {status.databaseIdConfigured && (
+        <section>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-cyan-300">Managed Postgres</h2>
+          <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <ChartCard title="CPU" unit="%" window={window} tick={tick} fetcher={getDatabaseCpu} />
+            <ChartCard title="Memory" unit="%" window={window} tick={tick} fetcher={getDatabaseMemory} />
+            <ChartCard title="Disk" unit="%" window={window} tick={tick} fetcher={getDatabaseDisk} />
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -177,15 +181,16 @@ function MetricsContent() {
 function ConfigurationMissing({ status }: { status: MetricsStatus }) {
   const rows: { label: string; ok: boolean }[] = [
     { label: "digitalocean.token (Secret)", ok: status.tokenConfigured },
-    { label: "digitalocean.app_id", ok: status.appIdConfigured },
+    { label: `digitalocean.apps (${status.appsConfigured} konfiguriert)`, ok: status.appsConfigured > 0 },
     { label: "digitalocean.database_id", ok: status.databaseIdConfigured }
   ];
   return (
     <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6">
       <h2 className="text-lg font-semibold text-amber-100">Konfiguration unvollständig</h2>
       <p className="mt-2 text-sm text-amber-200/80">
-        Die Metriken-Seite greift auf die DigitalOcean v2-API zu. Dazu müssen ein API-Token und
-        die UUIDs von App Platform und Datenbank gesetzt sein.
+        Die Metriken-Seite greift auf die DigitalOcean v2-API zu. Dazu müssen ein API-Token (mit
+        <code className="mx-1 rounded bg-black/30 px-1 font-mono text-xs">monitoring:read</code>
+        Scope) und mindestens eine App oder Datenbank konfiguriert sein.
       </p>
       <ul className="mt-4 space-y-2 text-sm">
         {rows.map((r) => (
@@ -276,18 +281,21 @@ function Toolbar({ window, onWindow, refreshSeconds, onRefreshSeconds, onManualR
   );
 }
 
-// ─── Summary cards (app + database top line status) ────────────────────────
+// ─── Summary cards (app + database top-line status) ────────────────────────
 
 interface SummariesBlockProps {
   tick: number;
-  appIdConfigured: boolean;
+  apps: MetricsApp[];
   dbIdConfigured: boolean;
 }
 
-function SummariesBlock({ tick, appIdConfigured, dbIdConfigured }: SummariesBlockProps) {
+function SummariesBlock({ tick, apps, dbIdConfigured }: SummariesBlockProps) {
+  if (apps.length === 0 && !dbIdConfigured) return null;
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      {appIdConfigured && <AppSummaryCard tick={tick} />}
+      {apps.map((app) => (
+        <AppSummaryCard key={app.id} app={app} tick={tick} />
+      ))}
       {dbIdConfigured && <DatabaseSummaryCard tick={tick} />}
     </div>
   );
@@ -307,13 +315,13 @@ interface AppSummaryShape {
   };
 }
 
-function AppSummaryCard({ tick }: { tick: number }) {
+function AppSummaryCard({ app, tick }: { app: MetricsApp; tick: number }) {
   const [data, setData] = React.useState<AppSummaryShape | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
-    getAppSummary<AppSummaryShape>()
+    getAppSummary<AppSummaryShape>(app.id)
       .then((d) => {
         if (!cancelled) {
           setData(d);
@@ -326,11 +334,11 @@ function AppSummaryCard({ tick }: { tick: number }) {
     return () => {
       cancelled = true;
     };
-  }, [tick]);
+  }, [tick, app.id]);
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-      <h3 className="text-sm font-semibold text-slate-100">App Platform</h3>
+      <h3 className="text-sm font-semibold text-slate-100">App Platform · {app.label}</h3>
       {error && <p className="mt-2 text-sm text-red-300">{error}</p>}
       {!error && !data && <p className="mt-2 text-xs text-slate-400">Lade…</p>}
       {data?.app && (
@@ -576,7 +584,7 @@ function LineChart({ series, unit }: { series: Point[]; unit: string }) {
   const tRange = tMax - tMin || 1;
 
   const points = series
-    .map((p, i) => {
+    .map((p) => {
       const x = PAD_X + ((p.t - tMin) / tRange) * (CHART_W - PAD_X * 2);
       const yValue = isPercent ? p.v * 100 : p.v;
       const y = CHART_H - PAD_Y - ((yValue - vMin) / vRange) * (CHART_H - PAD_Y * 2);
