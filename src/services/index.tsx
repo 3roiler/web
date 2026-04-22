@@ -662,3 +662,216 @@ export const getDatabaseMemory = (window: MetricsWindow) =>
   fetchTimeSeries('/admin/metrics/database/memory', window);
 export const getDatabaseDisk = (window: MetricsWindow) =>
   fetchTimeSeries('/admin/metrics/database/disk', window);
+
+// ─── Drucker & G-Code ─────────────────────────────────────────────────────
+
+export type PrinterStatus = 'offline' | 'online' | 'error';
+export type PrinterRole = 'owner' | 'operator' | 'viewer';
+
+export interface Printer {
+  id: string;
+  name: string;
+  model: string;
+  status: PrinterStatus;
+  agentVersion: string | null;
+  lastSeenAt: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface PrinterWithRole extends Printer {
+  role: PrinterRole;
+  canViewCamera: boolean;
+}
+
+export interface PrinterAccess {
+  id: string;
+  printerId: string;
+  userId: string;
+  role: PrinterRole;
+  canViewCamera: boolean;
+  grantedBy: string | null;
+  grantedAt: string;
+}
+
+export interface CreatePrinterInput {
+  name: string;
+  model: string;
+}
+
+/**
+ * Returned by `POST /printer/`. The `agentToken` is only visible on
+ * create and on rotate — the backend keeps a SHA-256 hash, so the UI
+ * must warn the user to copy it immediately.
+ */
+export interface CreatePrinterResult {
+  printer: PrinterWithRole;
+  agentToken: string;
+}
+
+export interface GcodeMetadata {
+  estimatedSeconds?: number;
+  filamentMeters?: number;
+  filamentGrams?: number;
+  layerCount?: number;
+  slicer?: string;
+}
+
+export interface GcodeFile {
+  id: string;
+  uploadedByUserId: string | null;
+  originalFilename: string;
+  sha256: string;
+  sizeBytes: number;
+  metadata: GcodeMetadata;
+  createdAt: string;
+}
+
+export async function listPrinters(): Promise<PrinterWithRole[]> {
+  try {
+    const response = await axios.get<PrinterWithRole[]>(`${getApiBaseUrl()}/printer`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Drucker konnten nicht geladen werden.');
+  }
+}
+
+export async function getPrinter(id: string): Promise<PrinterWithRole> {
+  try {
+    const response = await axios.get<PrinterWithRole>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(id)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Drucker konnte nicht geladen werden.');
+  }
+}
+
+export async function createPrinter(input: CreatePrinterInput): Promise<CreatePrinterResult> {
+  try {
+    const response = await axios.post<CreatePrinterResult>(
+      `${getApiBaseUrl()}/printer`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Drucker konnte nicht angelegt werden.');
+  }
+}
+
+export async function updatePrinter(id: string, input: { name?: string }): Promise<Printer> {
+  try {
+    const response = await axios.put<Printer>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(id)}`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Drucker konnte nicht aktualisiert werden.');
+  }
+}
+
+export async function deletePrinter(id: string): Promise<void> {
+  try {
+    await axios.delete(`${getApiBaseUrl()}/printer/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
+  } catch (error: unknown) {
+    toApiError(error, 'Drucker konnte nicht gelöscht werden.');
+  }
+}
+
+export async function rotatePrinterToken(id: string): Promise<string> {
+  try {
+    const response = await axios.post<{ agentToken: string }>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(id)}/rotate-token`,
+      {},
+      AXIOS_OPTIONS
+    );
+    return response.data.agentToken;
+  } catch (error: unknown) {
+    toApiError(error, 'Agent-Token konnte nicht rotiert werden.');
+  }
+}
+
+export async function listPrinterAccess(id: string): Promise<PrinterAccess[]> {
+  try {
+    const response = await axios.get<PrinterAccess[]>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(id)}/access`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Zugriffsliste konnte nicht geladen werden.');
+  }
+}
+
+export async function grantPrinterAccess(
+  id: string,
+  input: { userId: string; role: 'operator' | 'viewer'; canViewCamera?: boolean }
+): Promise<PrinterAccess> {
+  try {
+    const response = await axios.post<PrinterAccess>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(id)}/access`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Zugriff konnte nicht erteilt werden.');
+  }
+}
+
+export async function revokePrinterAccess(id: string, userId: string): Promise<void> {
+  try {
+    await axios.delete(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(id)}/access/${encodeURIComponent(userId)}`,
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Zugriff konnte nicht entzogen werden.');
+  }
+}
+
+export async function listGcodeFiles(): Promise<GcodeFile[]> {
+  try {
+    const response = await axios.get<GcodeFile[]>(`${getApiBaseUrl()}/gcode`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'G-Code-Dateien konnten nicht geladen werden.');
+  }
+}
+
+/**
+ * Raw body upload via `application/octet-stream` + `X-Filename`. Matches
+ * the API's `express.raw` route — we deliberately avoid multipart, since
+ * a single raw blob has zero framing overhead and needs no extra deps
+ * on either side.
+ */
+export async function uploadGcodeFile(file: File): Promise<GcodeFile> {
+  try {
+    const response = await axios.post<GcodeFile>(
+      `${getApiBaseUrl()}/gcode`,
+      file,
+      {
+        ...AXIOS_OPTIONS,
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          'X-Filename': file.name
+        }
+      }
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'G-Code-Datei konnte nicht hochgeladen werden.');
+  }
+}
+
+export async function deleteGcodeFile(id: string): Promise<void> {
+  try {
+    await axios.delete(`${getApiBaseUrl()}/gcode/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
+  } catch (error: unknown) {
+    toApiError(error, 'G-Code-Datei konnte nicht gelöscht werden.');
+  }
+}

@@ -46,6 +46,18 @@ const TILES: DashboardTile[] = [
     description: "DigitalOcean App-Platform und Managed-Postgres: CPU, Memory, Disk, Status.",
     to: Routes.Dashboard.Metrics,
     permission: "dashboard.metrics"
+  },
+  {
+    title: "Drucker",
+    description: "3D-Drucker registrieren, Agent-Token verwalten und Zugriffe vergeben.",
+    to: Routes.Dashboard.Printers,
+    permission: "dashboard.printers"
+  },
+  {
+    title: "G-Code",
+    description: "G-Code-Dateien hochladen, verwalten und für Druckjobs bereitstellen.",
+    to: Routes.Dashboard.Gcode,
+    permission: "dashboard.printers"
   }
 ];
 
