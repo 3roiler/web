@@ -25,7 +25,11 @@ export const Routes = {
     Groups: "/dashboard/groups",
     GroupDetail: "/dashboard/groups/:id",
     Settings: "/dashboard/settings",
-    Metrics: "/dashboard/metrics"
+    Metrics: "/dashboard/metrics",
+    Printers: "/dashboard/printers",
+    PrinterNew: "/dashboard/printers/new",
+    PrinterDetail: "/dashboard/printers/:id",
+    Gcode: "/dashboard/gcode"
   },
 
   Callback: {

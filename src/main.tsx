@@ -16,6 +16,10 @@ import { AdminGroupDetailPage } from './pages/AdminGroupDetail';
 import { DashboardSettingsPage } from './pages/DashboardSettings';
 import { DashboardMetricsPage } from './pages/DashboardMetrics';
 import { ProfilePage } from './pages/Profile';
+import { PrintersPage } from './pages/Printers';
+import { PrinterNewPage } from './pages/PrinterNew';
+import { PrinterDetailPage } from './pages/PrinterDetail';
+import { GcodePage } from './pages/Gcode';
 import { Routes } from './config/routes';
 
 /**
@@ -63,6 +67,10 @@ function AppRoot() {
           <Route path={Routes.Dashboard.GroupDetail} element={<AdminGroupDetailPage />} />
           <Route path={Routes.Dashboard.Settings} element={<DashboardSettingsPage />} />
           <Route path={Routes.Dashboard.Metrics} element={<DashboardMetricsPage />} />
+          <Route path={Routes.Dashboard.Printers} element={<PrintersPage />} />
+          <Route path={Routes.Dashboard.PrinterNew} element={<PrinterNewPage />} />
+          <Route path={Routes.Dashboard.PrinterDetail} element={<PrinterDetailPage />} />
+          <Route path={Routes.Dashboard.Gcode} element={<GcodePage />} />
 
           <Route path={Routes.BlogPost} element={<BlogPostPage />} />
           <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />
