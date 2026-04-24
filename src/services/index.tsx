@@ -177,6 +177,31 @@ export async function updateMe(input: UpdateMeInput): Promise<User> {
   }
 }
 
+/**
+ * Slim profile returned by the search endpoint. Used in sharing flows
+ * like the printer-access grant dialog — shows enough context that you
+ * can pick the right person without leaking full user records.
+ */
+export interface UserSummary {
+  id: string;
+  name: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  email: string | null;
+}
+
+export async function searchUsers(query: string, limit = 10): Promise<UserSummary[]> {
+  try {
+    const response = await axios.get<UserSummary[]>(
+      `${getApiBaseUrl()}/user/search?q=${encodeURIComponent(query)}&limit=${limit}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Suche fehlgeschlagen.');
+  }
+}
+
 export async function nuke(): Promise<void> {
   try {
     await axios.post(`${getApiBaseUrl()}/user/nuke`, {}, AXIOS_OPTIONS);
@@ -666,7 +691,7 @@ export const getDatabaseDisk = (window: MetricsWindow) =>
 // ─── Drucker & G-Code ─────────────────────────────────────────────────────
 
 export type PrinterStatus = 'offline' | 'online' | 'error';
-export type PrinterRole = 'owner' | 'operator' | 'viewer';
+export type PrinterRole = 'owner' | 'operator' | 'contributor' | 'viewer';
 
 export interface Printer {
   id: string;
@@ -682,6 +707,7 @@ export interface Printer {
 export interface PrinterWithRole extends Printer {
   role: PrinterRole;
   canViewCamera: boolean;
+  canViewQueue: boolean;
 }
 
 export interface PrinterAccess {
@@ -690,8 +716,16 @@ export interface PrinterAccess {
   userId: string;
   role: PrinterRole;
   canViewCamera: boolean;
+  canViewQueue: boolean;
   grantedBy: string | null;
   grantedAt: string;
+}
+
+/** `PrinterAccess` enriched with the target user's public info. */
+export interface PrinterAccessWithUser extends PrinterAccess {
+  userName: string;
+  userDisplayName: string | null;
+  userAvatarUrl: string | null;
 }
 
 export interface CreatePrinterInput {
@@ -795,9 +829,9 @@ export async function rotatePrinterToken(id: string): Promise<string> {
   }
 }
 
-export async function listPrinterAccess(id: string): Promise<PrinterAccess[]> {
+export async function listPrinterAccess(id: string): Promise<PrinterAccessWithUser[]> {
   try {
-    const response = await axios.get<PrinterAccess[]>(
+    const response = await axios.get<PrinterAccessWithUser[]>(
       `${getApiBaseUrl()}/printer/${encodeURIComponent(id)}/access`,
       AXIOS_OPTIONS
     );
@@ -809,7 +843,12 @@ export async function listPrinterAccess(id: string): Promise<PrinterAccess[]> {
 
 export async function grantPrinterAccess(
   id: string,
-  input: { userId: string; role: 'operator' | 'viewer'; canViewCamera?: boolean }
+  input: {
+    userId: string;
+    role: 'operator' | 'contributor' | 'viewer';
+    canViewCamera?: boolean;
+    canViewQueue?: boolean;
+  }
 ): Promise<PrinterAccess> {
   try {
     const response = await axios.post<PrinterAccess>(
@@ -873,5 +912,220 @@ export async function deleteGcodeFile(id: string): Promise<void> {
     await axios.delete(`${getApiBaseUrl()}/gcode/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
   } catch (error: unknown) {
     toApiError(error, 'G-Code-Datei konnte nicht gelöscht werden.');
+  }
+}
+
+// ─── Druck-Jobs ────────────────────────────────────────────────────────────
+
+export type PrintJobState =
+  | 'requested'
+  | 'queued'
+  | 'transferring'
+  | 'printing'
+  | 'paused'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
+
+export interface PrintJob {
+  id: string;
+  printerId: string;
+  userId: string | null;
+  gcodeFileId: string;
+  state: PrintJobState;
+  priority: number;
+  queuedAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  errorMessage: string | null;
+  moonrakerJobId: string | null;
+  progress: number | null;
+}
+
+export interface PrintEvent {
+  id: string;
+  printJobId: string;
+  eventType: string;
+  payload: Record<string, unknown>;
+  ts: string;
+}
+
+/** Detail view returned by `GET /printer/:id/jobs/:jobId`. */
+export interface PrintJobDetail extends PrintJob {
+  events: PrintEvent[];
+}
+
+export interface CreatePrintRequestInput {
+  gcodeFileId: string;
+}
+
+export async function listPrintJobs(
+  printerId: string,
+  opts?: { state?: PrintJobState[]; limit?: number; offset?: number }
+): Promise<PrintJob[]> {
+  try {
+    const params = new URLSearchParams();
+    if (opts?.state?.length) params.set('state', opts.state.join(','));
+    if (opts?.limit !== undefined) params.set('limit', String(opts.limit));
+    if (opts?.offset !== undefined) params.set('offset', String(opts.offset));
+    const qs = params.toString();
+    const response = await axios.get<PrintJob[]>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(printerId)}/jobs${qs ? `?${qs}` : ''}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckqueue konnte nicht geladen werden.');
+  }
+}
+
+/**
+ * Fetches the single job the printer is handling right now (transferring /
+ * printing / paused) or null if idle. Anyone with access can see this.
+ */
+export async function getCurrentPrintJob(printerId: string): Promise<PrintJob | null> {
+  try {
+    const response = await axios.get(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(printerId)}/jobs/current`,
+      { ...AXIOS_OPTIONS, validateStatus: (s) => s === 200 || s === 204 }
+    );
+    if (response.status === 204) return null;
+    return response.data as PrintJob;
+  } catch (error: unknown) {
+    toApiError(error, 'Aktiver Druckjob konnte nicht geladen werden.');
+  }
+}
+
+/**
+ * Contributor+ files a new request. Goes into `requested` state —
+ * admin/operator must approve before it joins the queue.
+ */
+export async function createPrintRequest(
+  printerId: string,
+  input: CreatePrintRequestInput
+): Promise<PrintJob> {
+  try {
+    const response = await axios.post<PrintJob>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(printerId)}/jobs`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckanfrage konnte nicht angelegt werden.');
+  }
+}
+
+export async function approvePrintJob(
+  printerId: string,
+  jobId: string,
+  priority = 0
+): Promise<PrintJob> {
+  try {
+    const response = await axios.post<PrintJob>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(printerId)}/jobs/${encodeURIComponent(jobId)}/approve`,
+      { priority },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckanfrage konnte nicht genehmigt werden.');
+  }
+}
+
+export async function rejectPrintJob(
+  printerId: string,
+  jobId: string,
+  reason: string
+): Promise<PrintJob> {
+  try {
+    const response = await axios.post<PrintJob>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(printerId)}/jobs/${encodeURIComponent(jobId)}/reject`,
+      { reason },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckanfrage konnte nicht abgelehnt werden.');
+  }
+}
+
+/**
+ * Explicitly hands a queued job to the printer. The agent sees it on
+ * its next poll via `/api/agent/jobs/current`.
+ */
+export async function startPrintJob(printerId: string, jobId: string): Promise<PrintJob> {
+  try {
+    const response = await axios.post<PrintJob>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(printerId)}/jobs/${encodeURIComponent(jobId)}/start`,
+      {},
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druck konnte nicht gestartet werden.');
+  }
+}
+
+/**
+ * Replaces the G-code attached to a still-pending job (requested or
+ * queued). Used by the editor flow.
+ */
+export async function replaceJobGcode(
+  printerId: string,
+  jobId: string,
+  newGcodeFileId: string
+): Promise<PrintJob> {
+  try {
+    const response = await axios.put<PrintJob>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(printerId)}/jobs/${encodeURIComponent(jobId)}/gcode`,
+      { gcodeFileId: newGcodeFileId },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'G-Code konnte nicht getauscht werden.');
+  }
+}
+
+export async function getPrintJob(printerId: string, jobId: string): Promise<PrintJobDetail> {
+  try {
+    const response = await axios.get<PrintJobDetail>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(printerId)}/jobs/${encodeURIComponent(jobId)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckjob konnte nicht geladen werden.');
+  }
+}
+
+export async function updatePrintJobPriority(
+  printerId: string,
+  jobId: string,
+  priority: number
+): Promise<PrintJob> {
+  try {
+    const response = await axios.patch<PrintJob>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(printerId)}/jobs/${encodeURIComponent(jobId)}/priority`,
+      { priority },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Priorität konnte nicht geändert werden.');
+  }
+}
+
+export async function cancelPrintJob(printerId: string, jobId: string): Promise<PrintJob> {
+  try {
+    const response = await axios.post<PrintJob>(
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(printerId)}/jobs/${encodeURIComponent(jobId)}/cancel`,
+      {},
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckjob konnte nicht abgebrochen werden.');
   }
 }

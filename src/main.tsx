@@ -19,6 +19,7 @@ import { ProfilePage } from './pages/Profile';
 import { PrintersPage } from './pages/Printers';
 import { PrinterNewPage } from './pages/PrinterNew';
 import { PrinterDetailPage } from './pages/PrinterDetail';
+import { PrinterJobsPage } from './pages/PrinterJobs';
 import { GcodePage } from './pages/Gcode';
 import { Routes } from './config/routes';
 
@@ -70,6 +71,7 @@ function AppRoot() {
           <Route path={Routes.Dashboard.Printers} element={<PrintersPage />} />
           <Route path={Routes.Dashboard.PrinterNew} element={<PrinterNewPage />} />
           <Route path={Routes.Dashboard.PrinterDetail} element={<PrinterDetailPage />} />
+          <Route path={Routes.Dashboard.PrinterJobs} element={<PrinterJobsPage />} />
           <Route path={Routes.Dashboard.Gcode} element={<GcodePage />} />
 
           <Route path={Routes.BlogPost} element={<BlogPostPage />} />

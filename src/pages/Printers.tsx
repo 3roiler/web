@@ -18,6 +18,7 @@ const STATUS_BADGE: Record<PrinterStatus, { label: string; className: string }> 
 const ROLE_BADGE: Record<PrinterRole, { label: string; className: string }> = {
   owner: { label: "Owner", className: "bg-cyan-500/20 text-cyan-200" },
   operator: { label: "Operator", className: "bg-sky-500/20 text-sky-200" },
+  contributor: { label: "Contributor", className: "bg-teal-500/20 text-teal-200" },
   viewer: { label: "Viewer", className: "bg-slate-500/20 text-slate-300" }
 };
 
