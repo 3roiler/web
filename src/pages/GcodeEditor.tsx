@@ -178,6 +178,26 @@ function EditorContent({ fileId, jobId, printerId }: EditorContentProps) {
   const lineCount = React.useMemo(() => (content.match(/\n/g)?.length ?? 0) + 1, [content]);
   const byteSize = React.useMemo(() => new Blob([content]).size, [content]);
 
+  /**
+   * Block accidental tab-away while there are unsaved changes. We use
+   * the `beforeunload` event because it's the only one browsers still
+   * honour for a custom warning dialog (since 2018 the message itself
+   * is ignored, but the prompt still shows).
+   *
+   * MUST live above the early returns below — React requires hooks to
+   * run in the same order on every render, and an early return before
+   * a hook would skip it on the loading paths.
+   */
+  React.useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    globalThis.addEventListener("beforeunload", handler);
+    return () => globalThis.removeEventListener("beforeunload", handler);
+  }, [dirty]);
+
   if (error && meta === undefined) return <p className="text-sm text-red-300">{error}</p>;
   if (meta === undefined) return <p className="text-sm text-slate-400">Lade…</p>;
   if (meta === null) return <p className="text-sm text-slate-400">Datei nicht gefunden.</p>;
@@ -227,22 +247,6 @@ function EditorContent({ fileId, jobId, printerId }: EditorContentProps) {
       setSaving(false);
     }
   }
-
-  /**
-   * Block accidental tab-away while there are unsaved changes. We use
-   * the `beforeunload` event because it's the only one browsers will
-   * still honour for a custom warning dialog (since 2018 the message
-   * itself is ignored, but the prompt still shows).
-   */
-  React.useEffect(() => {
-    if (!dirty) return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
-    globalThis.addEventListener("beforeunload", handler);
-    return () => globalThis.removeEventListener("beforeunload", handler);
-  }, [dirty]);
 
   return (
     <div className="space-y-4">
