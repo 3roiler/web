@@ -158,7 +158,7 @@ function PrinterDetailContent({ id }: { id: string }) {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-3">
+      <section className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3 sm:p-6">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className={`rounded-full px-2 py-0.5 ${status.className}`}>
             {status.label}
@@ -181,12 +181,12 @@ function PrinterDetailContent({ id }: { id: string }) {
           <dt className="text-slate-500">Zuletzt</dt>
           <dd>{formatLastSeen(printer.lastSeenAt)}</dd>
           <dt className="text-slate-500">ID</dt>
-          <dd className="font-mono text-xs">{printer.id}</dd>
+          <dd className="break-all font-mono text-xs">{printer.id}</dd>
         </dl>
       </section>
 
       {isOwner && (
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
+        <section className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4 sm:p-6">
           <h3 className="text-sm font-semibold text-slate-100">Einstellungen</h3>
           <form onSubmit={handleRename} className="space-y-3">
             <label htmlFor="printer-detail-name" className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -210,7 +210,7 @@ function PrinterDetailContent({ id }: { id: string }) {
       {isOwner && <PrinterAccessSection printerId={id} />}
 
       {isOwner && (
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
+        <section className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4 sm:p-6">
           <h3 className="text-sm font-semibold text-slate-100">Agent-Token</h3>
           <p className="text-xs text-slate-400">
             Rotiere den Token, wenn er kompromittiert sein könnte oder der
@@ -243,7 +243,7 @@ function PrinterDetailContent({ id }: { id: string }) {
       )}
 
       {isOwner && (
-        <section className="rounded-2xl border border-red-500/30 bg-red-500/5 p-6 space-y-3">
+        <section className="rounded-2xl border border-red-500/30 bg-red-500/5 p-4 space-y-3 sm:p-6">
           <h3 className="text-sm font-semibold text-red-200">Gefahrenzone</h3>
           <p className="text-xs text-red-200/80">
             Löscht den Drucker, alle Zugriffs-Einträge und gekoppelten Jobs.
@@ -365,7 +365,7 @@ function PrinterAccessSection({ printerId }: AccessSectionProps) {
   }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4 max-w-3xl">
+    <section className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4 max-w-3xl sm:p-6">
       <div>
         <h3 className="text-sm font-semibold text-slate-100">Zugriff</h3>
         <p className="mt-1 text-xs text-slate-500">
