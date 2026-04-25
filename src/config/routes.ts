@@ -31,6 +31,7 @@ export const Routes = {
     PrinterDetail: "/dashboard/printers/:id",
     PrinterJobs: "/dashboard/printers/:id/jobs",
     Gcode: "/dashboard/gcode",
+    GcodeNew: "/dashboard/gcode/new",
     GcodeEdit: "/dashboard/gcode/:id/edit",
     Stl: "/dashboard/stl",
     StlViewer: "/dashboard/stl/:id"

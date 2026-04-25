@@ -86,6 +86,10 @@ function AppRoot() {
           <Route path={Routes.Dashboard.PrinterDetail} element={<PrinterDetailPage />} />
           <Route path={Routes.Dashboard.PrinterJobs} element={<PrinterJobsPage />} />
           <Route path={Routes.Dashboard.Gcode} element={<GcodePage />} />
+          {/* `/new` MUST come before `/:id/edit` so the literal segment
+              wins over the param. React-Router 7 actually rank-orders
+              routes, but keeping the obvious ordering avoids surprises. */}
+          <Route path={Routes.Dashboard.GcodeNew} element={<GcodeEditorPage />} />
           <Route path={Routes.Dashboard.GcodeEdit} element={<GcodeEditorPage />} />
           <Route path={Routes.Dashboard.Stl} element={<StlPage />} />
           <Route path={Routes.Dashboard.StlViewer} element={<StlViewerPage />} />

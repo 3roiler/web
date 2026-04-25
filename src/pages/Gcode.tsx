@@ -37,6 +37,11 @@ export function GcodePage() {
           Eintrag zugeschrieben.
         </>
       }
+      actions={
+        <Link to={Routes.Dashboard.GcodeNew} className="btn btn-sm">
+          Neuer Entwurf
+        </Link>
+      }
     >
       {() => <GcodeContent />}
     </DashboardLayout>
