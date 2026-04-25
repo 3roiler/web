@@ -100,19 +100,39 @@ const editorTheme = EditorView.theme(
 
 const EXTENSIONS = [gcodeLanguage, syntaxHighlighting(gcodeHighlight), editorTheme];
 
+/**
+ * Renders the editor in one of two modes:
+ *
+ *   - **Existing file**: route is `/dashboard/gcode/:id/edit`. We fetch
+ *     the file metadata + body and pre-fill the buffer.
+ *   - **New / blank**: route is `/dashboard/gcode/new`. The buffer
+ *     starts empty and the filename defaults to `untitled.gcode`. Save
+ *     uploads it as a fresh `gcode_file` row and navigates to that
+ *     file's editor URL.
+ *
+ * Both modes share the same component below so the editing UX, save
+ * flow and beforeunload guard live in one place.
+ */
 export function GcodeEditorPage() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const jobId = searchParams.get("jobId");
   const printerId = searchParams.get("printerId");
 
+  // `useParams` returns undefined for the `/new` route — translate to
+  // `null` so the contract for `EditorContent` is explicit.
+  const fileId = id ?? null;
+  const isNew = fileId === null;
+
   return (
     <DashboardLayout
       requiredPermission="dashboard.printers"
       kicker="Dashboard · G-Code Editor"
-      title="G-Code bearbeiten"
+      title={isNew ? "Neuer Entwurf" : "G-Code bearbeiten"}
       description={
-        jobId
+        isNew
+          ? "Schreibe G-Code von Hand oder füge ihn ein. Beim Speichern landet er als neue Datei in deiner G-Code-Liste."
+          : jobId
           ? "Änderungen werden als neue Version gespeichert und am verknüpften Druckjob hinterlegt."
           : "Änderungen werden als neue Version gespeichert. Der Original-G-Code bleibt unverändert."
       }
@@ -122,19 +142,14 @@ export function GcodeEditorPage() {
         </Link>
       }
     >
-      {() =>
-        id ? (
-          <EditorContent fileId={id} jobId={jobId} printerId={printerId} />
-        ) : (
-          <p className="text-sm text-red-300">Keine Datei-ID.</p>
-        )
-      }
+      {() => <EditorContent fileId={fileId} jobId={jobId} printerId={printerId} />}
     </DashboardLayout>
   );
 }
 
 interface EditorContentProps {
-  fileId: string;
+  /** Null when the page was opened via `/dashboard/gcode/new`. */
+  fileId: string | null;
   jobId: string | null;
   printerId: string | null;
 }
@@ -142,17 +157,24 @@ interface EditorContentProps {
 function EditorContent({ fileId, jobId, printerId }: EditorContentProps) {
   const navigate = useNavigate();
   const editorRef = React.useRef<ReactCodeMirrorRef | null>(null);
+  const isNew = fileId === null;
 
-  const [meta, setMeta] = React.useState<GcodeFile | null | undefined>(undefined);
+  // In "new" mode we skip the metadata fetch entirely; meta starts as
+  // `null` to signal "no file behind this editor yet". In "existing"
+  // mode it starts undefined so the loading guard kicks in below.
+  const [meta, setMeta] = React.useState<GcodeFile | null | undefined>(
+    isNew ? null : undefined
+  );
   const [original, setOriginal] = React.useState<string>("");
   const [content, setContent] = React.useState<string>("");
-  const [filename, setFilename] = React.useState<string>("");
+  const [filename, setFilename] = React.useState<string>(isNew ? "untitled.gcode" : "");
   const [error, setError] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
+    if (isNew) return; // no fetch — start blank
     let cancelled = false;
-    Promise.all([listGcodeFiles(), getGcodeContent(fileId)])
+    Promise.all([listGcodeFiles(), getGcodeContent(fileId!)])
       .then(([files, body]) => {
         if (cancelled) return;
         const m = files.find((f) => f.id === fileId) ?? null;
@@ -172,9 +194,11 @@ function EditorContent({ fileId, jobId, printerId }: EditorContentProps) {
     return () => {
       cancelled = true;
     };
-  }, [fileId]);
+  }, [fileId, isNew]);
 
-  const dirty = content !== original;
+  // In "new" mode any non-empty buffer counts as dirty. In "existing"
+  // mode dirty means "drifted from what the server gave us".
+  const dirty = isNew ? content.length > 0 : content !== original;
   const lineCount = React.useMemo(() => (content.match(/\n/g)?.length ?? 0) + 1, [content]);
   const byteSize = React.useMemo(() => new Blob([content]).size, [content]);
 
@@ -198,9 +222,14 @@ function EditorContent({ fileId, jobId, printerId }: EditorContentProps) {
     return () => globalThis.removeEventListener("beforeunload", handler);
   }, [dirty]);
 
-  if (error && meta === undefined) return <p className="text-sm text-red-300">{error}</p>;
-  if (meta === undefined) return <p className="text-sm text-slate-400">Lade…</p>;
-  if (meta === null) return <p className="text-sm text-slate-400">Datei nicht gefunden.</p>;
+  // Loading / not-found guards only apply in existing-file mode — in
+  // "new" mode `meta` is intentionally `null` (= no file behind the
+  // editor yet) and we want to render the blank canvas right away.
+  if (!isNew) {
+    if (error && meta === undefined) return <p className="text-sm text-red-300">{error}</p>;
+    if (meta === undefined) return <p className="text-sm text-slate-400">Lade…</p>;
+    if (meta === null) return <p className="text-sm text-slate-400">Datei nicht gefunden.</p>;
+  }
 
   function handleReset() {
     if (!dirty) return;
@@ -283,7 +312,13 @@ function EditorContent({ fileId, jobId, printerId }: EditorContentProps) {
             disabled={!dirty || saving}
             className="btn btn-sm"
           >
-            {saving ? "Speichere…" : jobId ? "Speichern + im Job ersetzen" : "Als neue Version speichern"}
+            {saving
+              ? "Speichere…"
+              : isNew
+              ? "Anlegen"
+              : jobId
+              ? "Speichern + im Job ersetzen"
+              : "Als neue Version speichern"}
           </button>
         </div>
       </div>
