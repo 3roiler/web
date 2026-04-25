@@ -1,7 +1,9 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { UploadCard } from "../components/UploadCard";
 import { Routes } from "../config/routes";
+import { formatBytes, formatDate, formatDuration, readMaxBytes } from "../lib/asset-helpers";
 import {
   listGcodeFiles,
   uploadGcodeFile,
@@ -10,34 +12,6 @@ import {
   type GcodeFile,
   type GcodeMetadata
 } from "../services";
-
-/**
- * Mirrors `GCODE_MAX_BYTES` default on the server. Used for client-side
- * pre-check so the user gets instant feedback instead of a 413.
- * Override via `window.__gcodeMaxBytes` if the server limit is bumped.
- */
-const DEFAULT_MAX_BYTES = 52428800; // 50 MiB
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDuration(seconds: number | undefined): string | null {
-  if (seconds === undefined) return null;
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString("de-DE", {
-    dateStyle: "short",
-    timeStyle: "short"
-  });
-}
 
 function metadataPreview(md: GcodeMetadata): string {
   const parts: string[] = [];
@@ -72,11 +46,8 @@ export function GcodePage() {
 function GcodeContent() {
   const [files, setFiles] = React.useState<GcodeFile[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const [uploading, setUploading] = React.useState(false);
   const [busyId, setBusyId] = React.useState<string | null>(null);
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
-
-  const maxBytes = (globalThis as unknown as { __gcodeMaxBytes?: number }).__gcodeMaxBytes ?? DEFAULT_MAX_BYTES;
+  const maxBytes = readMaxBytes("__gcodeMaxBytes");
 
   const reload = React.useCallback(() => {
     listGcodeFiles()
@@ -93,25 +64,12 @@ function GcodeContent() {
 
   async function handleUpload(file: File) {
     setError(null);
-    if (file.size === 0) {
-      setError("Datei ist leer.");
-      return;
-    }
-    if (file.size > maxBytes) {
-      setError(`Datei zu groß (${formatBytes(file.size)} > ${formatBytes(maxBytes)}).`);
-      return;
-    }
-
-    setUploading(true);
     try {
       await uploadGcodeFile(file);
       reload();
-      if (inputRef.current) inputRef.current.value = "";
     } catch (err: unknown) {
       console.error(err);
       setError(err instanceof ApiError ? err.message : "Upload fehlgeschlagen.");
-    } finally {
-      setUploading(false);
     }
   }
 
@@ -132,27 +90,14 @@ function GcodeContent() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <h3 className="text-sm font-semibold text-slate-100">Neue Datei hochladen</h3>
-        <p className="mt-1 text-xs text-slate-500">
-          Max. {formatBytes(maxBytes)}. Akzeptiert nur plausible G-Code-Dateien
-          (enthält G/M-Kommandos in den ersten 1 KB).
-        </p>
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".gcode,.g,.gco,application/octet-stream"
-            disabled={uploading}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleUpload(f);
-            }}
-            className="block text-sm text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-cyan-500/20 file:px-4 file:py-1.5 file:text-xs file:font-semibold file:text-cyan-200 hover:file:bg-cyan-500/30"
-          />
-          {uploading && <span className="text-xs text-cyan-300">Lade hoch…</span>}
-        </div>
-      </section>
+      <UploadCard
+        title="Neue Datei hochladen"
+        hint="Akzeptiert nur plausible G-Code-Dateien (enthält G/M-Kommandos in den ersten 1 KB)."
+        accept=".gcode,.g,.gco,application/octet-stream"
+        maxBytes={maxBytes}
+        onUpload={handleUpload}
+        onPreflightError={setError}
+      />
 
       {error && <p className="text-sm text-red-300">{error}</p>}
 
@@ -167,7 +112,7 @@ function GcodeContent() {
           return (
             <div
               key={file.id}
-              className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-5 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5"
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-50">
