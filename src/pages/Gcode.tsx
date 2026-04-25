@@ -1,5 +1,7 @@
 import * as React from "react";
+import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { Routes } from "../config/routes";
 import {
   listGcodeFiles,
   uploadGcodeFile,
@@ -179,7 +181,13 @@ function GcodeContent() {
                   sha256: {file.sha256.slice(0, 16)}…
                 </p>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                <Link
+                  to={Routes.Dashboard.GcodeEdit.replace(":id", file.id)}
+                  className="rounded-full border border-cyan-400/40 px-3 py-1 text-xs text-cyan-200 transition hover:bg-cyan-500/10"
+                >
+                  Bearbeiten
+                </Link>
                 <button
                   type="button"
                   onClick={() => handleDelete(file)}

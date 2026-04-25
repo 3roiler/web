@@ -20,7 +20,8 @@ import {
   type PrintJob,
   type PrintJobState,
   type PrintJobDetail,
-  type GcodeFile
+  type GcodeFile,
+  type User
 } from "../services";
 
 const STATE_META: Record<PrintJobState, { label: string; className: string }> = {
@@ -83,12 +84,12 @@ export function PrinterJobsPage() {
         ) : null
       }
     >
-      {() => (id ? <JobsContent printerId={id} /> : <p className="text-sm text-red-300">Keine Drucker-ID.</p>)}
+      {({ me }) => (id ? <JobsContent printerId={id} me={me} /> : <p className="text-sm text-red-300">Keine Drucker-ID.</p>)}
     </DashboardLayout>
   );
 }
 
-function JobsContent({ printerId }: { printerId: string }) {
+function JobsContent({ printerId, me }: { printerId: string; me: User }) {
   const [printer, setPrinter] = React.useState<PrinterWithRole | null | undefined>(undefined);
   const [currentJob, setCurrentJob] = React.useState<PrintJob | null>(null);
   const [jobs, setJobs] = React.useState<PrintJob[] | null>(null);
@@ -238,6 +239,25 @@ function JobsContent({ printerId }: { printerId: string }) {
     }
   }
 
+  /**
+   * Decides whether the viewer can edit a job's g-code. Mirrors the
+   * backend rule in `controllers/print-job.ts#replaceGcode`:
+   *   - owner / operator: any pending job (`requested` or `queued`)
+   *   - submitter: only their own, only while still `requested`
+   * Outside of those windows the editor button stays hidden so we don't
+   * tease the user with a control that 403s.
+   */
+  function editUrlFor(job: PrintJob): string | null {
+    if (job.state !== 'requested' && job.state !== 'queued') return null;
+    const ok =
+      isModerator || (job.state === 'requested' && job.userId === me.id);
+    if (!ok) return null;
+    return (
+      Routes.Dashboard.GcodeEdit.replace(':id', job.gcodeFileId) +
+      `?jobId=${encodeURIComponent(job.id)}&printerId=${encodeURIComponent(printerId)}`
+    );
+  }
+
   async function handleExpand(job: PrintJob) {
     if (expandedJob?.id === job.id) {
       setExpandedJob(null);
@@ -274,6 +294,7 @@ function JobsContent({ printerId }: { printerId: string }) {
               role={printer.role}
               busy={busyJob === currentJob.id}
               expanded={expandedJob?.id === currentJob.id ? expandedJob : null}
+              editGcodeUrl={editUrlFor(currentJob)}
               onCancel={isModerator ? () => handleCancel(currentJob) : null}
               onPriorityBump={null}
               onApprove={null}
@@ -353,6 +374,7 @@ function JobsContent({ printerId }: { printerId: string }) {
               role={printer.role}
               busy={busyJob === job.id}
               expanded={expandedJob?.id === job.id ? expandedJob : null}
+              editGcodeUrl={editUrlFor(job)}
               onApprove={() => handleApprove(job)}
               onReject={() => handleReject(job)}
               onStart={null}
@@ -377,6 +399,7 @@ function JobsContent({ printerId }: { printerId: string }) {
               role={printer.role}
               busy={busyJob === job.id}
               expanded={expandedJob?.id === job.id ? expandedJob : null}
+              editGcodeUrl={editUrlFor(job)}
               onApprove={null}
               onReject={null}
               onStart={null}
@@ -404,6 +427,7 @@ function JobsContent({ printerId }: { printerId: string }) {
               role={printer.role}
               busy={busyJob === job.id}
               expanded={expandedJob?.id === job.id ? expandedJob : null}
+              editGcodeUrl={editUrlFor(job)}
               onApprove={null}
               onReject={null}
               onStart={isModerator && currentJob === null ? () => handleStart(job) : null}
@@ -426,6 +450,7 @@ function JobsContent({ printerId }: { printerId: string }) {
               role={printer.role}
               busy={false}
               expanded={expandedJob?.id === job.id ? expandedJob : null}
+              editGcodeUrl={null}
               onApprove={null}
               onReject={null}
               onStart={null}
@@ -446,6 +471,8 @@ interface JobCardProps {
   role: PrinterRole;
   busy: boolean;
   expanded: PrintJobDetail | null;
+  /** Set when the viewer is allowed to edit this job's g-code. */
+  editGcodeUrl: string | null;
   onApprove: (() => void) | null;
   onReject: (() => void) | null;
   onStart: (() => void) | null;
@@ -455,7 +482,7 @@ interface JobCardProps {
 }
 
 function JobCard(props: JobCardProps) {
-  const { job, file, busy, expanded, onApprove, onReject, onStart, onCancel, onPriorityBump, onToggleExpand } = props;
+  const { job, file, busy, expanded, editGcodeUrl, onApprove, onReject, onStart, onCancel, onPriorityBump, onToggleExpand } = props;
   const meta = STATE_META[job.state];
 
   return (
@@ -491,6 +518,14 @@ function JobCard(props: JobCardProps) {
           <button type="button" onClick={onToggleExpand} className="btn-outline btn-sm">
             {expanded ? "Schließen" : "Events"}
           </button>
+          {editGcodeUrl && (
+            <Link
+              to={editGcodeUrl}
+              className="rounded-full border border-cyan-400/40 px-3 py-1 text-xs text-cyan-200 hover:bg-cyan-500/10"
+            >
+              G-Code
+            </Link>
+          )}
           {onApprove && (
             <button
               type="button"

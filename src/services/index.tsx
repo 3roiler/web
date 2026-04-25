@@ -907,6 +907,24 @@ export async function uploadGcodeFile(file: File): Promise<GcodeFile> {
   }
 }
 
+/**
+ * Returns the raw G-code body as a string. Owner-scoped on the server
+ * (only the uploader can fetch). Used by the editor — UTF-8 is fine
+ * because slicers emit ASCII / Latin-1 text and the rare Windows-1252
+ * escape sequences round-trip through JS strings without loss.
+ */
+export async function getGcodeContent(id: string): Promise<string> {
+  try {
+    const response = await axios.get<string>(
+      `${getApiBaseUrl()}/gcode/${encodeURIComponent(id)}/content`,
+      { ...AXIOS_OPTIONS, responseType: 'text', transformResponse: [(d: unknown) => String(d ?? '')] }
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'G-Code-Inhalt konnte nicht geladen werden.');
+  }
+}
+
 export async function deleteGcodeFile(id: string): Promise<void> {
   try {
     await axios.delete(`${getApiBaseUrl()}/gcode/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
