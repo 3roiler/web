@@ -26,13 +26,18 @@ import { Routes } from './config/routes';
 /**
  * Route-level code splitting. Both the Markdown editor and the rendered-post
  * view depend on highlight.js (~400 KB), which we don't want to ship with the
- * homepage. Lazy-loading here keeps the initial bundle around ~70 kB gzip.
+ * homepage. The G-code editor in turn pulls in CodeMirror 6 (~110 KB gzip)
+ * which is only useful to printer owners. Lazy-loading keeps the initial
+ * bundle around ~70 kB gzip for everyone else.
  */
 const BlogEditPage = React.lazy(() =>
   import('./pages/BlogEdit').then((m) => ({ default: m.BlogEditPage }))
 );
 const BlogPostPage = React.lazy(() =>
   import('./pages/BlogPost').then((m) => ({ default: m.BlogPostPage }))
+);
+const GcodeEditorPage = React.lazy(() =>
+  import('./pages/GcodeEditor').then((m) => ({ default: m.GcodeEditorPage }))
 );
 
 function RouteFallback() {
@@ -73,6 +78,7 @@ function AppRoot() {
           <Route path={Routes.Dashboard.PrinterDetail} element={<PrinterDetailPage />} />
           <Route path={Routes.Dashboard.PrinterJobs} element={<PrinterJobsPage />} />
           <Route path={Routes.Dashboard.Gcode} element={<GcodePage />} />
+          <Route path={Routes.Dashboard.GcodeEdit} element={<GcodeEditorPage />} />
 
           <Route path={Routes.BlogPost} element={<BlogPostPage />} />
           <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />
