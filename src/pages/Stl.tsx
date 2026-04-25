@@ -1,7 +1,9 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { UploadCard } from "../components/UploadCard";
 import { Routes } from "../config/routes";
+import { formatBytes, formatDate, readMaxBytes } from "../lib/asset-helpers";
 import {
   listStlFiles,
   uploadStlFile,
@@ -9,25 +11,6 @@ import {
   ApiError,
   type StlFile
 } from "../services";
-
-/**
- * Mirrors `GCODE_MAX_BYTES` default on the server. STLs share the same
- * 50 MB cap until usage tells us otherwise.
- */
-const DEFAULT_MAX_BYTES = 52428800;
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString("de-DE", {
-    dateStyle: "short",
-    timeStyle: "short"
-  });
-}
 
 function metadataPreview(file: StlFile): string {
   const parts: string[] = [];
@@ -62,11 +45,8 @@ export function StlPage() {
 function StlContent() {
   const [files, setFiles] = React.useState<StlFile[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const [uploading, setUploading] = React.useState(false);
   const [busyId, setBusyId] = React.useState<string | null>(null);
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
-
-  const maxBytes = (globalThis as unknown as { __stlMaxBytes?: number }).__stlMaxBytes ?? DEFAULT_MAX_BYTES;
+  const maxBytes = readMaxBytes("__stlMaxBytes");
 
   const reload = React.useCallback(() => {
     listStlFiles()
@@ -83,24 +63,12 @@ function StlContent() {
 
   async function handleUpload(file: File) {
     setError(null);
-    if (file.size === 0) {
-      setError("Datei ist leer.");
-      return;
-    }
-    if (file.size > maxBytes) {
-      setError(`Datei zu groß (${formatBytes(file.size)} > ${formatBytes(maxBytes)}).`);
-      return;
-    }
-    setUploading(true);
     try {
       await uploadStlFile(file);
       reload();
-      if (inputRef.current) inputRef.current.value = "";
     } catch (err: unknown) {
       console.error(err);
       setError(err instanceof ApiError ? err.message : "Upload fehlgeschlagen.");
-    } finally {
-      setUploading(false);
     }
   }
 
@@ -121,26 +89,14 @@ function StlContent() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6">
-        <h3 className="text-sm font-semibold text-slate-100">Neue Datei hochladen</h3>
-        <p className="mt-1 text-xs text-slate-500">
-          Max. {formatBytes(maxBytes)}. Akzeptiert ASCII- und Binary-STLs (Header-Validierung serverseitig).
-        </p>
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".stl,model/stl,application/sla,application/octet-stream"
-            disabled={uploading}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleUpload(f);
-            }}
-            className="block text-sm text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-cyan-500/20 file:px-4 file:py-1.5 file:text-xs file:font-semibold file:text-cyan-200 hover:file:bg-cyan-500/30"
-          />
-          {uploading && <span className="text-xs text-cyan-300">Lade hoch…</span>}
-        </div>
-      </section>
+      <UploadCard
+        title="Neue Datei hochladen"
+        hint="Akzeptiert ASCII- und Binary-STLs (Header-Validierung serverseitig)."
+        accept=".stl,model/stl,application/sla,application/octet-stream"
+        maxBytes={maxBytes}
+        onUpload={handleUpload}
+        onPreflightError={setError}
+      />
 
       {error && <p className="text-sm text-red-300">{error}</p>}
 
