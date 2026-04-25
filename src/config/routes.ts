@@ -31,7 +31,9 @@ export const Routes = {
     PrinterDetail: "/dashboard/printers/:id",
     PrinterJobs: "/dashboard/printers/:id/jobs",
     Gcode: "/dashboard/gcode",
-    GcodeEdit: "/dashboard/gcode/:id/edit"
+    GcodeEdit: "/dashboard/gcode/:id/edit",
+    Stl: "/dashboard/stl",
+    StlViewer: "/dashboard/stl/:id"
   },
 
   Callback: {

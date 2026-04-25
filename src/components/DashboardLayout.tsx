@@ -50,7 +50,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Nutzer", to: Routes.Dashboard.Users, permission: "dashboard.users" },
   { label: "Gruppen", to: Routes.Dashboard.Groups, permission: "dashboard.groups", prefixes: ["/dashboard/groups"] },
   { label: "Drucker", to: Routes.Dashboard.Printers, permission: "dashboard.printers", prefixes: ["/dashboard/printers"] },
-  { label: "G-Code", to: Routes.Dashboard.Gcode, permission: "dashboard.printers" },
+  { label: "G-Code", to: Routes.Dashboard.Gcode, permission: "dashboard.printers", prefixes: ["/dashboard/gcode"] },
+  { label: "STL", to: Routes.Dashboard.Stl, permission: "dashboard.printers", prefixes: ["/dashboard/stl"] },
   { label: "Einstellungen", to: Routes.Dashboard.Settings, permission: "dashboard.settings" },
   { label: "Metriken", to: Routes.Dashboard.Metrics, permission: "dashboard.metrics" }
 ];

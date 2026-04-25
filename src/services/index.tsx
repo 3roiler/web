@@ -925,6 +925,76 @@ export async function getGcodeContent(id: string): Promise<string> {
   }
 }
 
+// ─── STL ───────────────────────────────────────────────────────────────────
+
+export interface StlMetadata {
+  format?: 'ascii' | 'binary';
+  triangleCount?: number;
+}
+
+export interface StlFile {
+  id: string;
+  uploadedByUserId: string | null;
+  originalFilename: string;
+  sha256: string;
+  sizeBytes: number;
+  metadata: StlMetadata;
+  createdAt: string;
+}
+
+export async function listStlFiles(): Promise<StlFile[]> {
+  try {
+    const response = await axios.get<StlFile[]>(`${getApiBaseUrl()}/stl`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'STL-Dateien konnten nicht geladen werden.');
+  }
+}
+
+export async function uploadStlFile(file: File): Promise<StlFile> {
+  try {
+    const response = await axios.post<StlFile>(
+      `${getApiBaseUrl()}/stl`,
+      file,
+      {
+        ...AXIOS_OPTIONS,
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          'X-Filename': file.name
+        }
+      }
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'STL-Datei konnte nicht hochgeladen werden.');
+  }
+}
+
+export async function deleteStlFile(id: string): Promise<void> {
+  try {
+    await axios.delete(`${getApiBaseUrl()}/stl/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
+  } catch (error: unknown) {
+    toApiError(error, 'STL-Datei konnte nicht gelöscht werden.');
+  }
+}
+
+/**
+ * Returns the raw STL bytes as an `ArrayBuffer`, ready to feed three.js'
+ * `STLLoader.parse`. We don't try to decode here — the loader handles
+ * both ASCII and binary STL transparently.
+ */
+export async function getStlContent(id: string): Promise<ArrayBuffer> {
+  try {
+    const response = await axios.get<ArrayBuffer>(
+      `${getApiBaseUrl()}/stl/${encodeURIComponent(id)}/content`,
+      { ...AXIOS_OPTIONS, responseType: 'arraybuffer' }
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'STL-Inhalt konnte nicht geladen werden.');
+  }
+}
+
 export async function deleteGcodeFile(id: string): Promise<void> {
   try {
     await axios.delete(`${getApiBaseUrl()}/gcode/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
