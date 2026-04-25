@@ -873,39 +873,62 @@ export async function revokePrinterAccess(id: string, userId: string): Promise<v
   }
 }
 
-export async function listGcodeFiles(): Promise<GcodeFile[]> {
-  try {
-    const response = await axios.get<GcodeFile[]>(`${getApiBaseUrl()}/gcode`, AXIOS_OPTIONS);
-    return response.data;
-  } catch (error: unknown) {
-    toApiError(error, 'G-Code-Dateien konnten nicht geladen werden.');
-  }
+/**
+ * Builds a list/upload/delete trio for an asset endpoint that follows
+ * the broiler raw-octet-stream convention (G-code, STL, future slicer
+ * outputs). The label is a German noun fragment used in error
+ * messages — "G-Code" → "G-Code-Datei konnte nicht ...".
+ *
+ * Lives next to `toApiError` so the per-call try/catch noise stays
+ * confined to one place. Pages get back regular Promise-returning
+ * functions and don't see the factory at all.
+ */
+function buildAssetClient<TFile>(basePath: string, label: string) {
+  const base = () => `${getApiBaseUrl()}/${basePath}`;
+  return {
+    async list(): Promise<TFile[]> {
+      try {
+        const r = await axios.get<TFile[]>(base(), AXIOS_OPTIONS);
+        return r.data;
+      } catch (error: unknown) {
+        toApiError(error, `${label}-Dateien konnten nicht geladen werden.`);
+      }
+    },
+    /**
+     * Raw body upload via `application/octet-stream` + `X-Filename`.
+     * Matches the API's `express.raw` route — multipart was considered
+     * and dropped, single raw blob has zero framing overhead and needs
+     * no extra deps on either side.
+     */
+    async upload(file: File): Promise<TFile> {
+      try {
+        const r = await axios.post<TFile>(base(), file, {
+          ...AXIOS_OPTIONS,
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'X-Filename': file.name
+          }
+        });
+        return r.data;
+      } catch (error: unknown) {
+        toApiError(error, `${label}-Datei konnte nicht hochgeladen werden.`);
+      }
+    },
+    async delete(id: string): Promise<void> {
+      try {
+        await axios.delete(`${base()}/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
+      } catch (error: unknown) {
+        toApiError(error, `${label}-Datei konnte nicht gelöscht werden.`);
+      }
+    }
+  };
 }
 
-/**
- * Raw body upload via `application/octet-stream` + `X-Filename`. Matches
- * the API's `express.raw` route — we deliberately avoid multipart, since
- * a single raw blob has zero framing overhead and needs no extra deps
- * on either side.
- */
-export async function uploadGcodeFile(file: File): Promise<GcodeFile> {
-  try {
-    const response = await axios.post<GcodeFile>(
-      `${getApiBaseUrl()}/gcode`,
-      file,
-      {
-        ...AXIOS_OPTIONS,
-        headers: {
-          'Content-Type': 'application/octet-stream',
-          'X-Filename': file.name
-        }
-      }
-    );
-    return response.data;
-  } catch (error: unknown) {
-    toApiError(error, 'G-Code-Datei konnte nicht hochgeladen werden.');
-  }
-}
+const gcodeAssets = buildAssetClient<GcodeFile>('gcode', 'G-Code');
+
+export const listGcodeFiles = (): Promise<GcodeFile[]> => gcodeAssets.list();
+export const uploadGcodeFile = (file: File): Promise<GcodeFile> => gcodeAssets.upload(file);
+export const deleteGcodeFile = (id: string): Promise<void> => gcodeAssets.delete(id);
 
 /**
  * Returns the raw G-code body as a string. Owner-scoped on the server
@@ -942,41 +965,11 @@ export interface StlFile {
   createdAt: string;
 }
 
-export async function listStlFiles(): Promise<StlFile[]> {
-  try {
-    const response = await axios.get<StlFile[]>(`${getApiBaseUrl()}/stl`, AXIOS_OPTIONS);
-    return response.data;
-  } catch (error: unknown) {
-    toApiError(error, 'STL-Dateien konnten nicht geladen werden.');
-  }
-}
+const stlAssets = buildAssetClient<StlFile>('stl', 'STL');
 
-export async function uploadStlFile(file: File): Promise<StlFile> {
-  try {
-    const response = await axios.post<StlFile>(
-      `${getApiBaseUrl()}/stl`,
-      file,
-      {
-        ...AXIOS_OPTIONS,
-        headers: {
-          'Content-Type': 'application/octet-stream',
-          'X-Filename': file.name
-        }
-      }
-    );
-    return response.data;
-  } catch (error: unknown) {
-    toApiError(error, 'STL-Datei konnte nicht hochgeladen werden.');
-  }
-}
-
-export async function deleteStlFile(id: string): Promise<void> {
-  try {
-    await axios.delete(`${getApiBaseUrl()}/stl/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
-  } catch (error: unknown) {
-    toApiError(error, 'STL-Datei konnte nicht gelöscht werden.');
-  }
-}
+export const listStlFiles = (): Promise<StlFile[]> => stlAssets.list();
+export const uploadStlFile = (file: File): Promise<StlFile> => stlAssets.upload(file);
+export const deleteStlFile = (id: string): Promise<void> => stlAssets.delete(id);
 
 /**
  * Returns the raw STL bytes as an `ArrayBuffer`, ready to feed three.js'
@@ -992,14 +985,6 @@ export async function getStlContent(id: string): Promise<ArrayBuffer> {
     return response.data;
   } catch (error: unknown) {
     toApiError(error, 'STL-Inhalt konnte nicht geladen werden.');
-  }
-}
-
-export async function deleteGcodeFile(id: string): Promise<void> {
-  try {
-    await axios.delete(`${getApiBaseUrl()}/gcode/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
-  } catch (error: unknown) {
-    toApiError(error, 'G-Code-Datei konnte nicht gelöscht werden.');
   }
 }
 
