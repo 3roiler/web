@@ -87,8 +87,8 @@ export function DashboardLayout({
 
   if (me === undefined) {
     return (
-      <main className="min-h-screen bg-slate-950 py-24">
-        <div className="mx-auto max-w-6xl px-6 sm:px-10 lg:px-16 pt-16 text-sm text-slate-400">
+      <main className="min-h-screen bg-slate-950 pt-20 pb-12 sm:pt-24 sm:pb-16">
+        <div className="mx-auto max-w-6xl px-4 pt-6 text-sm text-slate-400 sm:px-6 sm:pt-12 lg:px-16 lg:pt-16">
           Lade…
         </div>
       </main>
@@ -97,8 +97,8 @@ export function DashboardLayout({
 
   if (!allowed || !me) {
     return (
-      <main className="min-h-screen bg-slate-950 py-24">
-        <div className="mx-auto max-w-6xl px-6 sm:px-10 lg:px-16 pt-16">
+      <main className="min-h-screen bg-slate-950 pt-20 pb-12 sm:pt-24 sm:pb-16">
+        <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-12 lg:px-16 lg:pt-16">
           <p className="text-sm text-red-300">
             Kein Zugriff. Dir fehlt die Berechtigung <code>{requiredPermission}</code>.
           </p>
@@ -117,26 +117,37 @@ export function DashboardLayout({
   const visibleItems = NAV_ITEMS.filter((item) => hasPermission(me, item.permission));
 
   return (
-    <main className="min-h-screen bg-slate-950 py-24" id="top">
-      <div className="mx-auto max-w-6xl px-6 sm:px-10 lg:px-16 pt-16">
+    <main className="min-h-screen bg-slate-950 pt-20 pb-12 sm:pt-24 sm:pb-16" id="top">
+      <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-12 lg:px-16 lg:pt-16">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-400">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400 sm:text-sm sm:tracking-[0.3em]">
               {kicker}
             </p>
-            <h1 className="mt-4 text-4xl font-semibold text-slate-50 sm:text-5xl">
+            <h1 className="mt-2 text-2xl font-semibold text-slate-50 sm:mt-4 sm:text-4xl lg:text-5xl">
               {title}
             </h1>
             {description && (
-              <div className="mt-3 max-w-2xl text-sm text-slate-400">{description}</div>
+              <div className="mt-2 max-w-2xl text-xs text-slate-400 sm:mt-3 sm:text-sm">{description}</div>
             )}
           </div>
           {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
         </div>
 
-        <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-[220px_minmax(0,1fr)]">
-          <aside>
-            <nav className="flex flex-row flex-wrap gap-2 lg:flex-col" aria-label="Dashboard-Navigation">
+        <div className="mt-6 grid grid-cols-1 gap-6 sm:mt-10 sm:gap-10 lg:grid-cols-[220px_minmax(0,1fr)]">
+          {/*
+            On phones the sidebar becomes a horizontally scrollable tab strip:
+            the same items, just one row that overflow-scrolls instead of
+            wrapping into 4 lines of pills. `-mx-4 px-4` lets the strip bleed
+            to the screen edge on tiny viewports so the active item is always
+            grabable without inset thumb-space. From `lg` it reverts to the
+            classic vertical sidebar.
+          */}
+          <aside className="lg:sticky lg:top-24">
+            <nav
+              aria-label="Dashboard-Navigation"
+              className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 sm:pb-0 lg:flex-col [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
               {visibleItems.map((item) => {
                 const active =
                   location.pathname === item.to ||
@@ -147,8 +158,8 @@ export function DashboardLayout({
                     to={item.to}
                     className={
                       active
-                        ? "rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200"
-                        : "rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-400 transition hover:text-slate-200"
+                        ? "shrink-0 whitespace-nowrap rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-200 sm:text-sm"
+                        : "shrink-0 whitespace-nowrap rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-400 transition hover:text-slate-200 sm:text-sm"
                     }
                     aria-current={active ? "page" : undefined}
                   >

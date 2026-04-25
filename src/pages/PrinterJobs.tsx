@@ -288,7 +288,7 @@ function JobsContent({ printerId }: { printerId: string }) {
       </section>
 
       {canSubmitJob && (
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <section className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6">
           <h3 className="text-sm font-semibold text-slate-100">
             {isModerator ? "Neuen Druck einreihen" : "Druckanfrage stellen"}
           </h3>
@@ -459,8 +459,8 @@ function JobCard(props: JobCardProps) {
   const meta = STATE_META[job.state];
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className={`rounded-full px-2 py-0.5 ${meta.className}`}>{meta.label}</span>
