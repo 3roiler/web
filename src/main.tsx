@@ -39,6 +39,14 @@ const BlogPostPage = React.lazy(() =>
 const GcodeEditorPage = React.lazy(() =>
   import('./pages/GcodeEditor').then((m) => ({ default: m.GcodeEditorPage }))
 );
+// three.js (~150 kB gzip) is even bigger than CodeMirror — definitely
+// keep it lazy so anyone who doesn't open the STL viewer never pays.
+const StlPage = React.lazy(() =>
+  import('./pages/Stl').then((m) => ({ default: m.StlPage }))
+);
+const StlViewerPage = React.lazy(() =>
+  import('./pages/StlViewer').then((m) => ({ default: m.StlViewerPage }))
+);
 
 function RouteFallback() {
   return (
@@ -79,6 +87,8 @@ function AppRoot() {
           <Route path={Routes.Dashboard.PrinterJobs} element={<PrinterJobsPage />} />
           <Route path={Routes.Dashboard.Gcode} element={<GcodePage />} />
           <Route path={Routes.Dashboard.GcodeEdit} element={<GcodeEditorPage />} />
+          <Route path={Routes.Dashboard.Stl} element={<StlPage />} />
+          <Route path={Routes.Dashboard.StlViewer} element={<StlViewerPage />} />
 
           <Route path={Routes.BlogPost} element={<BlogPostPage />} />
           <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />
