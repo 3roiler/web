@@ -971,6 +971,157 @@ export const listStlFiles = (): Promise<StlFile[]> => stlAssets.list();
 export const uploadStlFile = (file: File): Promise<StlFile> => stlAssets.upload(file);
 export const deleteStlFile = (id: string): Promise<void> => stlAssets.delete(id);
 
+// ─── Print-Request ─────────────────────────────────────────────────────────
+
+export type PrintRequestStatus =
+  | 'new'
+  | 'accepted'
+  | 'printing'
+  | 'done'
+  | 'rejected'
+  | 'cancelled';
+
+export type PrintRequestSourceType = 'stl_upload' | 'external_link';
+
+export interface PrintRequest {
+  id: string;
+  requesterUserId: string;
+  title: string;
+  description: string | null;
+  sourceType: PrintRequestSourceType;
+  stlFileId: string | null;
+  externalUrl: string | null;
+  assignedPrinterId: string | null;
+  status: PrintRequestStatus;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+/** List + detail rows from the API include requester / STL / printer
+ *  display so the UI doesn't need follow-up lookups. */
+export interface PrintRequestWithContext extends PrintRequest {
+  requesterName: string;
+  requesterDisplayName: string | null;
+  requesterAvatarUrl: string | null;
+  stlFilename: string | null;
+  printerName: string | null;
+}
+
+export interface PrintRequestComment {
+  id: string;
+  requestId: string;
+  authorUserId: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface PrintRequestCommentWithAuthor extends PrintRequestComment {
+  authorName: string;
+  authorDisplayName: string | null;
+  authorAvatarUrl: string | null;
+}
+
+export interface PrintRequestDetail extends PrintRequestWithContext {
+  comments: PrintRequestCommentWithAuthor[];
+}
+
+export interface CreatePrintRequestInput {
+  title: string;
+  description?: string | null;
+  sourceType: PrintRequestSourceType;
+  stlFileId?: string;
+  externalUrl?: string;
+}
+
+export async function listPrintRequests(opts?: {
+  mine?: boolean;
+  status?: PrintRequestStatus[];
+}): Promise<PrintRequestWithContext[]> {
+  try {
+    const params = new URLSearchParams();
+    if (opts?.mine) params.set('mine', '1');
+    if (opts?.status?.length) params.set('status', opts.status.join(','));
+    const qs = params.toString();
+    const response = await axios.get<PrintRequestWithContext[]>(
+      `${getApiBaseUrl()}/print-request${qs ? `?${qs}` : ''}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckanfragen konnten nicht geladen werden.');
+  }
+}
+
+export async function getPrintRequest(id: string): Promise<PrintRequestDetail> {
+  try {
+    const response = await axios.get<PrintRequestDetail>(
+      `${getApiBaseUrl()}/print-request/${encodeURIComponent(id)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckanfrage konnte nicht geladen werden.');
+  }
+}
+
+export async function createPrintRequest(input: CreatePrintRequestInput): Promise<PrintRequest> {
+  try {
+    const response = await axios.post<PrintRequest>(
+      `${getApiBaseUrl()}/print-request`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckanfrage konnte nicht angelegt werden.');
+  }
+}
+
+export async function updatePrintRequest(
+  id: string,
+  input: { status?: PrintRequestStatus; assignedPrinterId?: string | null }
+): Promise<PrintRequest> {
+  try {
+    const response = await axios.patch<PrintRequest>(
+      `${getApiBaseUrl()}/print-request/${encodeURIComponent(id)}`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckanfrage konnte nicht aktualisiert werden.');
+  }
+}
+
+export async function cancelPrintRequest(id: string): Promise<PrintRequest> {
+  try {
+    const response = await axios.post<PrintRequest>(
+      `${getApiBaseUrl()}/print-request/${encodeURIComponent(id)}/cancel`,
+      {},
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckanfrage konnte nicht zurückgezogen werden.');
+  }
+}
+
+export async function addPrintRequestComment(
+  id: string,
+  body: string
+): Promise<PrintRequestComment> {
+  try {
+    const response = await axios.post<PrintRequestComment>(
+      `${getApiBaseUrl()}/print-request/${encodeURIComponent(id)}/comment`,
+      { body },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Kommentar konnte nicht gesendet werden.');
+  }
+}
+
 /**
  * Returns the raw STL bytes as an `ArrayBuffer`, ready to feed three.js'
  * `STLLoader.parse`. We don't try to decode here — the loader handles
@@ -1028,7 +1179,13 @@ export interface PrintJobDetail extends PrintJob {
   events: PrintEvent[];
 }
 
-export interface CreatePrintRequestInput {
+/**
+ * Input for the legacy "queue a job under a printer" flow (used by the
+ * old PrinterJobs page). Renamed away from `CreatePrintRequestInput`
+ * once the standalone print-request resource landed; the public flow
+ * now owns that name.
+ */
+export interface CreatePrintJobRequestInput {
   gcodeFileId: string;
 }
 
@@ -1070,12 +1227,17 @@ export async function getCurrentPrintJob(printerId: string): Promise<PrintJob | 
 }
 
 /**
- * Contributor+ files a new request. Goes into `requested` state —
- * admin/operator must approve before it joins the queue.
+ * Legacy "contributor enqueues a print under a specific printer" flow.
+ * The job lands in `requested` state and a moderator approves before
+ * the queue picks it up.
+ *
+ * Distinct from `createPrintRequest` (the standalone print-request
+ * resource on the public page) — this path is printer-bound and used
+ * from the dashboard's PrinterJobs view.
  */
-export async function createPrintRequest(
+export async function createPrintJobRequest(
   printerId: string,
-  input: CreatePrintRequestInput
+  input: CreatePrintJobRequestInput
 ): Promise<PrintJob> {
   try {
     const response = await axios.post<PrintJob>(
@@ -1085,7 +1247,7 @@ export async function createPrintRequest(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckanfrage konnte nicht angelegt werden.');
+    toApiError(error, 'Druckjob konnte nicht angelegt werden.');
   }
 }
 

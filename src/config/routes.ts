@@ -15,6 +15,7 @@ export const Routes = {
   Blog: "/blog",
   BlogPost: "/blog/:slug",
   Profile: "/profile",
+  PrintRequest: "/druckanfrage",
 
   Dashboard: {
     Home: "/dashboard",
@@ -34,7 +35,9 @@ export const Routes = {
     GcodeNew: "/dashboard/gcode/new",
     GcodeEdit: "/dashboard/gcode/:id/edit",
     Stl: "/dashboard/stl",
-    StlViewer: "/dashboard/stl/:id"
+    StlViewer: "/dashboard/stl/:id",
+    PrintRequests: "/dashboard/druckanfragen",
+    PrintRequestDetail: "/dashboard/druckanfragen/:id"
   },
 
   Callback: {
