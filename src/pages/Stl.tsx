@@ -3,63 +3,57 @@ import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { UploadCard } from "../components/UploadCard";
 import { Routes } from "../config/routes";
-import { formatBytes, formatDate, formatDuration, readMaxBytes } from "../lib/asset-helpers";
+import { formatBytes, formatDate, readMaxBytes } from "../lib/asset-helpers";
 import {
-  listGcodeFiles,
-  uploadGcodeFile,
-  deleteGcodeFile,
+  listStlFiles,
+  uploadStlFile,
+  deleteStlFile,
   ApiError,
-  type GcodeFile,
-  type GcodeMetadata
+  type StlFile
 } from "../services";
 
-function metadataPreview(md: GcodeMetadata): string {
+function metadataPreview(file: StlFile): string {
   const parts: string[] = [];
-  const duration = formatDuration(md.estimatedSeconds);
-  if (duration) parts.push(duration);
-  if (md.filamentMeters !== undefined) parts.push(`${md.filamentMeters.toFixed(1)}m`);
-  if (md.filamentGrams !== undefined) parts.push(`${md.filamentGrams.toFixed(0)}g`);
-  if (md.layerCount !== undefined) parts.push(`${md.layerCount} Layer`);
-  if (md.slicer) parts.push(md.slicer);
+  if (file.metadata.format) {
+    parts.push(file.metadata.format === "binary" ? "Binär" : "ASCII");
+  }
+  if (file.metadata.triangleCount !== undefined) {
+    parts.push(`${file.metadata.triangleCount.toLocaleString("de-DE")} Tris`);
+  }
   return parts.join(" · ");
 }
 
-export function GcodePage() {
+export function StlPage() {
   return (
     <DashboardLayout
       requiredPermission="dashboard.printers"
-      kicker="Dashboard · G-Code"
-      title="G-Code-Dateien"
+      kicker="Dashboard · STL"
+      title="STL-Dateien"
       description={
         <>
-          Lade fertig gesliceten G-Code hoch. Identische Dateien (gleicher
-          SHA-256) werden dedupliziert — wer zuerst lädt, bekommt den
-          Eintrag zugeschrieben.
+          Lade Slicer-Eingabedateien hoch. STLs werden im Browser visualisiert
+          (3D-Viewer); Slicing nach G-Code passiert vorerst lokal beim Spieler.
+          Identische Dateien (gleicher SHA-256) werden dedupliziert.
         </>
       }
-      actions={
-        <Link to={Routes.Dashboard.GcodeNew} className="btn btn-sm">
-          Neuer Entwurf
-        </Link>
-      }
     >
-      {() => <GcodeContent />}
+      {() => <StlContent />}
     </DashboardLayout>
   );
 }
 
-function GcodeContent() {
-  const [files, setFiles] = React.useState<GcodeFile[] | null>(null);
+function StlContent() {
+  const [files, setFiles] = React.useState<StlFile[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
-  const maxBytes = readMaxBytes("__gcodeMaxBytes");
+  const maxBytes = readMaxBytes("__stlMaxBytes");
 
   const reload = React.useCallback(() => {
-    listGcodeFiles()
+    listStlFiles()
       .then(setFiles)
       .catch((e: unknown) => {
         console.error(e);
-        setError("G-Code-Liste konnte nicht geladen werden.");
+        setError("STL-Liste konnte nicht geladen werden.");
       });
   }, []);
 
@@ -70,7 +64,7 @@ function GcodeContent() {
   async function handleUpload(file: File) {
     setError(null);
     try {
-      await uploadGcodeFile(file);
+      await uploadStlFile(file);
       reload();
     } catch (err: unknown) {
       console.error(err);
@@ -78,12 +72,12 @@ function GcodeContent() {
     }
   }
 
-  async function handleDelete(file: GcodeFile) {
+  async function handleDelete(file: StlFile) {
     const ok = globalThis.confirm(`"${file.originalFilename}" wirklich löschen?`);
     if (!ok) return;
     setBusyId(file.id);
     try {
-      await deleteGcodeFile(file.id);
+      await deleteStlFile(file.id);
       setFiles((prev) => prev?.filter((f) => f.id !== file.id) ?? null);
     } catch (err: unknown) {
       console.error(err);
@@ -97,8 +91,8 @@ function GcodeContent() {
     <div className="space-y-6">
       <UploadCard
         title="Neue Datei hochladen"
-        hint="Akzeptiert nur plausible G-Code-Dateien (enthält G/M-Kommandos in den ersten 1 KB)."
-        accept=".gcode,.g,.gco,application/octet-stream"
+        hint="Akzeptiert ASCII- und Binary-STLs (Header-Validierung serverseitig)."
+        accept=".stl,model/stl,application/sla,application/octet-stream"
         maxBytes={maxBytes}
         onUpload={handleUpload}
         onPreflightError={setError}
@@ -110,10 +104,10 @@ function GcodeContent() {
         <h3 className="text-sm font-semibold text-slate-100">Meine Dateien</h3>
         {files === null && <p className="text-sm text-slate-400">Lade…</p>}
         {files !== null && files.length === 0 && (
-          <p className="text-sm text-slate-400">Noch keine G-Code-Dateien hochgeladen.</p>
+          <p className="text-sm text-slate-400">Noch keine STL-Dateien hochgeladen.</p>
         )}
         {files?.map((file) => {
-          const meta = metadataPreview(file.metadata);
+          const meta = metadataPreview(file);
           return (
             <div
               key={file.id}
@@ -133,10 +127,10 @@ function GcodeContent() {
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <Link
-                  to={Routes.Dashboard.GcodeEdit.replace(":id", file.id)}
+                  to={Routes.Dashboard.StlViewer.replace(":id", file.id)}
                   className="rounded-full border border-cyan-400/40 px-3 py-1 text-xs text-cyan-200 transition hover:bg-cyan-500/10"
                 >
-                  Bearbeiten
+                  Ansehen
                 </Link>
                 <button
                   type="button"

@@ -21,6 +21,9 @@ import { PrinterNewPage } from './pages/PrinterNew';
 import { PrinterDetailPage } from './pages/PrinterDetail';
 import { PrinterJobsPage } from './pages/PrinterJobs';
 import { GcodePage } from './pages/Gcode';
+import { PrintRequestPage } from './pages/PrintRequest';
+import { PrintRequestsPage } from './pages/PrintRequests';
+import { PrintRequestDetailPage } from './pages/PrintRequestDetail';
 import { Routes } from './config/routes';
 
 /**
@@ -38,6 +41,14 @@ const BlogPostPage = React.lazy(() =>
 );
 const GcodeEditorPage = React.lazy(() =>
   import('./pages/GcodeEditor').then((m) => ({ default: m.GcodeEditorPage }))
+);
+// three.js (~150 kB gzip) is even bigger than CodeMirror — definitely
+// keep it lazy so anyone who doesn't open the STL viewer never pays.
+const StlPage = React.lazy(() =>
+  import('./pages/Stl').then((m) => ({ default: m.StlPage }))
+);
+const StlViewerPage = React.lazy(() =>
+  import('./pages/StlViewer').then((m) => ({ default: m.StlViewerPage }))
 );
 
 function RouteFallback() {
@@ -61,6 +72,7 @@ function AppRoot() {
           <Route path={Routes.Datenschutz} element={<DatenschutzPage />} />
           <Route path={Routes.Blog} element={<BlogPage />} />
           <Route path={Routes.Profile} element={<ProfilePage />} />
+          <Route path={Routes.PrintRequest} element={<PrintRequestPage />} />
 
           {/* Dashboard: zentrale Verwaltung. Alle Berechtigungsprüfungen
               laufen sowohl im DashboardLayout (UX) als auch im API-Handler. */}
@@ -78,7 +90,15 @@ function AppRoot() {
           <Route path={Routes.Dashboard.PrinterDetail} element={<PrinterDetailPage />} />
           <Route path={Routes.Dashboard.PrinterJobs} element={<PrinterJobsPage />} />
           <Route path={Routes.Dashboard.Gcode} element={<GcodePage />} />
+          {/* `/new` MUST come before `/:id/edit` so the literal segment
+              wins over the param. React-Router 7 actually rank-orders
+              routes, but keeping the obvious ordering avoids surprises. */}
+          <Route path={Routes.Dashboard.GcodeNew} element={<GcodeEditorPage />} />
           <Route path={Routes.Dashboard.GcodeEdit} element={<GcodeEditorPage />} />
+          <Route path={Routes.Dashboard.Stl} element={<StlPage />} />
+          <Route path={Routes.Dashboard.StlViewer} element={<StlViewerPage />} />
+          <Route path={Routes.Dashboard.PrintRequests} element={<PrintRequestsPage />} />
+          <Route path={Routes.Dashboard.PrintRequestDetail} element={<PrintRequestDetailPage />} />
 
           <Route path={Routes.BlogPost} element={<BlogPostPage />} />
           <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />

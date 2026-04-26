@@ -52,6 +52,15 @@ export function Header() {
     user?.permissions?.some((p) => p === 'dashboard.view' || p === 'admin.manage')
   );
 
+  /** Public link to the print-request submission page. Visible to anyone
+   *  who can submit (`print.request`) or moderate (`print.moderate`,
+   *  which usually comes via `admin.manage`). */
+  const canSeePrintRequest = Boolean(
+    user?.permissions?.some(
+      (p) => p === 'print.request' || p === 'print.moderate' || p === 'admin.manage'
+    )
+  );
+
   React.useEffect(() => {
     getMe().then(fetchedUser => {
       setUser(fetchedUser);
@@ -114,6 +123,9 @@ export function Header() {
           {NAV_LINKS.map((entry) => (
             <li key={entry.label}>{renderNavEntry(entry, 'nav-link')}</li>
           ))}
+          {canSeePrintRequest && (
+            <li><Link to={Routes.PrintRequest} className="nav-link">Druckanfrage</Link></li>
+          )}
           {canSeeDashboard && (
             <li><Link to={Routes.Dashboard.Home} className="nav-link">Dashboard</Link></li>
           )}
@@ -157,6 +169,11 @@ export function Header() {
           {NAV_LINKS.map((entry) => (
             <li key={entry.label}>{renderNavEntry(entry, 'mobile-nav-link')}</li>
           ))}
+          {canSeePrintRequest && (
+            <li>
+              <Link to={Routes.PrintRequest} className="mobile-nav-link">Druckanfrage</Link>
+            </li>
+          )}
           {canSeeDashboard && (
             <li>
               <Link to={Routes.Dashboard.Home} className="mobile-nav-link">Dashboard</Link>

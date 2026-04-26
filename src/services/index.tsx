@@ -873,39 +873,62 @@ export async function revokePrinterAccess(id: string, userId: string): Promise<v
   }
 }
 
-export async function listGcodeFiles(): Promise<GcodeFile[]> {
-  try {
-    const response = await axios.get<GcodeFile[]>(`${getApiBaseUrl()}/gcode`, AXIOS_OPTIONS);
-    return response.data;
-  } catch (error: unknown) {
-    toApiError(error, 'G-Code-Dateien konnten nicht geladen werden.');
-  }
+/**
+ * Builds a list/upload/delete trio for an asset endpoint that follows
+ * the broiler raw-octet-stream convention (G-code, STL, future slicer
+ * outputs). The label is a German noun fragment used in error
+ * messages — "G-Code" → "G-Code-Datei konnte nicht ...".
+ *
+ * Lives next to `toApiError` so the per-call try/catch noise stays
+ * confined to one place. Pages get back regular Promise-returning
+ * functions and don't see the factory at all.
+ */
+function buildAssetClient<TFile>(basePath: string, label: string) {
+  const base = () => `${getApiBaseUrl()}/${basePath}`;
+  return {
+    async list(): Promise<TFile[]> {
+      try {
+        const r = await axios.get<TFile[]>(base(), AXIOS_OPTIONS);
+        return r.data;
+      } catch (error: unknown) {
+        toApiError(error, `${label}-Dateien konnten nicht geladen werden.`);
+      }
+    },
+    /**
+     * Raw body upload via `application/octet-stream` + `X-Filename`.
+     * Matches the API's `express.raw` route — multipart was considered
+     * and dropped, single raw blob has zero framing overhead and needs
+     * no extra deps on either side.
+     */
+    async upload(file: File): Promise<TFile> {
+      try {
+        const r = await axios.post<TFile>(base(), file, {
+          ...AXIOS_OPTIONS,
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'X-Filename': file.name
+          }
+        });
+        return r.data;
+      } catch (error: unknown) {
+        toApiError(error, `${label}-Datei konnte nicht hochgeladen werden.`);
+      }
+    },
+    async delete(id: string): Promise<void> {
+      try {
+        await axios.delete(`${base()}/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
+      } catch (error: unknown) {
+        toApiError(error, `${label}-Datei konnte nicht gelöscht werden.`);
+      }
+    }
+  };
 }
 
-/**
- * Raw body upload via `application/octet-stream` + `X-Filename`. Matches
- * the API's `express.raw` route — we deliberately avoid multipart, since
- * a single raw blob has zero framing overhead and needs no extra deps
- * on either side.
- */
-export async function uploadGcodeFile(file: File): Promise<GcodeFile> {
-  try {
-    const response = await axios.post<GcodeFile>(
-      `${getApiBaseUrl()}/gcode`,
-      file,
-      {
-        ...AXIOS_OPTIONS,
-        headers: {
-          'Content-Type': 'application/octet-stream',
-          'X-Filename': file.name
-        }
-      }
-    );
-    return response.data;
-  } catch (error: unknown) {
-    toApiError(error, 'G-Code-Datei konnte nicht hochgeladen werden.');
-  }
-}
+const gcodeAssets = buildAssetClient<GcodeFile>('gcode', 'G-Code');
+
+export const listGcodeFiles = (): Promise<GcodeFile[]> => gcodeAssets.list();
+export const uploadGcodeFile = (file: File): Promise<GcodeFile> => gcodeAssets.upload(file);
+export const deleteGcodeFile = (id: string): Promise<void> => gcodeAssets.delete(id);
 
 /**
  * Returns the raw G-code body as a string. Owner-scoped on the server
@@ -925,11 +948,194 @@ export async function getGcodeContent(id: string): Promise<string> {
   }
 }
 
-export async function deleteGcodeFile(id: string): Promise<void> {
+// ─── STL ───────────────────────────────────────────────────────────────────
+
+export interface StlMetadata {
+  format?: 'ascii' | 'binary';
+  triangleCount?: number;
+}
+
+export interface StlFile {
+  id: string;
+  uploadedByUserId: string | null;
+  originalFilename: string;
+  sha256: string;
+  sizeBytes: number;
+  metadata: StlMetadata;
+  createdAt: string;
+}
+
+const stlAssets = buildAssetClient<StlFile>('stl', 'STL');
+
+export const listStlFiles = (): Promise<StlFile[]> => stlAssets.list();
+export const uploadStlFile = (file: File): Promise<StlFile> => stlAssets.upload(file);
+export const deleteStlFile = (id: string): Promise<void> => stlAssets.delete(id);
+
+// ─── Print-Request ─────────────────────────────────────────────────────────
+
+export type PrintRequestStatus =
+  | 'new'
+  | 'accepted'
+  | 'printing'
+  | 'done'
+  | 'rejected'
+  | 'cancelled';
+
+export type PrintRequestSourceType = 'stl_upload' | 'external_link';
+
+export interface PrintRequest {
+  id: string;
+  requesterUserId: string;
+  title: string;
+  description: string | null;
+  sourceType: PrintRequestSourceType;
+  stlFileId: string | null;
+  externalUrl: string | null;
+  assignedPrinterId: string | null;
+  status: PrintRequestStatus;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+/** List + detail rows from the API include requester / STL / printer
+ *  display so the UI doesn't need follow-up lookups. */
+export interface PrintRequestWithContext extends PrintRequest {
+  requesterName: string;
+  requesterDisplayName: string | null;
+  requesterAvatarUrl: string | null;
+  stlFilename: string | null;
+  printerName: string | null;
+}
+
+export interface PrintRequestComment {
+  id: string;
+  requestId: string;
+  authorUserId: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface PrintRequestCommentWithAuthor extends PrintRequestComment {
+  authorName: string;
+  authorDisplayName: string | null;
+  authorAvatarUrl: string | null;
+}
+
+export interface PrintRequestDetail extends PrintRequestWithContext {
+  comments: PrintRequestCommentWithAuthor[];
+}
+
+export interface CreatePrintRequestInput {
+  title: string;
+  description?: string | null;
+  sourceType: PrintRequestSourceType;
+  stlFileId?: string;
+  externalUrl?: string;
+}
+
+export async function listPrintRequests(opts?: {
+  mine?: boolean;
+  status?: PrintRequestStatus[];
+}): Promise<PrintRequestWithContext[]> {
   try {
-    await axios.delete(`${getApiBaseUrl()}/gcode/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
+    const params = new URLSearchParams();
+    if (opts?.mine) params.set('mine', '1');
+    if (opts?.status?.length) params.set('status', opts.status.join(','));
+    const qs = params.toString();
+    const response = await axios.get<PrintRequestWithContext[]>(
+      `${getApiBaseUrl()}/print-request${qs ? `?${qs}` : ''}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'G-Code-Datei konnte nicht gelöscht werden.');
+    toApiError(error, 'Druckanfragen konnten nicht geladen werden.');
+  }
+}
+
+export async function getPrintRequest(id: string): Promise<PrintRequestDetail> {
+  try {
+    const response = await axios.get<PrintRequestDetail>(
+      `${getApiBaseUrl()}/print-request/${encodeURIComponent(id)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckanfrage konnte nicht geladen werden.');
+  }
+}
+
+export async function createPrintRequest(input: CreatePrintRequestInput): Promise<PrintRequest> {
+  try {
+    const response = await axios.post<PrintRequest>(
+      `${getApiBaseUrl()}/print-request`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckanfrage konnte nicht angelegt werden.');
+  }
+}
+
+export async function updatePrintRequest(
+  id: string,
+  input: { status?: PrintRequestStatus; assignedPrinterId?: string | null }
+): Promise<PrintRequest> {
+  try {
+    const response = await axios.patch<PrintRequest>(
+      `${getApiBaseUrl()}/print-request/${encodeURIComponent(id)}`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckanfrage konnte nicht aktualisiert werden.');
+  }
+}
+
+export async function cancelPrintRequest(id: string): Promise<PrintRequest> {
+  try {
+    const response = await axios.post<PrintRequest>(
+      `${getApiBaseUrl()}/print-request/${encodeURIComponent(id)}/cancel`,
+      {},
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Druckanfrage konnte nicht zurückgezogen werden.');
+  }
+}
+
+export async function addPrintRequestComment(
+  id: string,
+  body: string
+): Promise<PrintRequestComment> {
+  try {
+    const response = await axios.post<PrintRequestComment>(
+      `${getApiBaseUrl()}/print-request/${encodeURIComponent(id)}/comment`,
+      { body },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Kommentar konnte nicht gesendet werden.');
+  }
+}
+
+/**
+ * Returns the raw STL bytes as an `ArrayBuffer`, ready to feed three.js'
+ * `STLLoader.parse`. We don't try to decode here — the loader handles
+ * both ASCII and binary STL transparently.
+ */
+export async function getStlContent(id: string): Promise<ArrayBuffer> {
+  try {
+    const response = await axios.get<ArrayBuffer>(
+      `${getApiBaseUrl()}/stl/${encodeURIComponent(id)}/content`,
+      { ...AXIOS_OPTIONS, responseType: 'arraybuffer' }
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'STL-Inhalt konnte nicht geladen werden.');
   }
 }
 
@@ -973,7 +1179,13 @@ export interface PrintJobDetail extends PrintJob {
   events: PrintEvent[];
 }
 
-export interface CreatePrintRequestInput {
+/**
+ * Input for the legacy "queue a job under a printer" flow (used by the
+ * old PrinterJobs page). Renamed away from `CreatePrintRequestInput`
+ * once the standalone print-request resource landed; the public flow
+ * now owns that name.
+ */
+export interface CreatePrintJobRequestInput {
   gcodeFileId: string;
 }
 
@@ -1015,12 +1227,17 @@ export async function getCurrentPrintJob(printerId: string): Promise<PrintJob | 
 }
 
 /**
- * Contributor+ files a new request. Goes into `requested` state —
- * admin/operator must approve before it joins the queue.
+ * Legacy "contributor enqueues a print under a specific printer" flow.
+ * The job lands in `requested` state and a moderator approves before
+ * the queue picks it up.
+ *
+ * Distinct from `createPrintRequest` (the standalone print-request
+ * resource on the public page) — this path is printer-bound and used
+ * from the dashboard's PrinterJobs view.
  */
-export async function createPrintRequest(
+export async function createPrintJobRequest(
   printerId: string,
-  input: CreatePrintRequestInput
+  input: CreatePrintJobRequestInput
 ): Promise<PrintJob> {
   try {
     const response = await axios.post<PrintJob>(
@@ -1030,7 +1247,7 @@ export async function createPrintRequest(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckanfrage konnte nicht angelegt werden.');
+    toApiError(error, 'Druckjob konnte nicht angelegt werden.');
   }
 }
 
