@@ -56,6 +56,11 @@ const NAV_ITEMS: NavItem[] = [
   // The list page still owns deletion / per-file viewing.
   { label: "Editor", to: Routes.Dashboard.GcodeNew, permission: "dashboard.printers" },
   { label: "STL", to: Routes.Dashboard.Stl, permission: "dashboard.printers", prefixes: ["/dashboard/stl"] },
+  // Druckanfragen erscheinen sowohl für Anfrager (`print.request`) als
+  // auch für Moderatoren (`print.moderate`) — der Backend-Filter
+  // entscheidet was sie sehen. Wir gaten hier auf das schwächere
+  // Recht, damit jeder Anfrager den Eintrag findet.
+  { label: "Druckanfragen", to: Routes.Dashboard.PrintRequests, permission: "print.request", prefixes: ["/dashboard/druckanfragen"] },
   { label: "Einstellungen", to: Routes.Dashboard.Settings, permission: "dashboard.settings" },
   { label: "Metriken", to: Routes.Dashboard.Metrics, permission: "dashboard.metrics" }
 ];
@@ -64,10 +69,25 @@ const NAV_ITEMS: NavItem[] = [
  * `true` if the user holds the given permission, either directly or via
  * the `admin.manage` umbrella. The backend applies the same rule when
  * bootstrapping permissions, so keep the two in sync.
+ *
+ * Special case: a user who only holds `print.request` (a friend
+ * granted submission rights without full dashboard access) still
+ * needs to enter `/dashboard/*` to follow the request thread.
+ * `dashboard.view` is purely a frontend gate (the backend doesn't
+ * check it), so we synthesise it here rather than mass-granting it
+ * via bootstrap.
  */
 export function hasPermission(me: User | null | undefined, permission: string): boolean {
   if (!me?.permissions) return false;
-  return me.permissions.includes(permission) || me.permissions.includes("admin.manage");
+  if (me.permissions.includes(permission)) return true;
+  if (me.permissions.includes("admin.manage")) return true;
+  if (
+    permission === "dashboard.view" &&
+    me.permissions.includes("print.request")
+  ) {
+    return true;
+  }
+  return false;
 }
 
 export function DashboardLayout({

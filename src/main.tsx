@@ -21,6 +21,9 @@ import { PrinterNewPage } from './pages/PrinterNew';
 import { PrinterDetailPage } from './pages/PrinterDetail';
 import { PrinterJobsPage } from './pages/PrinterJobs';
 import { GcodePage } from './pages/Gcode';
+import { PrintRequestPage } from './pages/PrintRequest';
+import { PrintRequestsPage } from './pages/PrintRequests';
+import { PrintRequestDetailPage } from './pages/PrintRequestDetail';
 import { Routes } from './config/routes';
 
 /**
@@ -69,6 +72,7 @@ function AppRoot() {
           <Route path={Routes.Datenschutz} element={<DatenschutzPage />} />
           <Route path={Routes.Blog} element={<BlogPage />} />
           <Route path={Routes.Profile} element={<ProfilePage />} />
+          <Route path={Routes.PrintRequest} element={<PrintRequestPage />} />
 
           {/* Dashboard: zentrale Verwaltung. Alle Berechtigungsprüfungen
               laufen sowohl im DashboardLayout (UX) als auch im API-Handler. */}
@@ -93,6 +97,8 @@ function AppRoot() {
           <Route path={Routes.Dashboard.GcodeEdit} element={<GcodeEditorPage />} />
           <Route path={Routes.Dashboard.Stl} element={<StlPage />} />
           <Route path={Routes.Dashboard.StlViewer} element={<StlViewerPage />} />
+          <Route path={Routes.Dashboard.PrintRequests} element={<PrintRequestsPage />} />
+          <Route path={Routes.Dashboard.PrintRequestDetail} element={<PrintRequestDetailPage />} />
 
           <Route path={Routes.BlogPost} element={<BlogPostPage />} />
           <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />

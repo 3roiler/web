@@ -6,7 +6,7 @@ import {
   getPrinter,
   listPrintJobs,
   getCurrentPrintJob,
-  createPrintRequest,
+  createPrintJobRequest,
   approvePrintJob,
   rejectPrintJob,
   startPrintJob,
@@ -157,7 +157,7 @@ function JobsContent({ printerId, me }: { printerId: string; me: User }) {
     }
     setCreating(true);
     try {
-      await createPrintRequest(printerId, { gcodeFileId: pickFileId });
+      await createPrintJobRequest(printerId, { gcodeFileId: pickFileId });
       setPickFileId("");
       reload();
     } catch (err: unknown) {
