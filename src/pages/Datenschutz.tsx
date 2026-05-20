@@ -24,7 +24,7 @@ export function DatenschutzPage() {
       <Seo title="Datenschutz" description="Datenschutzerklärung von broiler.dev — minimale Daten, DSGVO-konform." />
       <div className="mx-auto max-w-3xl px-6 sm:px-10 lg:px-16 space-y-8">
         <h1 className="text-4xl font-semibold text-slate-50 sm:text-5xl">Datenschutz</h1>
-        <p className="mt-4 text-slate-300 text-sm leading-relaxed">Kurzfassung: minimale Daten, keine Werbung, kein Tracking.</p>
+        <p className="mt-4 text-slate-300 text-sm leading-relaxed">Kurzfassung: sparsame Datenverarbeitung. Werbung über Google AdSense — Werbe-Cookies nur nach deiner Einwilligung.</p>
         <div className="space-y-4 text-sm leading-relaxed text-slate-300">
           <section className="panel p-5">
             <h2 className="font-semibold text-slate-50">Verantwortlich</h2>
@@ -49,7 +49,7 @@ export function DatenschutzPage() {
           </section>
           <section className="panel p-5">
             <h2 className="font-semibold text-slate-50">Hosting</h2>
-            <p>DigitalOcean. Keine Weitergabe an Werbedritte. Etwaige Drittlandübertragung nach Art. 44 ff mit geeigneten Garantien.</p>
+            <p>DigitalOcean. Werbung über Google AdSense (siehe „Werbung"). Etwaige Drittlandübertragung nach Art. 44 ff mit geeigneten Garantien.</p>
           </section>
           <section className="panel p-5">
             <h2 className="font-semibold text-slate-50">Rechte</h2>
@@ -57,17 +57,23 @@ export function DatenschutzPage() {
           </section>
           <section className="panel p-5">
             <h2 className="font-semibold text-slate-50">Sicherheit & Logs</h2>
-            <p>TLS, beschränkter Zugriff. Logs nur zur Stabilität/Missbrauchsschutz (Art. 6(1)(f), Art. 32). Keine Profilbildung.</p>
+            <p>TLS, beschränkter Zugriff. Logs nur zur Stabilität/Missbrauchsschutz (Art. 6(1)(f), Art. 32). Keine eigene Profilbildung; Werbe-Personalisierung ggf. durch Google nach Einwilligung.</p>
           </section>
           <section className="panel p-5">
             <h2 className="font-semibold text-slate-50">Cookies / Tracking</h2>
-            <p>Keine Tracking-Cookies, keine Analyse-Dienste. Lediglich das oben genannte api.broiler.dev-Login-Cookie (Session, first-party, kurzlebig).</p>
+            <p>Funktionsnotwendig: das oben genannte api.broiler.dev-Login-Cookie (Session, first-party, kurzlebig) sowie ein CSRF-Token-Cookie. Keine eigenen Analyse-Dienste. Werbe-Cookies durch Google AdSense nur nach deiner Einwilligung (siehe „Werbung").</p>
+          </section>
+          <section className="panel p-5">
+            <h2 className="font-semibold text-slate-50">Werbung (Google AdSense)</h2>
+            <p>Auf dieser Website wird Google AdSense (Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland) zur Anzeige von Werbung eingesetzt. Google kann dabei Cookies und ähnliche Technologien verwenden, um Anzeigen auszuliefern, zu messen und – nach Einwilligung – zu personalisieren.</p>
+            <p>Werbe-Cookies und personalisierte Werbung erfolgen ausschließlich mit deiner Einwilligung über das Consent-Banner. Ohne Einwilligung werden keine Werbe-Cookies gesetzt (Google Consent Mode v2, Standard: abgelehnt). Rechtsgrundlage: Einwilligung (Art. 6(1)(a) DSGVO), jederzeit mit Wirkung für die Zukunft widerrufbar.</p>
+            <p>Mehr Infos: <a href="https://policies.google.com/privacy" className="text-cyan-300 hover:text-cyan-200" rel="noopener" target="_blank">Google Datenschutzerklärung</a> · <a href="https://adssettings.google.com" className="text-cyan-300 hover:text-cyan-200" rel="noopener" target="_blank">Werbe-Einstellungen</a>.</p>
           </section>
           <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
             <h2 className="font-semibold text-slate-50">Automatisierte Entscheidungen</h2>
             <p>Kein Profiling / keine Entscheidungen nach Art. 22.</p>
           </section>
-          <p className="text-xs text-slate-400">Stand: 2025-11-28</p>
+          <p className="text-xs text-slate-400">Stand: 2026-05-20</p>
         </div>
         <div className="flex flex-wrap gap-4">
           <a href="/" className="nav-link">Zurück</a>

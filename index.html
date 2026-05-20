@@ -35,6 +35,33 @@
     <link rel="stylesheet" href="/style.css" />
     <link rel="icon" type="image/x-icon" href="https://broiler.fra1.cdn.digitaloceanspaces.com/logo.ico" />
     <link rel="me" href="https://mastodon.social/@broiler" />
+    <!-- Google AdSense — Konto-Verifizierung per Meta-Tag (statisch, ohne
+         externe Ressource → SRI-neutral). -->
+    <meta name="google-adsense-account" content="ca-pub-6928645828688520" />
+    <!-- Consent Mode v2 (Standard: abgelehnt) + AdSense per JS nachladen.
+         Bewusst KEIN statisches <script src> für AdSense: Google liefert es
+         variabel/ohne stabile SRI aus — dynamisches Nachladen vermeidet den
+         SonarCloud-Hotspot Web:S5725, ohne die Funktion zu ändern. Das
+         Consent-Banner (Google-zertifizierte CMP) wird im AdSense-Konto unter
+         „Datenschutz & Mitteilungen" (GDPR) aktiviert. -->
+    <script>
+      globalThis.dataLayer = globalThis.dataLayer || [];
+      function gtag() { globalThis.dataLayer.push(arguments); }
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: 'denied',
+        wait_for_update: 500
+      });
+      {
+        const s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6928645828688520';
+        s.crossOrigin = 'anonymous';
+        document.head.appendChild(s);
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
