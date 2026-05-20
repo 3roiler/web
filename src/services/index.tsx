@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { getApiBaseUrl } from '../config/api';
+import { getApiBaseUrl, getApiEnvironment } from '../config/api';
 import { Routes } from '../config/routes';
 
 const ClientId = 'Ov23liULYLUWCVnTGLLN';
@@ -1368,23 +1368,29 @@ export async function cancelPrintJob(printerId: string, jobId: string): Promise<
 // ─── Streamclips Germany ─────────────────────────────────────────────────────
 
 /**
- * Twitch OAuth Client-ID fürs Login. Öffentlich (erscheint im
- * OAuth-Redirect), daher wie die GitHub-`ClientId` oben hartkodiert.
- * MUSS mit `TWITCH_CLIENT_ID` im API-.env übereinstimmen.
+ * Twitch OAuth Client-IDs je API-Umgebung. Öffentlich (erscheinen im
+ * OAuth-Redirect), daher hartkodiert wie die GitHub-`ClientId`. Jede ID
+ * MUSS zur Twitch-App gehören, deren Redirect-URLs die jeweilige Domain
+ * enthalten (sonst „invalid client" / redirect-Mismatch), und mit
+ * `TWITCH_CLIENT_ID` im API-.env der jeweiligen Umgebung übereinstimmen.
  */
-const TwitchClientId = 'eygoi5z4tf067fztfm6wr167iebviy';
+const TWITCH_CLIENT_IDS: Record<string, string> = {
+  Development: 'eygoi5z4tf067fztfm6wr167iebviy',
+  Staging: '2obalcga4dfzx9e5o6roosoedvhxtt',
+  Production: '2obalcga4dfzx9e5o6roosoedvhxtt'
+};
 // Reicht für Login + E-Mail-Verknüpfung. Clip-Metadaten holt das Backend
 // mit seinem eigenen App-Token, dafür ist kein User-Scope nötig.
 const TwitchScope = 'user:read:email';
 
+function getTwitchClientId(): string {
+  return TWITCH_CLIENT_IDS[getApiEnvironment()] ?? TWITCH_CLIENT_IDS.Development;
+}
+
 export function loginToTwitch(): void {
-  if (!TwitchClientId) {
-    console.error('[twitch] TwitchClientId ist nicht gesetzt — bitte in src/services/index.tsx eintragen.');
-    return;
-  }
   const { host, protocol } = globalThis.location;
   const params = new URLSearchParams({
-    client_id: TwitchClientId,
+    client_id: getTwitchClientId(),
     redirect_uri: `${protocol}//${host}${Routes.Callback.Twitch}`,
     response_type: 'code',
     scope: TwitchScope,
