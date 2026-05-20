@@ -1364,3 +1364,441 @@ export async function cancelPrintJob(printerId: string, jobId: string): Promise<
     toApiError(error, 'Druckjob konnte nicht abgebrochen werden.');
   }
 }
+
+// ─── Streamclips Germany ─────────────────────────────────────────────────────
+
+/**
+ * Twitch OAuth Client-ID fürs Login. Öffentlich (erscheint im
+ * OAuth-Redirect), daher wie die GitHub-`ClientId` oben hartkodiert.
+ * MUSS mit `TWITCH_CLIENT_ID` im API-.env übereinstimmen.
+ */
+const TwitchClientId = 'eygoi5z4tf067fztfm6wr167iebviy';
+// Reicht für Login + E-Mail-Verknüpfung. Clip-Metadaten holt das Backend
+// mit seinem eigenen App-Token, dafür ist kein User-Scope nötig.
+const TwitchScope = 'user:read:email';
+
+export function loginToTwitch(): void {
+  if (!TwitchClientId) {
+    console.error('[twitch] TwitchClientId ist nicht gesetzt — bitte in src/services/index.tsx eintragen.');
+    return;
+  }
+  const { host, protocol } = globalThis.location;
+  const params = new URLSearchParams({
+    client_id: TwitchClientId,
+    redirect_uri: `${protocol}//${host}${Routes.Callback.Twitch}`,
+    response_type: 'code',
+    scope: TwitchScope,
+    state: secureRandomState()
+  });
+  globalThis.location.href = `${Routes.External.TwitchOauth}?${params.toString()}`;
+}
+
+export interface TwitchLoginResult {
+  user: User;
+  twitch: { login: string; displayName: string };
+}
+
+export async function authenticateTwitch(code: string): Promise<TwitchLoginResult> {
+  try {
+    const redirectUri = `${globalThis.location.protocol}//${globalThis.location.host}${Routes.Callback.Twitch}`;
+    const response = await axios.post<TwitchLoginResult>(
+      `${getApiBaseUrl()}/twitch/oauth`,
+      { code, redirect_uri: redirectUri },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Twitch-Anmeldung fehlgeschlagen.');
+  }
+}
+
+export type ClipStatus = 'pending' | 'approved' | 'rejected' | 'flagged';
+export type ClipSection =
+  | 'gaming' | 'just_chatting' | 'irl' | 'music' | 'esports' | 'creative' | 'other';
+
+export interface AwardCategory {
+  id: string;
+  key: string;
+  displayName: string;
+  description: string | null;
+  emoji: string | null;
+  color: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface SectionOption {
+  key: ClipSection;
+  label: string;
+}
+
+export interface ClipAwardTally {
+  key: string;
+  displayName: string;
+  emoji: string | null;
+  color: string | null;
+  count: number;
+}
+
+export interface Clip {
+  id: string;
+  twitchClipId: string;
+  submittedByUserId: string;
+  title: string;
+  broadcasterId: string | null;
+  broadcasterName: string | null;
+  creatorName: string | null;
+  gameId: string | null;
+  thumbnailUrl: string | null;
+  embedUrl: string | null;
+  videoUrl: string | null;
+  durationSeconds: number | null;
+  viewCount: number;
+  language: string | null;
+  clipCreatedAt: string | null;
+  status: ClipStatus;
+  rejectionReason: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface ClipWithContext extends Clip {
+  submitterName: string;
+  submitterDisplayName: string | null;
+  submitterAvatarUrl: string | null;
+  categoryName: string | null;
+  section: ClipSection | null;
+  ratingCount: number;
+  avgScore: number | null;
+  awards: ClipAwardTally[];
+}
+
+export interface ClipRating {
+  id: string;
+  clipId: string;
+  userId: string;
+  score: number | null;
+  isSkipped: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface ClipDetail extends ClipWithContext {
+  myRating: (ClipRating & { awardIds: string[] }) | null;
+}
+
+export interface RateClipInput {
+  score?: number | null;
+  awardIds?: string[];
+  skipped?: boolean;
+}
+
+export interface ClipReportWithContext {
+  id: string;
+  clipId: string;
+  reporterUserId: string;
+  reason: string;
+  status: 'open' | 'resolved' | 'dismissed';
+  createdAt: string;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+  reporterName: string;
+  clipTitle: string;
+  clipStatus: ClipStatus;
+  clipThumbnailUrl: string | null;
+}
+
+// ── Öffentlich / eingeloggt ──
+
+export async function submitClip(url: string): Promise<Clip> {
+  try {
+    const response = await axios.post<Clip>(`${getApiBaseUrl()}/clips`, { url }, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Clip konnte nicht eingereicht werden.');
+  }
+}
+
+export async function getNextClip(section?: ClipSection): Promise<ClipWithContext | null> {
+  try {
+    const qs = section ? `?section=${encodeURIComponent(section)}` : '';
+    const response = await axios.get<{ clip: ClipWithContext | null }>(
+      `${getApiBaseUrl()}/clips/feed/next${qs}`,
+      AXIOS_OPTIONS
+    );
+    return response.data.clip;
+  } catch (error: unknown) {
+    toApiError(error, 'Nächster Clip konnte nicht geladen werden.');
+  }
+}
+
+export async function rateClip(clipId: string, input: RateClipInput): Promise<ClipRating> {
+  try {
+    const response = await axios.post<ClipRating>(
+      `${getApiBaseUrl()}/clips/${encodeURIComponent(clipId)}/rating`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Bewertung konnte nicht gespeichert werden.');
+  }
+}
+
+export async function getMyClips(): Promise<ClipWithContext[]> {
+  try {
+    const response = await axios.get<ClipWithContext[]>(`${getApiBaseUrl()}/clips/mine`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Eigene Clips konnten nicht geladen werden.');
+  }
+}
+
+export async function getClip(id: string): Promise<ClipDetail> {
+  try {
+    const response = await axios.get<ClipDetail>(
+      `${getApiBaseUrl()}/clips/${encodeURIComponent(id)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Clip konnte nicht geladen werden.');
+  }
+}
+
+export async function reportClip(id: string, reason: string): Promise<void> {
+  try {
+    await axios.post(`${getApiBaseUrl()}/clips/${encodeURIComponent(id)}/report`, { reason }, AXIOS_OPTIONS);
+  } catch (error: unknown) {
+    toApiError(error, 'Meldung konnte nicht gesendet werden.');
+  }
+}
+
+export type LeaderboardPeriod = 'all' | 'month' | 'week';
+
+export async function getLeaderboard(
+  section?: ClipSection,
+  limit = 20,
+  period: LeaderboardPeriod = 'all'
+): Promise<ClipWithContext[]> {
+  try {
+    const params = new URLSearchParams();
+    if (section) params.set('section', section);
+    if (period !== 'all') params.set('period', period);
+    params.set('limit', String(limit));
+    const response = await axios.get<ClipWithContext[]>(
+      `${getApiBaseUrl()}/clips/leaderboard?${params.toString()}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Leaderboard konnte nicht geladen werden.');
+  }
+}
+
+export async function getAwards(): Promise<AwardCategory[]> {
+  try {
+    const response = await axios.get<AwardCategory[]>(`${getApiBaseUrl()}/categories/awards`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Award-Kategorien konnten nicht geladen werden.');
+  }
+}
+
+export async function getSections(): Promise<SectionOption[]> {
+  try {
+    const response = await axios.get<SectionOption[]>(`${getApiBaseUrl()}/categories/sections`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Sektionen konnten nicht geladen werden.');
+  }
+}
+
+// ── Moderation (clips.moderate) ──
+
+export interface AwardInput {
+  key?: string;
+  displayName?: string;
+  description?: string | null;
+  emoji?: string | null;
+  color?: string | null;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
+export async function adminListClips(status: ClipStatus[] = ['pending']): Promise<ClipWithContext[]> {
+  try {
+    const qs = status.length ? `?status=${encodeURIComponent(status.join(','))}` : '';
+    const response = await axios.get<ClipWithContext[]>(
+      `${getApiBaseUrl()}/admin/streamclips/clips${qs}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Moderations-Queue konnte nicht geladen werden.');
+  }
+}
+
+export async function adminSetClipStatus(
+  id: string,
+  status: ClipStatus,
+  rejectionReason?: string
+): Promise<Clip> {
+  try {
+    const response = await axios.patch<Clip>(
+      `${getApiBaseUrl()}/admin/streamclips/clips/${encodeURIComponent(id)}`,
+      { status, rejectionReason: rejectionReason ?? null },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Clip-Status konnte nicht gesetzt werden.');
+  }
+}
+
+export async function adminListAwards(): Promise<AwardCategory[]> {
+  try {
+    const response = await axios.get<AwardCategory[]>(`${getApiBaseUrl()}/admin/streamclips/awards`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Award-Kategorien konnten nicht geladen werden.');
+  }
+}
+
+export async function adminCreateAward(input: AwardInput): Promise<AwardCategory> {
+  try {
+    const response = await axios.post<AwardCategory>(
+      `${getApiBaseUrl()}/admin/streamclips/awards`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Award-Kategorie konnte nicht angelegt werden.');
+  }
+}
+
+export async function adminUpdateAward(id: string, input: AwardInput): Promise<AwardCategory> {
+  try {
+    const response = await axios.patch<AwardCategory>(
+      `${getApiBaseUrl()}/admin/streamclips/awards/${encodeURIComponent(id)}`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Award-Kategorie konnte nicht aktualisiert werden.');
+  }
+}
+
+export async function adminDeleteAward(id: string): Promise<void> {
+  try {
+    await axios.delete(`${getApiBaseUrl()}/admin/streamclips/awards/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
+  } catch (error: unknown) {
+    toApiError(error, 'Award-Kategorie konnte nicht gelöscht werden.');
+  }
+}
+
+export async function adminListReports(status: 'open' | 'resolved' | 'dismissed' = 'open'): Promise<ClipReportWithContext[]> {
+  try {
+    const response = await axios.get<ClipReportWithContext[]>(
+      `${getApiBaseUrl()}/admin/streamclips/reports?status=${encodeURIComponent(status)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Meldungen konnten nicht geladen werden.');
+  }
+}
+
+export async function adminResolveReport(id: string, status: 'resolved' | 'dismissed'): Promise<void> {
+  try {
+    await axios.patch(
+      `${getApiBaseUrl()}/admin/streamclips/reports/${encodeURIComponent(id)}`,
+      { status },
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Meldung konnte nicht bearbeitet werden.');
+  }
+}
+
+// ── Browse / Suche / Sektions-Mapping ──
+
+export interface TwitchCategory {
+  id: string;
+  name: string;
+  boxArtUrl: string | null;
+  section: ClipSection;
+  createdAt: string;
+  updatedAt: string | null;
+  clipCount: number;
+}
+
+export interface BrowseCategoryRow {
+  gameId: string;
+  name: string;
+  section: ClipSection | null;
+  clips: ClipWithContext[];
+}
+
+export interface BrowseAwardRow {
+  key: string;
+  displayName: string;
+  emoji: string | null;
+  color: string | null;
+  clips: ClipWithContext[];
+}
+
+export interface BrowseData {
+  byCategory: BrowseCategoryRow[];
+  byAward: BrowseAwardRow[];
+}
+
+export async function browseClips(): Promise<BrowseData> {
+  try {
+    const response = await axios.get<BrowseData>(`${getApiBaseUrl()}/clips/browse`, AXIOS_OPTIONS);
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Übersicht konnte nicht geladen werden.');
+  }
+}
+
+export async function searchClips(q: string): Promise<ClipWithContext[]> {
+  try {
+    const response = await axios.get<ClipWithContext[]>(
+      `${getApiBaseUrl()}/clips/search?q=${encodeURIComponent(q)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Suche fehlgeschlagen.');
+  }
+}
+
+export async function adminListCategories(): Promise<TwitchCategory[]> {
+  try {
+    const response = await axios.get<TwitchCategory[]>(
+      `${getApiBaseUrl()}/admin/streamclips/categories`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Kategorien konnten nicht geladen werden.');
+  }
+}
+
+export async function adminSetCategorySection(id: string, section: ClipSection): Promise<TwitchCategory> {
+  try {
+    const response = await axios.patch<TwitchCategory>(
+      `${getApiBaseUrl()}/admin/streamclips/categories/${encodeURIComponent(id)}`,
+      { section },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Sektion konnte nicht gesetzt werden.');
+  }
+}

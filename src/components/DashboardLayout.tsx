@@ -61,6 +61,9 @@ const NAV_ITEMS: NavItem[] = [
   // entscheidet was sie sehen. Wir gaten hier auf das schwächere
   // Recht, damit jeder Anfrager den Eintrag findet.
   { label: "Druckanfragen", to: Routes.Dashboard.PrintRequests, permission: "print.request", prefixes: ["/dashboard/druckanfragen"] },
+  // Streamclips-Moderation. `dashboard.clips` schaltet den Bereich frei;
+  // die Award-/Report-Unterseiten teilen sich denselben prefix.
+  { label: "Clips", to: Routes.Dashboard.Clips, permission: "dashboard.clips", prefixes: ["/dashboard/clips"] },
   { label: "Einstellungen", to: Routes.Dashboard.Settings, permission: "dashboard.settings" },
   { label: "Metriken", to: Routes.Dashboard.Metrics, permission: "dashboard.metrics" }
 ];

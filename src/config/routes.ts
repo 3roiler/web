@@ -17,6 +17,16 @@ export const Routes = {
   Profile: "/profile",
   PrintRequest: "/druckanfrage",
 
+  // Streamclips Germany — öffentlicher Bereich.
+  Streamclips: {
+    Home: "/streamclips",
+    Vote: "/streamclips/vote",
+    Submit: "/streamclips/submit",
+    Leaderboard: "/streamclips/leaderboard",
+    ClipDetail: "/streamclips/clip/:id",
+    Me: "/streamclips/me",
+  },
+
   Dashboard: {
     Home: "/dashboard",
     Blog: "/dashboard/blog",
@@ -37,11 +47,17 @@ export const Routes = {
     Stl: "/dashboard/stl",
     StlViewer: "/dashboard/stl/:id",
     PrintRequests: "/dashboard/druckanfragen",
-    PrintRequestDetail: "/dashboard/druckanfragen/:id"
+    PrintRequestDetail: "/dashboard/druckanfragen/:id",
+    // Streamclips-Moderation
+    Clips: "/dashboard/clips",
+    ClipsAwards: "/dashboard/clips/awards",
+    ClipsCategories: "/dashboard/clips/categories",
+    ClipsReports: "/dashboard/clips/reports"
   },
 
   Callback: {
     Github: "/callback/github",
+    Twitch: "/callback/twitch",
     Error: "/callback/error",
   },
   External: {
@@ -53,6 +69,7 @@ export const Routes = {
     LinkedIn: "https://www.linkedin.com/in/paul-wechselberger-6133b3282/",
     Mastodon: "https://mastodon.social/@broiler",
     GithubOauth: "https://github.com/login/oauth/authorize",
+    TwitchOauth: "https://id.twitch.tv/oauth2/authorize",
     Sonarcloud: "https://sonarcloud.io/dashboard?id=3roiler_web",
     DigitalOcean: "https://www.digitalocean.com/?refcode=203d563657de&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge",
     PayPal: "https://paypal.me/bleikind"
