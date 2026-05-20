@@ -10,21 +10,39 @@
 	root * /srv
 	encode zstd gzip
 
-	# Long-term cache for hashed/static assets (set before the route block so
+	# Long-term cache for hashed/static assets (set before the handlers so
 	# it applies regardless of SPA fallback rewrite).
 	@assets path *.js *.css *.woff2 *.woff *.svg *.png *.jpg *.jpeg *.gif *.ico
 	header @assets Cache-Control "public, max-age=31536000, immutable"
 
-	# SPA fallback + no-cache on the shell. A `route` block forces sequential
-	# execution, so the `header` below runs *after* `try_files` has rewritten
-	# the URI (so /blog → /index.html gets the no-cache header too).
-	route {
-		try_files {path} {path}.html {path}/ /index.html
+	# Social-Crawler (kein JS) für teilbare Seiten an den Open-Graph-Renderer
+	# der API umleiten — sonst zeigen Link-Vorschauen (WhatsApp/Discord/X/…)
+	# nur die generische index.html. Echte Nutzer (andere User-Agents)
+	# fallen in den SPA-Handler unten. Die `handle`-Blöcke sind sich
+	# gegenseitig ausschließend, daher kein Doppel-Handling.
+	@og_bots {
+		path /streamclips/clip/* /blog/*
+		header_regexp User-Agent (?i)(facebookexternalhit|facebot|twitterbot|discordbot|whatsapp|linkedinbot|slackbot|telegrambot|pinterest|redditbot|vkshare|skypeuripreview|embedly|applebot|mastodon|bsky|threads)
+	}
+	handle @og_bots {
+		rewrite * /prod/og{path}
+		reverse_proxy https://api.broiler.dev {
+			header_up Host api.broiler.dev
+		}
+	}
 
-		@shell path *.html
-		header @shell Cache-Control "no-cache"
+	# Alles andere: SPA-Auslieferung mit Fallback. Das `route` erzwingt
+	# sequentielle Ausführung, damit der no-cache-Header nach dem try_files
+	# greift (auch /blog → /index.html bekommt ihn).
+	handle {
+		route {
+			try_files {path} {path}.html {path}/ /index.html
 
-		file_server
+			@shell path *.html
+			header @shell Cache-Control "no-cache"
+
+			file_server
+		}
 	}
 
 	handle_errors {
