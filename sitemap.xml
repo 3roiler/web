@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Statische Sitemap der öffentlichen Hub-Seiten. Einzelne Blog-Posts und
+  Clip-Detailseiten werden über die internen Links auf /blog bzw.
+  /streamclips/leaderboard gecrawlt; eine dynamisch aus der API generierte
+  Sitemap (inkl. aller Slugs/Clip-IDs) ist als nächster Schritt geplant.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://broiler.dev/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://broiler.dev/blog</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://broiler.dev/streamclips</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://broiler.dev/streamclips/leaderboard</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://broiler.dev/impressum</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://broiler.dev/datenschutz</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+</urlset>

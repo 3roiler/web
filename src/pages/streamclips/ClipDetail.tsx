@@ -4,6 +4,7 @@ import { Routes } from "../../config/routes";
 import { ClipEmbed } from "../../components/streamclips/ClipEmbed";
 import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
+import { Seo } from "../../components/Seo";
 import {
   getClip,
   reportClip,
@@ -54,6 +55,11 @@ export function ClipDetailPage() {
 
         {clip && (
           <div className="mt-4 space-y-5">
+            <Seo
+              title={clip.title}
+              description={`Clip${clip.broadcasterName ? ` von ${clip.broadcasterName}` : ""}${clip.categoryName ? ` · ${clip.categoryName}` : ""} — bewertet auf Streamclips Germany.`}
+              type="article"
+            />
             <ClipEmbed clipId={clip.twitchClipId} title={clip.title} />
 
             <div>

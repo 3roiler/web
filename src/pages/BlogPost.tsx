@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { getBlogPost, getMe, type BlogPost as BlogPostModel, type User } from "../services";
 import { Routes } from "../config/routes";
+import { Seo, JsonLd, SITE_URL } from "../components/Seo";
 import "highlight.js/styles/github-dark.css";
 
 function formatDate(iso: string | null): string {
@@ -61,6 +62,27 @@ export function BlogPostPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 py-24" id="top">
+      <Seo
+        title={post.title}
+        description={post.excerpt ?? `Blog-Beitrag von Paul Wechselberger: ${post.title}.`}
+        type="article"
+        noindex={post.publishedAt === null}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          headline: post.title,
+          ...(post.excerpt ? { description: post.excerpt } : {}),
+          ...(post.publishedAt ? { datePublished: post.publishedAt } : {}),
+          ...((post.updatedAt ?? post.publishedAt)
+            ? { dateModified: post.updatedAt ?? post.publishedAt }
+            : {}),
+          author: { "@type": "Person", name: "Paul Wechselberger", url: SITE_URL },
+          url: `${SITE_URL}/blog/${post.slug}`,
+          mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`
+        }}
+      />
       <div className="mx-auto max-w-3xl px-6 sm:px-10 lg:px-16 pt-16">
         <Link to={Routes.Blog} className="text-xs text-slate-400 hover:text-cyan-300">← Zur Übersicht</Link>
 

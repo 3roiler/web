@@ -4,6 +4,7 @@ import { Routes } from "../../config/routes";
 import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
+import { Seo } from "../../components/Seo";
 import {
   getLeaderboard,
   getSections,
@@ -43,6 +44,7 @@ export function LeaderboardPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 pt-20 pb-16 sm:pt-24" id="top">
+      <Seo title="Top-Clips — Streamclips Germany" description="Die bestbewerteten deutschen Twitch-Clips, von der Community gewählt — Leaderboard für Allzeit, 30 und 7 Tage." />
       <div className="mx-auto max-w-3xl px-4 pt-6 sm:px-6 sm:pt-12 lg:px-16 lg:pt-16">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-1">

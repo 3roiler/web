@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { listBlogPosts, getMe, type BlogPost, type User } from "../services";
 import { Routes } from "../config/routes";
+import { Seo } from "../components/Seo";
 
 function formatDate(iso: string | null): string {
   if (!iso) return "Entwurf";
@@ -34,6 +35,7 @@ export function BlogPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 py-24" id="top">
+      <Seo title="Blog" description="Gedanken & Notizen zu Backend, Infrastruktur und Homelab von Paul Wechselberger." />
       <div className="mx-auto max-w-4xl px-6 sm:px-10 lg:px-16 pt-16">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
