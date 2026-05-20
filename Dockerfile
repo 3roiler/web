@@ -19,7 +19,7 @@ WORKDIR /static
 COPY --from=builder /app/dist/ ./
 COPY favicon.ico ./favicon.ico
 COPY alex.html huh.html sasu.html ./
-COPY robots.txt sitemap.xml ads.txt ./
+COPY robots.txt ads.txt ./
 
 # caddy:2-alpine defaults to root; we create a dedicated user and fix
 # ownership/permissions after the COPYs to avoid SonarCloud docker:S6504
