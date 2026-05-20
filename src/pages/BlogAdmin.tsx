@@ -7,6 +7,7 @@ import {
   type BlogPostVisibility
 } from "../services";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { Pagination } from "../components/Pagination";
 import { Routes } from "../config/routes";
 
 function formatDate(iso: string | null): string {
@@ -67,19 +68,22 @@ export function BlogAdminPage() {
   );
 }
 
+const PAGE_SIZE = 20;
+
 function BlogAdminContent() {
   const [posts, setPosts] = React.useState<BlogPost[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  const [offset, setOffset] = React.useState(0);
 
   const reload = React.useCallback(() => {
-    listBlogPosts(true)
+    listBlogPosts(true, PAGE_SIZE, offset)
       .then(setPosts)
       .catch((e: unknown) => {
         console.error(e);
         setError("Beim Laden der Posts ist ein Fehler aufgetreten.");
       });
-  }, []);
+  }, [offset]);
 
   React.useEffect(() => {
     reload();
@@ -91,7 +95,7 @@ function BlogAdminContent() {
     setBusyId(post.id);
     try {
       await deleteBlogPost(post.id);
-      setPosts((prev) => prev?.filter((p) => p.id !== post.id) ?? null);
+      reload();
     } catch (e: unknown) {
       console.error(e);
       setError("Löschen fehlgeschlagen.");
@@ -169,6 +173,10 @@ function BlogAdminContent() {
           </div>
         );
       })}
+
+      {posts !== null && (
+        <Pagination offset={offset} pageSize={PAGE_SIZE} count={posts.length} onChange={setOffset} />
+      )}
     </div>
   );
 }

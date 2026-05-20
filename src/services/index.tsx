@@ -310,14 +310,28 @@ export async function logout(): Promise<void> {
   }
 }
 
+/** Hängt optionale limit/offset an eine Query an → „?…"-Suffix (oder ""). */
+function withPagingQuery(params: URLSearchParams, limit?: number, offset?: number): string {
+  if (limit != null) params.set('limit', String(limit));
+  if (offset != null) params.set('offset', String(offset));
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
 // Blog
 
-export async function listBlogPosts(includeDrafts = false): Promise<BlogPost[]> {
+export async function listBlogPosts(
+  includeDrafts = false,
+  limit?: number,
+  offset?: number
+): Promise<BlogPost[]> {
   try {
-    const url = includeDrafts
-      ? `${getApiBaseUrl()}/blog?drafts=true`
-      : `${getApiBaseUrl()}/blog`;
-    const response = await axios.get<BlogPost[]>(url, AXIOS_OPTIONS);
+    const params = new URLSearchParams();
+    if (includeDrafts) params.set('drafts', 'true');
+    const response = await axios.get<BlogPost[]>(
+      `${getApiBaseUrl()}/blog${withPagingQuery(params, limit, offset)}`,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
     toApiError(error, 'Beim Laden der Blog-Liste ist ein Fehler aufgetreten.');
@@ -957,9 +971,12 @@ export async function revokePrinterAccess(id: string, userId: string): Promise<v
 function buildAssetClient<TFile>(basePath: string, label: string) {
   const base = () => `${getApiBaseUrl()}/${basePath}`;
   return {
-    async list(): Promise<TFile[]> {
+    async list(limit?: number, offset?: number): Promise<TFile[]> {
       try {
-        const r = await axios.get<TFile[]>(base(), AXIOS_OPTIONS);
+        const r = await axios.get<TFile[]>(
+          `${base()}${withPagingQuery(new URLSearchParams(), limit, offset)}`,
+          AXIOS_OPTIONS
+        );
         return r.data;
       } catch (error: unknown) {
         toApiError(error, `${label}-Dateien konnten nicht geladen werden.`);
@@ -997,7 +1014,8 @@ function buildAssetClient<TFile>(basePath: string, label: string) {
 
 const gcodeAssets = buildAssetClient<GcodeFile>('gcode', 'G-Code');
 
-export const listGcodeFiles = (): Promise<GcodeFile[]> => gcodeAssets.list();
+export const listGcodeFiles = (limit?: number, offset?: number): Promise<GcodeFile[]> =>
+  gcodeAssets.list(limit, offset);
 export const uploadGcodeFile = (file: File): Promise<GcodeFile> => gcodeAssets.upload(file);
 export const deleteGcodeFile = (id: string): Promise<void> => gcodeAssets.delete(id);
 
@@ -1038,7 +1056,8 @@ export interface StlFile {
 
 const stlAssets = buildAssetClient<StlFile>('stl', 'STL');
 
-export const listStlFiles = (): Promise<StlFile[]> => stlAssets.list();
+export const listStlFiles = (limit?: number, offset?: number): Promise<StlFile[]> =>
+  stlAssets.list(limit, offset);
 export const uploadStlFile = (file: File): Promise<StlFile> => stlAssets.upload(file);
 export const deleteStlFile = (id: string): Promise<void> => stlAssets.delete(id);
 
@@ -1107,14 +1126,15 @@ export interface CreatePrintRequestInput {
 export async function listPrintRequests(opts?: {
   mine?: boolean;
   status?: PrintRequestStatus[];
+  limit?: number;
+  offset?: number;
 }): Promise<PrintRequestWithContext[]> {
   try {
     const params = new URLSearchParams();
     if (opts?.mine) params.set('mine', '1');
     if (opts?.status?.length) params.set('status', opts.status.join(','));
-    const qs = params.toString();
     const response = await axios.get<PrintRequestWithContext[]>(
-      `${getApiBaseUrl()}/print-request${qs ? `?${qs}` : ''}`,
+      `${getApiBaseUrl()}/print-request${withPagingQuery(params, opts?.limit, opts?.offset)}`,
       AXIOS_OPTIONS
     );
     return response.data;
@@ -1705,11 +1725,16 @@ export interface AwardInput {
   sortOrder?: number;
 }
 
-export async function adminListClips(status: ClipStatus[] = ['pending']): Promise<ClipWithContext[]> {
+export async function adminListClips(
+  status: ClipStatus[] = ['pending'],
+  limit?: number,
+  offset?: number
+): Promise<ClipWithContext[]> {
   try {
-    const qs = status.length ? `?status=${encodeURIComponent(status.join(','))}` : '';
+    const params = new URLSearchParams();
+    if (status.length) params.set('status', status.join(','));
     const response = await axios.get<ClipWithContext[]>(
-      `${getApiBaseUrl()}/admin/streamclips/clips${qs}`,
+      `${getApiBaseUrl()}/admin/streamclips/clips${withPagingQuery(params, limit, offset)}`,
       AXIOS_OPTIONS
     );
     return response.data;
@@ -1778,10 +1803,16 @@ export async function adminDeleteAward(id: string): Promise<void> {
   }
 }
 
-export async function adminListReports(status: 'open' | 'resolved' | 'dismissed' = 'open'): Promise<ClipReportWithContext[]> {
+export async function adminListReports(
+  status: 'open' | 'resolved' | 'dismissed' = 'open',
+  limit?: number,
+  offset?: number
+): Promise<ClipReportWithContext[]> {
   try {
+    const params = new URLSearchParams();
+    params.set('status', status);
     const response = await axios.get<ClipReportWithContext[]>(
-      `${getApiBaseUrl()}/admin/streamclips/reports?status=${encodeURIComponent(status)}`,
+      `${getApiBaseUrl()}/admin/streamclips/reports${withPagingQuery(params, limit, offset)}`,
       AXIOS_OPTIONS
     );
     return response.data;

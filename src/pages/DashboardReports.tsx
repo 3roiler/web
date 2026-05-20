@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { Pagination } from "../components/Pagination";
 import { Routes } from "../config/routes";
 import { formatDate } from "../lib/asset-helpers";
 import {
@@ -23,18 +24,21 @@ export function DashboardReportsPage() {
   );
 }
 
+const PAGE_SIZE = 20;
+
 function ReportsList() {
   const [rows, setRows] = React.useState<ClipReportWithContext[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [offset, setOffset] = React.useState(0);
 
   const reload = React.useCallback(() => {
-    adminListReports("open")
+    adminListReports("open", PAGE_SIZE, offset)
       .then(setRows)
       .catch((err: unknown) => {
         console.error(err);
         setError(err instanceof ApiError ? err.message : "Meldungen konnten nicht geladen werden.");
       });
-  }, []);
+  }, [offset]);
 
   React.useEffect(() => {
     reload();
@@ -84,6 +88,10 @@ function ReportsList() {
           </div>
         </div>
       ))}
+
+      {rows !== null && (
+        <Pagination offset={offset} pageSize={PAGE_SIZE} count={rows.length} onChange={setOffset} />
+      )}
     </div>
   );
 }

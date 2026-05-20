@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { Pagination } from "../components/Pagination";
 import { UploadCard } from "../components/UploadCard";
 import { Routes } from "../config/routes";
 import { formatBytes, formatDate, readMaxBytes } from "../lib/asset-helpers";
@@ -42,20 +43,23 @@ export function StlPage() {
   );
 }
 
+const PAGE_SIZE = 20;
+
 function StlContent() {
   const [files, setFiles] = React.useState<StlFile[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  const [offset, setOffset] = React.useState(0);
   const maxBytes = readMaxBytes("__stlMaxBytes");
 
   const reload = React.useCallback(() => {
-    listStlFiles()
+    listStlFiles(PAGE_SIZE, offset)
       .then(setFiles)
       .catch((e: unknown) => {
         console.error(e);
         setError("STL-Liste konnte nicht geladen werden.");
       });
-  }, []);
+  }, [offset]);
 
   React.useEffect(() => {
     reload();
@@ -78,7 +82,7 @@ function StlContent() {
     setBusyId(file.id);
     try {
       await deleteStlFile(file.id);
-      setFiles((prev) => prev?.filter((f) => f.id !== file.id) ?? null);
+      reload();
     } catch (err: unknown) {
       console.error(err);
       setError(err instanceof ApiError ? err.message : "Löschen fehlgeschlagen.");
@@ -144,6 +148,10 @@ function StlContent() {
             </div>
           );
         })}
+
+        {files !== null && (
+          <Pagination offset={offset} pageSize={PAGE_SIZE} count={files.length} onChange={setOffset} />
+        )}
       </section>
     </div>
   );
