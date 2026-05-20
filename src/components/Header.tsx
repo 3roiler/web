@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { loginToGithub, logout, getMe, User } from '../services';
+import { loginToGithub, loginToTwitch, logout, getMe, User } from '../services';
 import { Routes } from '../config/routes';
 
 
@@ -211,9 +211,18 @@ function DesktopAuth(props: AuthBlockProps) {
   const { user, displayName, avatarUrl, avatarBroken, initial, onAvatarError, onLogout } = props;
   if (!user) {
     return (
-      <button type="button" onClick={() => loginToGithub()} className="btn btn-sm">
-        Mit GitHub anmelden
-      </button>
+      <>
+        <button type="button" onClick={() => loginToGithub()} className="btn btn-sm">
+          Mit GitHub anmelden
+        </button>
+        <button
+          type="button"
+          onClick={() => loginToTwitch()}
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-[#9146FF] px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#772ce8]"
+        >
+          Mit Twitch anmelden
+        </button>
+      </>
     );
   }
   return (
@@ -244,9 +253,18 @@ function MobileAuth(props: AuthBlockProps) {
   const { user, displayName, avatarUrl, avatarBroken, initial, onAvatarError, onLogout } = props;
   if (!user) {
     return (
-      <button type="button" onClick={() => loginToGithub()} className="btn w-full justify-center">
-        Mit GitHub anmelden
-      </button>
+      <div className="flex flex-col gap-2">
+        <button type="button" onClick={() => loginToGithub()} className="btn w-full justify-center">
+          Mit GitHub anmelden
+        </button>
+        <button
+          type="button"
+          onClick={() => loginToTwitch()}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#9146FF] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#772ce8]"
+        >
+          Mit Twitch anmelden
+        </button>
+      </div>
     );
   }
   return (
