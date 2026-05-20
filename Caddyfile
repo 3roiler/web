@@ -31,6 +31,16 @@
 		}
 	}
 
+	# Dynamische sitemap.xml von der API (enthält auch alle Clip-/Artikel-URLs)
+	# statt einer statischen Datei. robots.txt + GSC zeigen weiterhin auf
+	# https://broiler.dev/sitemap.xml.
+	handle /sitemap.xml {
+		rewrite * /prod/sitemap.xml
+		reverse_proxy https://api.broiler.dev {
+			header_up Host api.broiler.dev
+		}
+	}
+
 	# Alles andere: SPA-Auslieferung mit Fallback. Das `route` erzwingt
 	# sequentielle Ausführung, damit der no-cache-Header nach dem try_files
 	# greift (auch /blog → /index.html bekommt ihn).
