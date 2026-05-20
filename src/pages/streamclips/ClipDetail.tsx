@@ -7,6 +7,8 @@ import { StarRating } from "../../components/streamclips/StarRating";
 import {
   getClip,
   reportClip,
+  getMe,
+  loginToTwitch,
   ApiError,
   type ClipDetail as ClipDetailType,
   type ClipStatus
@@ -23,6 +25,11 @@ export function ClipDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [clip, setClip] = React.useState<ClipDetailType | null | undefined>(undefined);
   const [error, setError] = React.useState<string | null>(null);
+  const [loggedIn, setLoggedIn] = React.useState(false);
+
+  React.useEffect(() => {
+    getMe().then(() => setLoggedIn(true)).catch(() => setLoggedIn(false));
+  }, []);
 
   React.useEffect(() => {
     if (!id) return;
@@ -87,11 +94,26 @@ export function ClipDetailPage() {
               </div>
             )}
 
-            <ReportBlock clipId={clip.id} />
+            {loggedIn ? <ReportBlock clipId={clip.id} /> : <LoginHint />}
           </div>
         )}
       </div>
     </main>
+  );
+}
+
+function LoginHint() {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
+      <p className="text-sm text-slate-400">Melde dich an, um Clips zu bewerten und zu melden.</p>
+      <button
+        type="button"
+        onClick={() => loginToTwitch()}
+        className="mt-3 inline-flex items-center justify-center gap-2 rounded-full bg-[#9146FF] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#772ce8]"
+      >
+        Mit Twitch anmelden
+      </button>
+    </div>
   );
 }
 
