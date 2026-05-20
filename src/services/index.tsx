@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosHeaders } from 'axios';
 import { getApiBaseUrl, getApiEnvironment } from '../config/api';
 import { Routes } from '../config/routes';
 
@@ -158,6 +158,62 @@ function toApiError(error: unknown, fallback: string): never {
 const AXIOS_OPTIONS = {
   withCredentials: true
 } as const;
+
+/**
+ * CSRF (Double-Submit-Cookie): Das Backend setzt ein `XSRF-TOKEN`-Cookie und
+ * liefert den Wert über `GET /csrf`. Da Frontend (broiler.dev) und API
+ * (api.broiler.dev) auf verschiedenen Subdomains liegen, kann das SPA das
+ * Cookie nicht direkt lesen — wir holen den Token daher aus dem Body, cachen
+ * ihn und schicken ihn bei mutierenden Requests im `X-CSRF-Token`-Header.
+ * Bei einem 403 `CSRF_TOKEN` (z. B. direkt nach einem Deploy, bevor das
+ * Cookie gesetzt war) holen wir den Token neu und wiederholen den Request
+ * genau einmal.
+ */
+const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete']);
+let csrfToken: string | null = null;
+
+async function fetchCsrfToken(): Promise<string | null> {
+  try {
+    const res = await axios.get<{ csrfToken: string }>(`${getApiBaseUrl()}/csrf`, AXIOS_OPTIONS);
+    csrfToken = res.data?.csrfToken ?? null;
+  } catch {
+    csrfToken = null;
+  }
+  return csrfToken;
+}
+
+function setCsrfHeader(headers: AxiosHeaders | undefined, token: string): AxiosHeaders {
+  const h = headers ?? new AxiosHeaders();
+  h.set('X-CSRF-Token', token);
+  return h;
+}
+
+axios.interceptors.request.use(async (config) => {
+  const method = (config.method ?? 'get').toLowerCase();
+  const url = typeof config.url === 'string' ? config.url : '';
+  if (MUTATING_METHODS.has(method) && url.startsWith(getApiBaseUrl())) {
+    const token = csrfToken ?? (await fetchCsrfToken());
+    if (token) config.headers = setCsrfHeader(config.headers, token);
+  }
+  return config;
+});
+
+axios.interceptors.response.use(
+  (response) => response,
+  async (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 403 && error.config) {
+      const payload = error.response.data as ApiErrorPayload | undefined;
+      const original = error.config as typeof error.config & { _csrfRetried?: boolean };
+      if (payload?.identifier === 'CSRF_TOKEN' && !original._csrfRetried) {
+        original._csrfRetried = true;
+        const token = await fetchCsrfToken();
+        if (token) original.headers = setCsrfHeader(original.headers as AxiosHeaders, token);
+        return axios(original);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export async function getMe(): Promise<User> {
   try {
