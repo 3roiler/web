@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { Pagination } from "../components/Pagination";
 import { Routes } from "../config/routes";
 import { formatDate } from "../lib/asset-helpers";
 import {
@@ -60,29 +61,46 @@ export function PrintRequestsPage() {
   );
 }
 
+const PAGE_SIZE = 20;
+
 function RequestsContent({ me }: { me: User }) {
   const [rows, setRows] = React.useState<PrintRequestWithContext[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [filter, setFilter] = React.useState<typeof FILTER_TABS[number]>(FILTER_TABS[1]);
   const [showOnlyMine, setShowOnlyMine] = React.useState(false);
+  const [offset, setOffset] = React.useState(0);
 
   const moderator = isModerator(me);
 
   const reload = React.useCallback(() => {
     listPrintRequests({
       mine: !moderator || showOnlyMine,
-      status: filter.value ?? undefined
+      status: filter.value ?? undefined,
+      limit: PAGE_SIZE,
+      offset
     })
       .then(setRows)
       .catch((err: unknown) => {
         console.error(err);
         setError(err instanceof ApiError ? err.message : "Anfragen konnten nicht geladen werden.");
       });
-  }, [moderator, showOnlyMine, filter]);
+  }, [moderator, showOnlyMine, filter, offset]);
 
   React.useEffect(() => {
     reload();
   }, [reload]);
+
+  // Filterwechsel (Status-Tab oder „Nur meine") setzt die Seite zurück, damit
+  // man nicht auf einer leeren Seite landet.
+  function changeFilter(tab: typeof FILTER_TABS[number]) {
+    setFilter(tab);
+    setOffset(0);
+  }
+
+  function changeShowOnlyMine(value: boolean) {
+    setShowOnlyMine(value);
+    setOffset(0);
+  }
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -94,7 +112,7 @@ function RequestsContent({ me }: { me: User }) {
               <button
                 key={tab.label}
                 type="button"
-                onClick={() => setFilter(tab)}
+                onClick={() => changeFilter(tab)}
                 className={
                   active
                     ? "shrink-0 whitespace-nowrap rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-200"
@@ -111,7 +129,7 @@ function RequestsContent({ me }: { me: User }) {
             <input
               type="checkbox"
               checked={showOnlyMine}
-              onChange={(e) => setShowOnlyMine(e.target.checked)}
+              onChange={(e) => changeShowOnlyMine(e.target.checked)}
             />
             Nur meine
           </label>
@@ -156,6 +174,10 @@ function RequestsContent({ me }: { me: User }) {
           );
         })}
       </div>
+
+      {rows !== null && (
+        <Pagination offset={offset} pageSize={PAGE_SIZE} count={rows.length} onChange={setOffset} />
+      )}
     </div>
   );
 }

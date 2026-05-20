@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { Pagination } from "../components/Pagination";
 import { Routes } from "../config/routes";
 import { formatDate } from "../lib/asset-helpers";
 import { ClipEmbed } from "../components/streamclips/ClipEmbed";
@@ -47,24 +48,34 @@ export function DashboardClipsPage() {
   );
 }
 
+const PAGE_SIZE = 20;
+
 function ClipsQueue() {
   const [filter, setFilter] = React.useState(FILTER_TABS[0]);
+  const [offset, setOffset] = React.useState(0);
   const [rows, setRows] = React.useState<ClipWithContext[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   const reload = React.useCallback(() => {
     setRows(null);
-    adminListClips(filter.value)
+    adminListClips(filter.value, PAGE_SIZE, offset)
       .then(setRows)
       .catch((err: unknown) => {
         console.error(err);
         setError(err instanceof ApiError ? err.message : "Queue konnte nicht geladen werden.");
       });
-  }, [filter]);
+  }, [filter, offset]);
 
   React.useEffect(() => {
     reload();
   }, [reload]);
+
+  // Beim Tab-/Statuswechsel zurück auf Seite 1 — sonst landet man ggf. auf einer
+  // leeren Seite, weil der neue Filter weniger Einträge hat.
+  function changeFilter(tab: typeof FILTER_TABS[number]) {
+    setFilter(tab);
+    setOffset(0);
+  }
 
   return (
     <div className="max-w-3xl space-y-5">
@@ -75,7 +86,7 @@ function ClipsQueue() {
             <button
               key={tab.label}
               type="button"
-              onClick={() => setFilter(tab)}
+              onClick={() => changeFilter(tab)}
               className={
                 active
                   ? "shrink-0 whitespace-nowrap rounded-full border border-[#9146FF]/50 bg-[#9146FF]/15 px-3 py-1 text-xs font-semibold text-[#bf94ff]"
@@ -99,6 +110,10 @@ function ClipsQueue() {
           <ClipModCard key={clip.id} clip={clip} onChanged={reload} />
         ))}
       </div>
+
+      {rows !== null && (
+        <Pagination offset={offset} pageSize={PAGE_SIZE} count={rows.length} onChange={setOffset} />
+      )}
     </div>
   );
 }

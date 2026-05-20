@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { Pagination } from "../components/Pagination";
 import { UploadCard } from "../components/UploadCard";
 import { Routes } from "../config/routes";
 import { formatBytes, formatDate, formatDuration, readMaxBytes } from "../lib/asset-helpers";
@@ -48,20 +49,23 @@ export function GcodePage() {
   );
 }
 
+const PAGE_SIZE = 20;
+
 function GcodeContent() {
   const [files, setFiles] = React.useState<GcodeFile[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  const [offset, setOffset] = React.useState(0);
   const maxBytes = readMaxBytes("__gcodeMaxBytes");
 
   const reload = React.useCallback(() => {
-    listGcodeFiles()
+    listGcodeFiles(PAGE_SIZE, offset)
       .then(setFiles)
       .catch((e: unknown) => {
         console.error(e);
         setError("G-Code-Liste konnte nicht geladen werden.");
       });
-  }, []);
+  }, [offset]);
 
   React.useEffect(() => {
     reload();
@@ -84,7 +88,7 @@ function GcodeContent() {
     setBusyId(file.id);
     try {
       await deleteGcodeFile(file.id);
-      setFiles((prev) => prev?.filter((f) => f.id !== file.id) ?? null);
+      reload();
     } catch (err: unknown) {
       console.error(err);
       setError(err instanceof ApiError ? err.message : "Löschen fehlgeschlagen.");
@@ -150,6 +154,10 @@ function GcodeContent() {
             </div>
           );
         })}
+
+        {files !== null && (
+          <Pagination offset={offset} pageSize={PAGE_SIZE} count={files.length} onChange={setOffset} />
+        )}
       </section>
     </div>
   );
