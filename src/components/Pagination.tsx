@@ -26,26 +26,27 @@ export function Pagination({ offset, pageSize, count, total, onChange }: Paginat
       ? `${from}–${to} von ${total}`
       : `${from}–${to} · Seite ${Math.floor(offset / pageSize) + 1}`;
 
+  // Beide Buttons über ein kleines Array, damit das Markup nur einmal existiert.
+  const buttons = [
+    { label: "Zurück", disabled: !hasPrev, target: Math.max(0, offset - pageSize) },
+    { label: "Weiter", disabled: !hasNext, target: offset + pageSize }
+  ];
+
   return (
     <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
       <span className="tabular-nums">{label}</span>
       <div className="flex gap-2">
-        <button
-          type="button"
-          className="btn-outline btn-sm disabled:opacity-40"
-          disabled={!hasPrev}
-          onClick={() => onChange(Math.max(0, offset - pageSize))}
-        >
-          Zurück
-        </button>
-        <button
-          type="button"
-          className="btn-outline btn-sm disabled:opacity-40"
-          disabled={!hasNext}
-          onClick={() => onChange(offset + pageSize)}
-        >
-          Weiter
-        </button>
+        {buttons.map((b) => (
+          <button
+            key={b.label}
+            type="button"
+            className="btn-outline btn-sm disabled:opacity-40"
+            disabled={b.disabled}
+            onClick={() => onChange(b.target)}
+          >
+            {b.label}
+          </button>
+        ))}
       </div>
     </div>
   );
