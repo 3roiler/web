@@ -361,9 +361,24 @@ export async function deleteBlogPost(id: string): Promise<void> {
 
 // Admin / Permissions
 
-export async function listAdminUsers(): Promise<AdminUser[]> {
+export interface AdminUserPage {
+  users: AdminUser[];
+  total: number;
+}
+
+export async function listAdminUsers(
+  opts: { q?: string; limit?: number; offset?: number } = {}
+): Promise<AdminUserPage> {
   try {
-    const response = await axios.get<AdminUser[]>(`${getApiBaseUrl()}/admin/users`, AXIOS_OPTIONS);
+    const params = new URLSearchParams();
+    if (opts.q) params.set('q', opts.q);
+    if (opts.limit != null) params.set('limit', String(opts.limit));
+    if (opts.offset != null) params.set('offset', String(opts.offset));
+    const qs = params.toString();
+    const response = await axios.get<AdminUserPage>(
+      `${getApiBaseUrl()}/admin/users${qs ? `?${qs}` : ''}`,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
     toApiError(error, 'Beim Laden der Benutzerliste ist ein Fehler aufgetreten.');

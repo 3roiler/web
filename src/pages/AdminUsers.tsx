@@ -37,38 +37,59 @@ export function AdminUsersPage() {
   );
 }
 
+const PAGE_SIZE = 20;
+
 function UsersContent({ me }: { me: User }) {
   const [users, setUsers] = React.useState<AdminUser[] | null>(null);
+  const [total, setTotal] = React.useState(0);
   const [permissions, setPermissions] = React.useState<PermissionDefinition[] | null>(null);
+  const [search, setSearch] = React.useState("");
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
+  const [offset, setOffset] = React.useState(0);
   const [error, setError] = React.useState<string | null>(null);
   const [busyKey, setBusyKey] = React.useState<string | null>(null);
   const [editing, setEditing] = React.useState<AdminUser | null>(null);
 
-  const reload = React.useCallback(async () => {
+  // Permissions-Katalog einmalig laden (ändert sich nicht pro Seite/Suche).
+  React.useEffect(() => {
+    listGrantablePermissions().then(setPermissions).catch(() => setPermissions([]));
+  }, []);
+
+  // Suche entprellen; bei neuer Suche zurück auf Seite 1.
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setOffset(0);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const fetchPage = React.useCallback(async () => {
     try {
-      const [userList, permList] = await Promise.all([
-        listAdminUsers(),
-        listGrantablePermissions()
-      ]);
-      setUsers(userList);
-      setPermissions(permList);
+      const page = await listAdminUsers({
+        q: debouncedSearch || undefined,
+        limit: PAGE_SIZE,
+        offset
+      });
+      setUsers(page.users);
+      setTotal(page.total);
       setError(null);
     } catch (e: unknown) {
       console.error(e);
       setError("Beim Laden der Daten ist ein Fehler aufgetreten.");
     }
-  }, []);
+  }, [debouncedSearch, offset]);
 
   React.useEffect(() => {
-    void reload();
-  }, [reload]);
+    void fetchPage();
+  }, [fetchPage]);
 
   async function handleGrant(userId: string, permission: string) {
     const key = `grant:${userId}:${permission}`;
     setBusyKey(key);
     try {
       await grantPermission(userId, permission);
-      await reload();
+      await fetchPage();
     } catch (e: unknown) {
       console.error(e);
       setError(e instanceof ApiError ? e.message : "Erteilen fehlgeschlagen.");
@@ -84,7 +105,7 @@ function UsersContent({ me }: { me: User }) {
     setBusyKey(key);
     try {
       await revokePermission(userId, permission);
-      await reload();
+      await fetchPage();
     } catch (e: unknown) {
       console.error(e);
       setError(e instanceof ApiError ? e.message : "Entziehen fehlgeschlagen.");
@@ -103,7 +124,7 @@ function UsersContent({ me }: { me: User }) {
     setBusyKey(key);
     try {
       await deleteAdminUser(user.id);
-      await reload();
+      await fetchPage();
     } catch (e: unknown) {
       console.error(e);
       setError(e instanceof ApiError ? e.message : "Löschen fehlgeschlagen.");
@@ -112,13 +133,28 @@ function UsersContent({ me }: { me: User }) {
     }
   }
 
+  const from = total === 0 ? 0 : offset + 1;
+  const to = Math.min(offset + PAGE_SIZE, total);
+
   return (
     <div className="space-y-4">
+      <input
+        type="search"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Nutzer suchen (Name, Anzeigename, E-Mail)…"
+        aria-label="Nutzer suchen"
+        className="w-full rounded-lg border border-white/10 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500"
+      />
+
       {error && <p className="text-sm text-red-300">{error}</p>}
       {!error && users === null && <p className="text-sm text-slate-400">Lade…</p>}
       {!error && users !== null && users.length === 0 && (
-        <p className="text-sm text-slate-400">Noch keine Nutzer.</p>
+        <p className="text-sm text-slate-400">
+          {debouncedSearch ? "Keine Treffer." : "Noch keine Nutzer."}
+        </p>
       )}
+
       {users?.map((u) => (
         <UserRow
           key={u.id}
@@ -133,13 +169,37 @@ function UsersContent({ me }: { me: User }) {
         />
       ))}
 
+      {users !== null && total > 0 && (
+        <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
+          <span className="tabular-nums">{from}–{to} von {total}</span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="btn-outline btn-sm disabled:opacity-40"
+              disabled={offset === 0}
+              onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+            >
+              Zurück
+            </button>
+            <button
+              type="button"
+              className="btn-outline btn-sm disabled:opacity-40"
+              disabled={offset + PAGE_SIZE >= total}
+              onClick={() => setOffset(offset + PAGE_SIZE)}
+            >
+              Weiter
+            </button>
+          </div>
+        </div>
+      )}
+
       {editing && (
         <EditUserDialog
           user={editing}
           onClose={() => setEditing(null)}
           onSaved={async () => {
             setEditing(null);
-            await reload();
+            await fetchPage();
           }}
         />
       )}
