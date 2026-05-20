@@ -1,5 +1,5 @@
 import * as React from "react";
-import { authenticateGithub } from "../services";
+import { authenticateGithub, authenticateTwitch } from "../services";
 import { Routes, navigateTo } from "../config/routes";
 
 function GithubCallbackPage() {
@@ -25,6 +25,38 @@ function GithubCallbackPage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-slate-900 text-slate-200">
       <p>Authentifizierung läuft...</p>
+    </main>
+  );
+}
+
+/**
+ * Twitch-OAuth-Redirect. Twitch liefert `code` (+ `state`); das Backend
+ * tauscht den Code gegen ein Token, legt/verknüpft den Nutzer an und
+ * setzt das Session-Cookie. Nach Erfolg geht es zum Vote-Feed — der
+ * natürliche Einstieg in Streamclips.
+ */
+function TwitchCallbackPage() {
+  React.useEffect(() => {
+    const params = new URLSearchParams(globalThis.location.search);
+    const code = params.get('code');
+
+    if (code) {
+      authenticateTwitch(code).then(({ user }) => {
+          localStorage.setItem('user', JSON.stringify(user));
+          navigateTo(Routes.Streamclips.Vote);
+        }).catch((error: unknown) => {
+          console.error(error);
+          navigateTo(Routes.Callback.Error);
+        });
+    } else {
+      console.error("Missing code in Twitch callback URL");
+      navigateTo(Routes.Callback.Error);
+    }
+  }, []);
+
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-slate-900 text-slate-200">
+      <p>Twitch-Anmeldung läuft...</p>
     </main>
   );
 }
@@ -65,4 +97,4 @@ function AuthErrorPage() {
     );
 }
 
-export { GithubCallbackPage, AuthErrorPage };
+export { GithubCallbackPage, TwitchCallbackPage, AuthErrorPage };

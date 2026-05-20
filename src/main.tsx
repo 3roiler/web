@@ -6,7 +6,7 @@ import { Footer } from './components/Footer';
 import { HomePage } from './pages/Home';
 import { ImpressumPage } from './pages/Impressum';
 import { DatenschutzPage } from './pages/Datenschutz';
-import { GithubCallbackPage, AuthErrorPage } from './pages/Callbacks';
+import { GithubCallbackPage, TwitchCallbackPage, AuthErrorPage } from './pages/Callbacks';
 import { BlogPage } from './pages/Blog';
 import { BlogAdminPage } from './pages/BlogAdmin';
 import { DashboardHomePage } from './pages/DashboardHome';
@@ -24,6 +24,16 @@ import { GcodePage } from './pages/Gcode';
 import { PrintRequestPage } from './pages/PrintRequest';
 import { PrintRequestsPage } from './pages/PrintRequests';
 import { PrintRequestDetailPage } from './pages/PrintRequestDetail';
+import { StreamclipsHomePage } from './pages/streamclips/Landing';
+import { VotePage } from './pages/streamclips/Vote';
+import { SubmitClipPage } from './pages/streamclips/Submit';
+import { LeaderboardPage } from './pages/streamclips/Leaderboard';
+import { ClipDetailPage } from './pages/streamclips/ClipDetail';
+import { MyClipsPage } from './pages/streamclips/Me';
+import { DashboardClipsPage } from './pages/DashboardClips';
+import { DashboardAwardsPage } from './pages/DashboardAwards';
+import { DashboardClipCategoriesPage } from './pages/DashboardClipCategories';
+import { DashboardReportsPage } from './pages/DashboardReports';
 import { Routes } from './config/routes';
 
 /**
@@ -74,6 +84,14 @@ function AppRoot() {
           <Route path={Routes.Profile} element={<ProfilePage />} />
           <Route path={Routes.PrintRequest} element={<PrintRequestPage />} />
 
+          {/* Streamclips Germany — öffentlicher Bereich. */}
+          <Route path={Routes.Streamclips.Home} element={<StreamclipsHomePage />} />
+          <Route path={Routes.Streamclips.Vote} element={<VotePage />} />
+          <Route path={Routes.Streamclips.Submit} element={<SubmitClipPage />} />
+          <Route path={Routes.Streamclips.Leaderboard} element={<LeaderboardPage />} />
+          <Route path={Routes.Streamclips.ClipDetail} element={<ClipDetailPage />} />
+          <Route path={Routes.Streamclips.Me} element={<MyClipsPage />} />
+
           {/* Dashboard: zentrale Verwaltung. Alle Berechtigungsprüfungen
               laufen sowohl im DashboardLayout (UX) als auch im API-Handler. */}
           <Route path={Routes.Dashboard.Home} element={<DashboardHomePage />} />
@@ -99,9 +117,18 @@ function AppRoot() {
           <Route path={Routes.Dashboard.StlViewer} element={<StlViewerPage />} />
           <Route path={Routes.Dashboard.PrintRequests} element={<PrintRequestsPage />} />
           <Route path={Routes.Dashboard.PrintRequestDetail} element={<PrintRequestDetailPage />} />
+          {/* `/awards` und `/reports` MÜSSEN vor dem allgemeinen
+              `/dashboard/clips` stehen bleiben — hier sind es eigene
+              literale Pfade, daher unkritisch, aber der Klarheit halber
+              gruppiert. */}
+          <Route path={Routes.Dashboard.Clips} element={<DashboardClipsPage />} />
+          <Route path={Routes.Dashboard.ClipsAwards} element={<DashboardAwardsPage />} />
+          <Route path={Routes.Dashboard.ClipsCategories} element={<DashboardClipCategoriesPage />} />
+          <Route path={Routes.Dashboard.ClipsReports} element={<DashboardReportsPage />} />
 
           <Route path={Routes.BlogPost} element={<BlogPostPage />} />
           <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />
+          <Route path={Routes.Callback.Twitch} element={<TwitchCallbackPage />} />
           <Route path={Routes.Callback.Error} element={<AuthErrorPage />} />
         </RouterRoutes>
       </React.Suspense>

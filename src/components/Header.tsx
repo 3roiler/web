@@ -33,6 +33,7 @@ const NAV_LINKS: NavLinkSpec[] = [
   { label: 'Stack',    href: '/#skills' },
   { label: 'Projekte', href: '/#projects' },
   { label: 'Blog',     to: Routes.Blog },
+  { label: 'Streamclips', to: Routes.Streamclips.Home },
   { label: 'Kontakt',  href: '/#contact' }
 ];
 

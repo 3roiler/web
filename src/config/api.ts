@@ -6,7 +6,11 @@
 export const ApiEnvironments = {
   Production: "https://api.broiler.dev/prod",
   Staging: "https://api.broiler.dev/staging",
-  Development: "http://localhost:3000",
+  // Die lokale API mountet alle Routen unter `config.prefix` (= /api),
+  // daher MUSS die Dev-Basis-URL das Präfix enthalten — sonst 404 auf
+  // jeden Call. (Prod/Staging routen /prod bzw. /staging über den
+  // Reverse-Proxy und brauchen das /api hier nicht.)
+  Development: "http://localhost:3000/api",
 } as const;
 
 export type ApiEnvironment = keyof typeof ApiEnvironments;
