@@ -1,5 +1,6 @@
 import { navigateTo, Routes } from "../config/routes";
 import { nuke } from "../services";
+import { Seo } from "../components/Seo";
 
 async function handleNuke() {
   try {
@@ -20,6 +21,7 @@ async function handleNuke() {
 export function DatenschutzPage() {
   return (
     <main className="mt-24 pb-24 bg-slate-950" id="top">
+      <Seo title="Datenschutz" description="Datenschutzerklärung von broiler.dev — minimale Daten, DSGVO-konform." />
       <div className="mx-auto max-w-3xl px-6 sm:px-10 lg:px-16 space-y-8">
         <h1 className="text-4xl font-semibold text-slate-50 sm:text-5xl">Datenschutz</h1>
         <p className="mt-4 text-slate-300 text-sm leading-relaxed">Kurzfassung: minimale Daten, keine Werbung, kein Tracking.</p>

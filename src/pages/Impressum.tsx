@@ -1,8 +1,10 @@
 import { Routes } from "../config/routes";
+import { Seo } from "../components/Seo";
 
 export function ImpressumPage() {
   return (
     <main className="bg-slate-950/60 py-24" id="top">
+      <Seo title="Impressum" description="Anbieterkennzeichnung und rechtliche Hinweise zu broiler.dev." />
       <div className="mx-auto max-w-4xl px-6 sm:px-10 lg:px-16 space-y-16 pt-24">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-400">Impressum</p>
         <h1 className="mt-6 max-w-3xl text-4xl font-semibold leading-tight text-slate-50 sm:text-5xl lg:text-6xl">Anbieterkennzeichnung & rechtliche Hinweise</h1>

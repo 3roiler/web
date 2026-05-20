@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /profile
+Disallow: /callback/
+Disallow: /streamclips/me
+Disallow: /streamclips/submit
+Disallow: /streamclips/vote
+
+Sitemap: https://broiler.dev/sitemap.xml

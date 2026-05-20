@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Routes } from "../config/routes";
+import { Seo, JsonLd, SITE_URL } from "../components/Seo";
 
 function handleContactSubmit(event: FormEvent<HTMLFormElement>) {
   event.preventDefault();
@@ -35,6 +36,21 @@ function handleContactSubmit(event: FormEvent<HTMLFormElement>) {
 export function HomePage() {
   return (
     <>
+      <Seo title="Paul Wechselberger — Platform & Backend Engineer" />
+      <JsonLd
+        data={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Person",
+            name: "Paul Wechselberger",
+            alternateName: "3roiler",
+            url: SITE_URL,
+            jobTitle: "Platform & Backend Engineer",
+            sameAs: [Routes.External.GithubProfile, Routes.External.LinkedIn, Routes.External.Mastodon]
+          },
+          { "@context": "https://schema.org", "@type": "WebSite", name: "broiler.dev", url: SITE_URL }
+        ]}
+      />
       {/* ─── Hero ───────────────────────────────────────────────────────── */}
       <header id="top" className="relative overflow-hidden bg-slate-950 pt-32 pb-24 sm:pt-40 sm:pb-32">
         {/* Ambient glow */}

@@ -35,6 +35,7 @@ import { DashboardAwardsPage } from './pages/DashboardAwards';
 import { DashboardClipCategoriesPage } from './pages/DashboardClipCategories';
 import { DashboardClipSettingsPage } from './pages/DashboardClipSettings';
 import { DashboardReportsPage } from './pages/DashboardReports';
+import { NotFoundPage } from './pages/NotFound';
 import { Routes } from './config/routes';
 
 /**
@@ -132,6 +133,9 @@ function AppRoot() {
           <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />
           <Route path={Routes.Callback.Twitch} element={<TwitchCallbackPage />} />
           <Route path={Routes.Callback.Error} element={<AuthErrorPage />} />
+
+          {/* Catch-all → 404 (noindex). MUSS zuletzt stehen. */}
+          <Route path="*" element={<NotFoundPage />} />
         </RouterRoutes>
       </React.Suspense>
       <Footer />

@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
+import { Seo } from "../../components/Seo";
 import { ClipCarousel } from "../../components/streamclips/ClipCarousel";
 import { ClipCard } from "../../components/streamclips/ClipCard";
 import {
@@ -62,6 +63,7 @@ export function StreamclipsHomePage() {
 
   return (
     <main className="min-h-screen bg-slate-950 pt-20 pb-16 sm:pt-24" id="top">
+      <Seo title="Streamclips Germany — deutsche Twitch-Clips" description="Die besten deutschen Twitch-Clips, von der Community gewählt. Entdecken, bewerten und einreichen." />
       <div className="mx-auto max-w-5xl px-4 pt-6 sm:px-6 sm:pt-12 lg:px-16 lg:pt-16">
         <header className="mb-6 space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#bf94ff] sm:tracking-[0.3em]">
