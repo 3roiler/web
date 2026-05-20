@@ -1808,3 +1808,34 @@ export async function adminSetCategorySection(id: string, section: ClipSection):
     toApiError(error, 'Sektion konnte nicht gesetzt werden.');
   }
 }
+
+export interface ModerationSettings {
+  autoApproveDailyLimit: number;
+  requireReviewAll: boolean;
+  reviewSections: ClipSection[];
+}
+
+export async function getModerationSettings(): Promise<ModerationSettings> {
+  try {
+    const response = await axios.get<ModerationSettings>(
+      `${getApiBaseUrl()}/admin/streamclips/moderation-settings`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Moderations-Einstellungen konnten nicht geladen werden.');
+  }
+}
+
+export async function updateModerationSettings(input: Partial<ModerationSettings>): Promise<ModerationSettings> {
+  try {
+    const response = await axios.put<ModerationSettings>(
+      `${getApiBaseUrl()}/admin/streamclips/moderation-settings`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Moderations-Einstellungen konnten nicht gespeichert werden.');
+  }
+}

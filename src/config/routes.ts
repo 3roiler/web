@@ -52,6 +52,7 @@ export const Routes = {
     Clips: "/dashboard/clips",
     ClipsAwards: "/dashboard/clips/awards",
     ClipsCategories: "/dashboard/clips/categories",
+    ClipsSettings: "/dashboard/clips/settings",
     ClipsReports: "/dashboard/clips/reports"
   },
 
