@@ -8,11 +8,11 @@ import {
   removeGroupMember,
   grantGroupPermission,
   revokeGroupPermission,
-  listAdminUsers,
+  searchUsers,
   listGrantablePermissions,
   ApiError,
   type AdminGroupDetail as AdminGroupDetailType,
-  type AdminUser,
+  type UserSummary,
   type PermissionDefinition
 } from "../services";
 import { DashboardLayout } from "../components/DashboardLayout";
@@ -51,19 +51,16 @@ export function AdminGroupDetailPage() {
 function LoadedGroupDetail({ id }: { id: string }) {
   const navigate = useNavigate();
   const [group, setGroup] = React.useState<AdminGroupDetailType | null | undefined>(undefined);
-  const [allUsers, setAllUsers] = React.useState<AdminUser[]>([]);
   const [permCatalog, setPermCatalog] = React.useState<PermissionDefinition[]>([]);
   const [error, setError] = React.useState<string | null>(null);
 
   const reload = React.useCallback(async () => {
     try {
-      const [detail, users, perms] = await Promise.all([
+      const [detail, perms] = await Promise.all([
         getAdminGroup(id),
-        listAdminUsers(),
         listGrantablePermissions()
       ]);
       setGroup(detail);
-      setAllUsers(users);
       setPermCatalog(perms);
       setError(null);
     } catch (e: unknown) {
@@ -123,7 +120,6 @@ function LoadedGroupDetail({ id }: { id: string }) {
         return (
           <GroupDetailBody
             group={group}
-            allUsers={allUsers}
             permCatalog={permCatalog}
             onChanged={reload}
             setError={setError}
@@ -136,17 +132,18 @@ function LoadedGroupDetail({ id }: { id: string }) {
 
 interface GroupDetailBodyProps {
   group: AdminGroupDetailType;
-  allUsers: AdminUser[];
   permCatalog: PermissionDefinition[];
   onChanged: () => Promise<void>;
   setError: (msg: string | null) => void;
 }
 
-function GroupDetailBody({ group, allUsers, permCatalog, onChanged, setError }: GroupDetailBodyProps) {
+function GroupDetailBody({ group, permCatalog, onChanged, setError }: GroupDetailBodyProps) {
   const [key, setKey] = React.useState(group.key);
   const [displayName, setDisplayName] = React.useState(group.displayName);
   const [savingMeta, setSavingMeta] = React.useState(false);
-  const [addUserId, setAddUserId] = React.useState("");
+  const [memberQuery, setMemberQuery] = React.useState("");
+  const [memberResults, setMemberResults] = React.useState<UserSummary[]>([]);
+  const [searchingMembers, setSearchingMembers] = React.useState(false);
   const [addingMember, setAddingMember] = React.useState(false);
   const [permPicker, setPermPicker] = React.useState("");
   const [busyPerm, setBusyPerm] = React.useState<string | null>(null);
@@ -157,8 +154,25 @@ function GroupDetailBody({ group, allUsers, permCatalog, onChanged, setError }: 
     setDisplayName(group.displayName);
   }, [group.id, group.key, group.displayName]);
 
+  // Entprellte Mitgliedersuche über die API; aktuelle Mitglieder ausblenden.
+  React.useEffect(() => {
+    const q = memberQuery.trim();
+    if (q.length < 2) {
+      setMemberResults([]);
+      setSearchingMembers(false);
+      return;
+    }
+    setSearchingMembers(true);
+    const t = setTimeout(() => {
+      searchUsers(q)
+        .then((rows) => setMemberResults(rows.filter((u) => !memberIds.has(u.id))))
+        .catch(() => setMemberResults([]))
+        .finally(() => setSearchingMembers(false));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [memberQuery, group.members]);
+
   const memberIds = new Set(group.members.map((m) => m.id));
-  const nonMembers = allUsers.filter((u) => !memberIds.has(u.id));
   const grantable = permCatalog.filter((p) => !group.permissions.includes(p.key));
 
   const keyValid = GROUP_KEY_RE.test(key);
@@ -190,13 +204,13 @@ function GroupDetailBody({ group, allUsers, permCatalog, onChanged, setError }: 
     }
   }
 
-  async function handleAddMember() {
-    if (!addUserId) return;
+  async function handleAddMember(userId: string) {
     setAddingMember(true);
     setError(null);
     try {
-      await addGroupMember(group.id, addUserId);
-      setAddUserId("");
+      await addGroupMember(group.id, userId);
+      setMemberQuery("");
+      setMemberResults([]);
       await onChanged();
     } catch (e: unknown) {
       console.error(e);
@@ -393,31 +407,43 @@ function GroupDetailBody({ group, allUsers, permCatalog, onChanged, setError }: 
           </ul>
         )}
 
-        {nonMembers.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <select
-              value={addUserId}
-              onChange={(e) => setAddUserId(e.target.value)}
-              className="rounded-lg border border-white/10 bg-slate-900/60 px-3 py-1.5 text-xs text-slate-200"
-              aria-label="Nutzer auswählen"
-            >
-              <option value="">Nutzer auswählen…</option>
-              {nonMembers.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.displayName || u.name} ({u.name})
-                </option>
+        <div className="mt-4 space-y-2">
+          <input
+            type="search"
+            value={memberQuery}
+            onChange={(e) => setMemberQuery(e.target.value)}
+            placeholder="Nutzer suchen, um sie hinzuzufügen…"
+            aria-label="Nutzer suchen"
+            className="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500"
+          />
+          {searchingMembers && <p className="text-xs text-slate-500">Suche…</p>}
+          {!searchingMembers && memberQuery.trim().length >= 2 && memberResults.length === 0 && (
+            <p className="text-xs text-slate-500">Keine Treffer.</p>
+          )}
+          {memberResults.length > 0 && (
+            <ul className="divide-y divide-white/5 rounded-lg border border-white/10">
+              {memberResults.map((u) => (
+                <li key={u.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                  <div className="min-w-0">
+                    <p className="truncate text-slate-100">{u.displayName || u.name}</p>
+                    <p className="truncate text-xs text-slate-500">
+                      @{u.name}
+                      {u.email ? ` · ${u.email}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAddMember(u.id)}
+                    disabled={addingMember}
+                    className="btn-outline btn-sm disabled:opacity-50"
+                  >
+                    {addingMember ? "…" : "Hinzufügen"}
+                  </button>
+                </li>
               ))}
-            </select>
-            <button
-              type="button"
-              onClick={handleAddMember}
-              disabled={!addUserId || addingMember}
-              className="btn-outline btn-sm disabled:opacity-50"
-            >
-              {addingMember ? "Füge hinzu…" : "Hinzufügen"}
-            </button>
-          </div>
-        )}
+            </ul>
+          )}
+        </div>
       </section>
     </div>
   );
