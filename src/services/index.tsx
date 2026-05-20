@@ -310,6 +310,14 @@ export async function logout(): Promise<void> {
   }
 }
 
+/** Hängt optionale limit/offset an eine Query an → „?…"-Suffix (oder ""). */
+function withPagingQuery(params: URLSearchParams, limit?: number, offset?: number): string {
+  if (limit != null) params.set('limit', String(limit));
+  if (offset != null) params.set('offset', String(offset));
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
 // Blog
 
 export async function listBlogPosts(
@@ -320,11 +328,8 @@ export async function listBlogPosts(
   try {
     const params = new URLSearchParams();
     if (includeDrafts) params.set('drafts', 'true');
-    if (limit != null) params.set('limit', String(limit));
-    if (offset != null) params.set('offset', String(offset));
-    const qs = params.toString();
     const response = await axios.get<BlogPost[]>(
-      `${getApiBaseUrl()}/blog${qs ? `?${qs}` : ''}`,
+      `${getApiBaseUrl()}/blog${withPagingQuery(params, limit, offset)}`,
       AXIOS_OPTIONS
     );
     return response.data;
@@ -968,11 +973,10 @@ function buildAssetClient<TFile>(basePath: string, label: string) {
   return {
     async list(limit?: number, offset?: number): Promise<TFile[]> {
       try {
-        const params = new URLSearchParams();
-        if (limit != null) params.set('limit', String(limit));
-        if (offset != null) params.set('offset', String(offset));
-        const qs = params.toString();
-        const r = await axios.get<TFile[]>(`${base()}${qs ? `?${qs}` : ''}`, AXIOS_OPTIONS);
+        const r = await axios.get<TFile[]>(
+          `${base()}${withPagingQuery(new URLSearchParams(), limit, offset)}`,
+          AXIOS_OPTIONS
+        );
         return r.data;
       } catch (error: unknown) {
         toApiError(error, `${label}-Dateien konnten nicht geladen werden.`);
@@ -1129,11 +1133,8 @@ export async function listPrintRequests(opts?: {
     const params = new URLSearchParams();
     if (opts?.mine) params.set('mine', '1');
     if (opts?.status?.length) params.set('status', opts.status.join(','));
-    if (opts?.limit != null) params.set('limit', String(opts.limit));
-    if (opts?.offset != null) params.set('offset', String(opts.offset));
-    const qs = params.toString();
     const response = await axios.get<PrintRequestWithContext[]>(
-      `${getApiBaseUrl()}/print-request${qs ? `?${qs}` : ''}`,
+      `${getApiBaseUrl()}/print-request${withPagingQuery(params, opts?.limit, opts?.offset)}`,
       AXIOS_OPTIONS
     );
     return response.data;
@@ -1732,11 +1733,8 @@ export async function adminListClips(
   try {
     const params = new URLSearchParams();
     if (status.length) params.set('status', status.join(','));
-    if (limit != null) params.set('limit', String(limit));
-    if (offset != null) params.set('offset', String(offset));
-    const qs = params.toString();
     const response = await axios.get<ClipWithContext[]>(
-      `${getApiBaseUrl()}/admin/streamclips/clips${qs ? `?${qs}` : ''}`,
+      `${getApiBaseUrl()}/admin/streamclips/clips${withPagingQuery(params, limit, offset)}`,
       AXIOS_OPTIONS
     );
     return response.data;
@@ -1813,10 +1811,8 @@ export async function adminListReports(
   try {
     const params = new URLSearchParams();
     params.set('status', status);
-    if (limit != null) params.set('limit', String(limit));
-    if (offset != null) params.set('offset', String(offset));
     const response = await axios.get<ClipReportWithContext[]>(
-      `${getApiBaseUrl()}/admin/streamclips/reports?${params.toString()}`,
+      `${getApiBaseUrl()}/admin/streamclips/reports${withPagingQuery(params, limit, offset)}`,
       AXIOS_OPTIONS
     );
     return response.data;

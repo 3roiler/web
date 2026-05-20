@@ -12,6 +12,7 @@ import {
   type User
 } from "../services";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { Pagination } from "../components/Pagination";
 
 /**
  * Dashboard UI for managing users: editing display name/email, revoking
@@ -133,8 +134,6 @@ function UsersContent({ me }: { me: User }) {
     }
   }
 
-  const from = total === 0 ? 0 : offset + 1;
-  const to = Math.min(offset + PAGE_SIZE, total);
 
   return (
     <div className="space-y-4">
@@ -169,28 +168,8 @@ function UsersContent({ me }: { me: User }) {
         />
       ))}
 
-      {users !== null && total > 0 && (
-        <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
-          <span className="tabular-nums">{from}–{to} von {total}</span>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="btn-outline btn-sm disabled:opacity-40"
-              disabled={offset === 0}
-              onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-            >
-              Zurück
-            </button>
-            <button
-              type="button"
-              className="btn-outline btn-sm disabled:opacity-40"
-              disabled={offset + PAGE_SIZE >= total}
-              onClick={() => setOffset(offset + PAGE_SIZE)}
-            >
-              Weiter
-            </button>
-          </div>
-        </div>
+      {users !== null && (
+        <Pagination offset={offset} pageSize={PAGE_SIZE} count={users.length} total={total} onChange={setOffset} />
       )}
 
       {editing && (

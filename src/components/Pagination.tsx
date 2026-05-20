@@ -3,29 +3,32 @@ interface PaginationProps {
   pageSize: number;
   /** Anzahl Einträge auf der aktuell geladenen Seite (für „Weiter"). */
   count: number;
+  /** Gesamtzahl, falls bekannt → zeigt „X–Y von N" und exakte Weiter-Logik. */
+  total?: number;
   onChange: (offset: number) => void;
 }
 
 /**
- * Offset-basierte Pagination OHNE Gesamtzahl: „Weiter" ist aktiv, solange die
- * aktuelle Seite voll ist (`count === pageSize`) — dann gibt es vermutlich
- * weitere Einträge. Für Dashboard-Listen, deren API `limit`/`offset` kann.
- * Rendert nichts, wenn es nur eine (Teil-)Seite gibt.
+ * Offset-basierte Pagination. Ist `total` bekannt, wird „X–Y von N" gezeigt
+ * und „Weiter" exakt anhand der Gesamtzahl aktiviert. Sonst (count-Modus)
+ * ist „Weiter" aktiv, solange die aktuelle Seite voll ist (`count ===
+ * pageSize`). Rendert nichts, wenn es nur eine (Teil-)Seite gibt.
  */
-export function Pagination({ offset, pageSize, count, onChange }: PaginationProps) {
+export function Pagination({ offset, pageSize, count, total, onChange }: PaginationProps) {
   const hasPrev = offset > 0;
-  const hasNext = count === pageSize;
+  const hasNext = total != null ? offset + pageSize < total : count === pageSize;
   if (!hasPrev && !hasNext) return null;
 
-  const page = Math.floor(offset / pageSize) + 1;
   const from = count === 0 ? 0 : offset + 1;
   const to = offset + count;
+  const label =
+    total != null
+      ? `${from}–${to} von ${total}`
+      : `${from}–${to} · Seite ${Math.floor(offset / pageSize) + 1}`;
 
   return (
     <div className="flex items-center justify-between pt-2 text-xs text-slate-400">
-      <span className="tabular-nums">
-        {from}–{to} · Seite {page}
-      </span>
+      <span className="tabular-nums">{label}</span>
       <div className="flex gap-2">
         <button
           type="button"
