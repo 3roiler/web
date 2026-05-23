@@ -204,9 +204,34 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
       raf = requestAnimationFrame(step);
     }
 
+    /** Einmaliger Render ohne Animation und ohne Maus-Interaktion. Wird
+     *  verwendet, wenn der Nutzer `prefers-reduced-motion: reduce` gesetzt
+     *  hat — wir zeigen das Netz dann statisch, statt gar nichts. „Weniger
+     *  Bewegung" heißt nicht „keine Visuals". */
+    function renderStaticFrame() {
+      // Mauseinfluss neutralisieren, sonst würden Punkte am letzten
+      // Cursor-Standort heller leuchten — das wäre ein versteckter Hover-
+      // Effekt, den der reduced-motion-Nutzer nicht erwartet.
+      const oldMouseX = mouseX;
+      const oldMouseY = mouseY;
+      mouseX = -10_000;
+      mouseY = -10_000;
+      ctx!.clearRect(0, 0, width, height);
+      drawLinks();
+      drawParticlesAndMouse();
+      mouseX = oldMouseX;
+      mouseY = oldMouseY;
+    }
+
     function start() {
-      if (prefersReduced) return;
       cancelAnimationFrame(raf);
+      if (prefersReduced) {
+        // Statt komplett nichts: ein eingefrorenes Netz. Das ist sichtbar
+        // wie geplant, bewegt sich aber nicht und reagiert nicht auf die
+        // Maus.
+        renderStaticFrame();
+        return;
+      }
       raf = requestAnimationFrame(step);
     }
 
@@ -238,7 +263,7 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
       prefersReduced = event.matches;
       if (prefersReduced) {
         stop();
-        ctx!.clearRect(0, 0, width, height);
+        renderStaticFrame();
       } else {
         start();
       }
@@ -250,8 +275,20 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
     // 0×0, was beim Setzen von `canvas.width = 0` den Canvas auf eine
     // 300×150-Default-Größe kollabiert und visuell „nichts passiert"
     // aussieht.
-    requestAnimationFrame(resize);
-    const ro = new ResizeObserver(() => resize());
+    requestAnimationFrame(() => {
+      resize();
+      // Wenn `start()` wegen reduced-motion frühzeitig zurückkommt, hat
+      // es schon den statischen Frame gerendert; ResizeObserver wird das
+      // bei jeder folgenden Größenänderung erneut tun (siehe `ro`).
+    });
+    const ro = new ResizeObserver(() => {
+      resize();
+      // Setzen von `canvas.width` clearet implizit den Canvas — wenn die
+      // RAF-Loop läuft, ist der nächste step() ohnehin gleich. Bei
+      // reduced-motion müssen wir das Frame aber selbst nachreichen,
+      // sonst sieht der Nutzer nach jedem Resize einen leeren Hero.
+      if (prefersReduced) renderStaticFrame();
+    });
     ro.observe(canvas);
     // mousemove auf `globalThis`, damit die Maus auch dann den Hover-
     // Effekt auslöst, wenn sie über einen Vordergrund-Button (mit eigenem
