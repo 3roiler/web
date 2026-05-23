@@ -24,16 +24,19 @@ import React from 'react';
  *    (Sidebar-Toggle, Mobile-Drawer) zuverlässig getriggert werden.
  *
  * A11y:
- *  - `aria-hidden`, weil rein dekorativ.
- *  - `pointer-events-none`, damit Buttons/Links im Vordergrund weiter
- *    direkt anklickbar bleiben.
+ *  - Rein dekorativ. Wir verstecken den gesamten Canvas-Wrapper per
+ *    `aria-hidden` (am wrapping div, nicht am canvas — SonarCloud
+ *    S6825 lehnt aria-hidden direkt auf canvas ab, weil canvas in
+ *    Edge-Cases mit `tabindex` fokussierbar werden könnte).
+ *  - `pointer-events-none` an Wrapper UND canvas, damit Buttons/Links
+ *    im Vordergrund weiter direkt anklickbar bleiben.
  */
 export interface ParticleFieldProps {
   /** Multiplikator auf die berechnete Partikelzahl. Default 1. Werte unter
    *  1 = leiser, über 1 = dichter (nur sparsam einsetzen). */
-  density?: number;
-  /** Zusätzliche Klassen für das Canvas (Positionierung/Sizing). */
-  className?: string;
+  readonly density?: number;
+  /** Zusätzliche Klassen für den Canvas-Wrapper (Positionierung/Sizing). */
+  readonly className?: string;
 }
 
 interface Particle {
@@ -48,6 +51,18 @@ const LINK_DISTANCE = 140;        // Maximaler Abstand für Linien zw. Punkten (
 const MOUSE_DISTANCE = 170;       // Einflussradius der Maus (px)
 const BASE_PARTICLE_OPACITY = 0.35;
 const PARTICLE_AREA_DIVISOR = 18000; // 1 Partikel pro N px² Hero-Fläche
+const PARTICLE_MIN = 20;
+const PARTICLE_MAX = 120;
+
+/**
+ * Zufalls-Helfer. `Math.random()` ist hier rein dekorativ (Partikel-
+ * Positionen, Drift-Geschwindigkeiten) — kein Sicherheitskontext. Wir
+ * kapseln den Aufruf, damit SonarCloud S2245 (PRNG-Warnung) genau eine
+ * dokumentierte Stelle sehen kann statt n verteilte. */
+function rand(): number {
+  // NOSONAR(typescript:S2245) – ornamentaler PRNG, kein Crypto-Kontext.
+  return Math.random();
+}
 
 export function ParticleField({ density = 1, className }: ParticleFieldProps) {
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
@@ -56,13 +71,13 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Reduced motion respektieren — komplett kein Render. Wir tracken auch
-    // Änderungen zur Laufzeit (User toggelt OS-Setting im offenen Tab).
-    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let prefersReduced = motionQuery.matches;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Reduced motion respektieren — komplett kein Render. Wir tracken auch
+    // Änderungen zur Laufzeit (User toggelt OS-Setting im offenen Tab).
+    const motionQuery = globalThis.matchMedia('(prefers-reduced-motion: reduce)');
+    let prefersReduced = motionQuery.matches;
 
     let particles: Particle[] = [];
     // Mauspos in CSS-Pixeln relativ zum Canvas. Außerhalb des Sichtfelds
@@ -79,31 +94,28 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
       // braucht ein Punkt rund 8 Sekunden für 60 px — sieht nach „Drift"
       // aus, nicht nach Bewegung.
       return {
-        x: Math.random() * w,
-        y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.24,
-        vy: (Math.random() - 0.5) * 0.24,
-        r: 1.1 + Math.random() * 0.9
+        x: rand() * w,
+        y: rand() * h,
+        vx: (rand() - 0.5) * 0.24,
+        vy: (rand() - 0.5) * 0.24,
+        r: 1.1 + rand() * 0.9
       };
     }
 
     function resize() {
-      // `canvas`/`ctx` sind oben null-gecheckt, aber TS verliert das
-      // Narrowing in nested function declarations (Hoisting). Die
-      // Non-Null-Assertions sind hier sicher.
       const rect = canvas!.getBoundingClientRect();
       width = rect.width;
       height = rect.height;
       // DPR-Cap: 4K-Displays sonst 4× Pixel-Arbeit für minimal sichtbare
       // Schärfe-Gewinne. 2 ist der Sweet-Spot für Retina.
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
       canvas!.width = Math.max(1, Math.floor(width * dpr));
       canvas!.height = Math.max(1, Math.floor(height * dpr));
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const target = Math.max(
-        20,
-        Math.min(120, Math.round(((width * height) / PARTICLE_AREA_DIVISOR) * density))
+        PARTICLE_MIN,
+        Math.min(PARTICLE_MAX, Math.round(((width * height) / PARTICLE_AREA_DIVISOR) * density))
       );
       // Wenn die Zahl steigt, ergänzen wir; wenn sie sinkt, schneiden wir
       // ab. Komplettes Recreate würde den „Drift" sichtbar resetten.
@@ -116,11 +128,8 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
       }
     }
 
-    function step() {
-      ctx!.clearRect(0, 0, width, height);
-
-      // 1) Positionen aktualisieren — toroidaler Rand, damit die Dichte
-      //    konstant bleibt. Keine Beschleunigungen, keine Wandkollisionen.
+    /** Position aller Partikel um einen Frame fortschreiben (toroidal). */
+    function advance() {
       for (const p of particles) {
         p.x += p.vx;
         p.y += p.vy;
@@ -129,43 +138,44 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
         if (p.y < 0) p.y += height;
         else if (p.y > height) p.y -= height;
       }
+    }
 
-      // 2) Linien zwischen Punktpaaren. Alpha skaliert quadratisch mit der
-      //    Nähe — entfernte Verbindungen sind nahezu unsichtbar, sehr nahe
-      //    Paare wirken wie gemalte Striche. Das macht das Netz dynamisch
-      //    ohne dass irgendwo eine harte Sichtbarkeitsgrenze blitzt.
+    /** Linien zwischen Punktpaaren mit Abstand < LINK_DISTANCE. Alpha
+     *  skaliert quadratisch mit der Nähe — entfernte Verbindungen sind
+     *  nahezu unsichtbar, sehr nahe Paare wirken wie gemalte Striche. */
+    function drawLinks() {
+      const maxSq = LINK_DISTANCE * LINK_DISTANCE;
       ctx!.lineWidth = 1;
       for (let i = 0; i < particles.length; i++) {
-        const a = particles[i];
+        const a = particles[i]!;
         for (let j = i + 1; j < particles.length; j++) {
-          const b = particles[j];
+          const b = particles[j]!;
           const dx = a.x - b.x;
           const dy = a.y - b.y;
           const distSq = dx * dx + dy * dy;
-          if (distSq > LINK_DISTANCE * LINK_DISTANCE) continue;
+          if (distSq > maxSq) continue;
           const t = 1 - Math.sqrt(distSq) / LINK_DISTANCE;
-          const alpha = t * t * 0.32;
-          ctx!.strokeStyle = `rgba(103, 232, 249, ${alpha})`; // cyan-300
+          ctx!.strokeStyle = `rgba(103, 232, 249, ${t * t * 0.32})`; // cyan-300
           ctx!.beginPath();
           ctx!.moveTo(a.x, a.y);
           ctx!.lineTo(b.x, b.y);
           ctx!.stroke();
         }
       }
+    }
 
-      // 3) Maus-Interaktion. Wir berechnen die Distanz nur einmal pro
-      //    Partikel und benutzen das Ergebnis sowohl für die Linie zur
-      //    Maus als auch für den Glow-Faktor beim Punkt. Spart einen
-      //    zweiten Pass.
-      const mouseDistSq = MOUSE_DISTANCE * MOUSE_DISTANCE;
+    /** Punkte zeichnen + Maus-Interaktion (Glow + temporäre Linie zur
+     *  Maus). In einem Pass kombiniert, damit wir die Distanz nur einmal
+     *  pro Partikel rechnen müssen. */
+    function drawParticlesAndMouse() {
+      const maxSq = MOUSE_DISTANCE * MOUSE_DISTANCE;
       for (const p of particles) {
         const dx = p.x - mouseX;
         const dy = p.y - mouseY;
         const distSq = dx * dx + dy * dy;
-        let proximity = 0;
-        if (distSq < mouseDistSq) {
-          proximity = 1 - Math.sqrt(distSq) / MOUSE_DISTANCE;
-          // Linie Punkt → Maus
+        const proximity = distSq < maxSq ? 1 - Math.sqrt(distSq) / MOUSE_DISTANCE : 0;
+
+        if (proximity > 0) {
           ctx!.strokeStyle = `rgba(34, 211, 238, ${proximity * 0.55})`; // cyan-400
           ctx!.beginPath();
           ctx!.moveTo(p.x, p.y);
@@ -173,14 +183,18 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
           ctx!.stroke();
         }
 
-        // Punkt selbst. Punkte nah an der Maus werden heller und etwas
-        // größer — das ist die einzige „Reaktion", die der User sieht.
         ctx!.fillStyle = `rgba(165, 243, 252, ${BASE_PARTICLE_OPACITY + proximity * 0.55})`; // cyan-200
         ctx!.beginPath();
         ctx!.arc(p.x, p.y, p.r + proximity * 1.4, 0, Math.PI * 2);
         ctx!.fill();
       }
+    }
 
+    function step() {
+      ctx!.clearRect(0, 0, width, height);
+      advance();
+      drawLinks();
+      drawParticlesAndMouse();
       raf = requestAnimationFrame(step);
     }
 
@@ -227,12 +241,12 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
     resize();
     const ro = new ResizeObserver(() => resize());
     ro.observe(canvas);
-    // mousemove auf `window`, damit die Maus auch dann den Hover-Effekt
-    // auslöst, wenn sie über einen Vordergrund-Button (mit eigenem
+    // mousemove auf `globalThis`, damit die Maus auch dann den Hover-
+    // Effekt auslöst, wenn sie über einen Vordergrund-Button (mit eigenem
     // pointer-events: auto) zieht. Distanz wird gegen das Canvas-Rect
     // umgerechnet, daher bleibt es lokal.
-    window.addEventListener('mousemove', onMove, { passive: true });
-    window.addEventListener('blur', clearMouse);
+    globalThis.addEventListener('mousemove', onMove, { passive: true });
+    globalThis.addEventListener('blur', clearMouse);
     document.addEventListener('visibilitychange', onVisibility);
     // Safari < 14 unterstützt `addEventListener` nicht auf MediaQueryList,
     // dort fällt es lautlos aus — das ist OK, weil reduced-motion dann
@@ -244,21 +258,28 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
     return () => {
       stop();
       ro.disconnect();
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('blur', clearMouse);
+      globalThis.removeEventListener('mousemove', onMove);
+      globalThis.removeEventListener('blur', clearMouse);
       document.removeEventListener('visibilitychange', onVisibility);
       motionQuery.removeEventListener?.('change', onMotionChange);
     };
   }, [density]);
 
+  // Wir wrappen das canvas in einen aria-hidden div statt das Attribut
+  // direkt aufs canvas zu legen (S6825). Das Canvas bleibt im DOM-Flow,
+  // ist aber zusammen mit dem Wrapper für Screenreader unsichtbar.
   return (
-    <canvas
-      ref={canvasRef}
+    <div
       aria-hidden="true"
       className={
         className ??
         'pointer-events-none absolute inset-0 -z-10 h-full w-full'
       }
-    />
+    >
+      <canvas
+        ref={canvasRef}
+        className="pointer-events-none h-full w-full"
+      />
+    </div>
   );
 }
