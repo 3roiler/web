@@ -2,6 +2,7 @@ import * as React from "react";
 import { useParams, Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
 import { ClipEmbed } from "../../components/streamclips/ClipEmbed";
+import { ClipCarousel } from "../../components/streamclips/ClipCarousel";
 import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { Seo } from "../../components/Seo";
@@ -10,9 +11,11 @@ import {
   reportClip,
   getMe,
   loginToTwitch,
+  listClipsByBroadcaster,
   ApiError,
   type ClipDetail as ClipDetailType,
-  type ClipStatus
+  type ClipStatus,
+  type ClipWithContext
 } from "../../services";
 
 const STATUS_BADGE: Record<ClipStatus, { label: string; className: string }> = {
@@ -27,6 +30,7 @@ export function ClipDetailPage() {
   const [clip, setClip] = React.useState<ClipDetailType | null | undefined>(undefined);
   const [error, setError] = React.useState<string | null>(null);
   const [loggedIn, setLoggedIn] = React.useState(false);
+  const [related, setRelated] = React.useState<ClipWithContext[]>([]);
 
   React.useEffect(() => {
     getMe().then(() => setLoggedIn(true)).catch(() => setLoggedIn(false));
@@ -34,6 +38,7 @@ export function ClipDetailPage() {
 
   React.useEffect(() => {
     if (!id) return;
+    setRelated([]); // Vorherige related-Liste verwerfen, wenn der Clip wechselt.
     getClip(id)
       .then(setClip)
       .catch((e: unknown) => {
@@ -42,6 +47,16 @@ export function ClipDetailPage() {
         setClip(null);
       });
   }, [id]);
+
+  // Lädt „Mehr von diesem Streamer", sobald der Clip da ist und einen
+  // broadcasterId trägt. Fehler still verschlucken — das Karussell ist
+  // optional, der eigentliche Clip soll davon unbeeindruckt bleiben.
+  React.useEffect(() => {
+    if (!clip?.broadcasterId) return;
+    listClipsByBroadcaster(clip.broadcasterId, { excludeId: clip.id, limit: 8 })
+      .then(setRelated)
+      .catch(() => undefined);
+  }, [clip?.broadcasterId, clip?.id]);
 
   return (
     <main className="min-h-screen bg-slate-950 pt-20 pb-16 sm:pt-24" id="top">
@@ -101,6 +116,20 @@ export function ClipDetailPage() {
             )}
 
             {loggedIn ? <ReportBlock clipId={clip.id} /> : <LoginHint />}
+          </div>
+        )}
+
+        {/* „Mehr von diesem Streamer" — bewusst außerhalb der max-w-2xl-
+            Spalte, damit das Karussell den vollen Container-Breitenraum
+            nutzen kann. Erst gerendert, wenn wirklich etwas da ist. */}
+        {clip && related.length > 0 && (
+          <div className="mt-10 -mx-4 sm:-mx-6 lg:-mx-16">
+            <div className="px-4 sm:px-6 lg:px-16">
+              <ClipCarousel
+                title={<>Mehr von {clip.broadcasterName ?? "diesem Streamer"}</>}
+                clips={related}
+              />
+            </div>
           </div>
         )}
       </div>

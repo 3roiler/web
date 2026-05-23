@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes as RouterRoutes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
+import { KeyboardShortcuts } from './components/KeyboardShortcuts';
 import { HomePage } from './pages/Home';
 import { ImpressumPage } from './pages/Impressum';
 import { DatenschutzPage } from './pages/Datenschutz';
@@ -77,6 +78,7 @@ function AppRoot() {
   return (
     <BrowserRouter>
       <Header />
+      <KeyboardShortcuts />
       <React.Suspense fallback={<RouteFallback />}>
         <RouterRoutes>
           <Route path={Routes.Home} element={<HomePage />} />
