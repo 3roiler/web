@@ -46,17 +46,44 @@ const NAV_LINKS: NavLinkSpec[] = [
 ];
 
 /**
- * Liefert `true` wenn der Eintrag bei der aktuellen Location als aktiv
- * gelten soll. Hash-Einträge (Anchors) sind nur auf `/` aktiv und müssen
- * den Hash treffen — andernfalls würden alle Anchor-Items auf jeder
- * Subseite den Active-Indikator zeigen.
+ * Wenn eine Section im Viewport rückt, aber selbst kein eigener Nav-
+ * Eintrag ist, ordnen wir sie einem benachbarten zu. `#about` etwa hat
+ * keinen Header-Link – während der User dort scrollt soll trotzdem
+ * „Start" markiert bleiben, damit der Nav nicht abrupt leer wird.
  */
-function isNavActive(entry: NavLinkSpec, pathname: string, hash: string): boolean {
+const ANCHOR_TO_NAV_HREF: Record<string, string> = {
+  top: '/#top',
+  about: '/#top',
+  skills: '/#skills',
+  projects: '/#projects',
+  contact: '/#contact'
+};
+
+/** IDs, die der IntersectionObserver beim Scrollen auf `/` mitliest. */
+const HOME_ANCHOR_IDS = ['top', 'about', 'skills', 'projects', 'contact'];
+
+/**
+ * Liefert `true` wenn der Eintrag bei der aktuellen Location als aktiv
+ * gelten soll. Hash-Einträge (Anchors) sind nur auf `/` aktiv und werden
+ * primär durch den vom IntersectionObserver gepflegten `activeAnchor`
+ * gesteuert. Fallback ist der URL-Hash — relevant bevor der Observer
+ * gemessen hat oder wenn keine Section im Sichtbereich ist (z. B. ganz
+ * unten im Footer-Bereich).
+ */
+function isNavActive(
+  entry: NavLinkSpec,
+  pathname: string,
+  hash: string,
+  activeAnchor: string | null
+): boolean {
   if (entry.to) {
     if (pathname === entry.to) return true;
     return entry.prefixes?.some((p) => pathname.startsWith(p)) ?? false;
   }
   if (entry.href && pathname === '/') {
+    if (activeAnchor) {
+      return ANCHOR_TO_NAV_HREF[activeAnchor] === entry.href;
+    }
     // Anker greifen nur, wenn der Hash 1:1 matched. Für `/#top` zählt auch
     // der Default-Zustand (kein Hash) als aktiv, sonst hätte die Startseite
     // beim ersten Aufruf keinen Indikator.
@@ -73,6 +100,7 @@ export function Header() {
   const [avatarBroken, setAvatarBroken] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [accountOpen, setAccountOpen] = React.useState(false);
+  const [activeAnchor, setActiveAnchor] = React.useState<string | null>(null);
   const location = useLocation();
   const accountMenuRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -127,6 +155,71 @@ export function Header() {
   }, [mobileOpen]);
 
   /**
+   * Active-Section-Tracking auf der Startseite. Beim Scrollen schauen
+   * wir, welche Section gerade unter der „Trigger-Linie" hängt (= ein
+   * Stück unter dem fixed Header). Die UNTERSTE Section, deren Oberkante
+   * diese Linie schon passiert hat, ist die, in der der User aktuell
+   * liest — also setzen wir die aktiv.
+   *
+   * Implementation per `scroll`-Listener (RAF-getaktet) statt
+   * IntersectionObserver: der Observer signalisiert nur „X% sichtbar",
+   * was bei zwei sich überlappenden Sections nicht ausreicht, um die
+   * jeweils richtige zu picken. Ein direkter `getBoundingClientRect()`-
+   * Sweep über fünf DOM-Knoten kostet praktisch nichts und ist explizit
+   * lesbar.
+   */
+  React.useEffect(() => {
+    if (location.pathname !== '/') {
+      setActiveAnchor(null);
+      return;
+    }
+    // px unter dem fixed Header, ab denen eine Section als „eingerollt"
+    // gilt. Etwas über der reinen Header-Höhe (~64 px), damit der
+    // Indikator nicht schon umspringt, wenn die nächste Section nur
+    // einen Pixel unter den Header rutscht.
+    const TRIGGER_OFFSET = 120;
+
+    const elements = HOME_ANCHOR_IDS
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+    if (elements.length === 0) return;
+
+    let raf = 0;
+
+    const pickActive = () => {
+      raf = 0;
+      let current: string | null = null;
+      for (const el of elements) {
+        const top = el.getBoundingClientRect().top;
+        if (top <= TRIGGER_OFFSET) {
+          current = el.id;
+        } else {
+          // Sections sind im DOM von oben nach unten — sobald eine noch
+          // nicht unter die Triggerlinie gescrollt ist, ist auch keine
+          // dahinter relevant.
+          break;
+        }
+      }
+      setActiveAnchor(current);
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(pickActive);
+    };
+
+    // Initial pick (Page-Load mit ggf. bestehendem scrollY)
+    pickActive();
+    globalThis.addEventListener('scroll', onScroll, { passive: true });
+    globalThis.addEventListener('resize', onScroll);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      globalThis.removeEventListener('scroll', onScroll);
+      globalThis.removeEventListener('resize', onScroll);
+    };
+  }, [location.pathname]);
+
+  /**
    * Outside-click + Escape schließen das Account-Dropdown. Wir hängen die
    * Listener nur ein, wenn das Menü offen ist — spart in 99 % der Zeit
    * einen Document-Listener, der gar nichts zu tun hätte.
@@ -160,7 +253,7 @@ export function Header() {
 
   /** Renders one nav entry — RouterLink for SPA paths, anchor otherwise. */
   function renderNavEntry(entry: NavLinkSpec, baseClass: string) {
-    const active = isNavActive(entry, location.pathname, location.hash);
+    const active = isNavActive(entry, location.pathname, location.hash, activeAnchor);
     const className = active ? `${baseClass} is-active` : baseClass;
     const aria = active ? 'page' : undefined;
     if (entry.to) {

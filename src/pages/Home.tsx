@@ -1,8 +1,56 @@
+import * as React from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Routes } from "../config/routes";
 import { Seo, JsonLd, SITE_URL } from "../components/Seo";
 import { ParticleField } from "../components/ParticleField";
+
+/**
+ * Hover-Tilt mit Maus-Verfolgung für Project-Cards. Berechnet aus der
+ * Cursor-Position innerhalb der Karte zwei Drehwinkel und schreibt sie
+ * via CSS-Custom-Properties — der eigentliche Transform sitzt im
+ * ClassName, damit Tailwind-Hover-Effekte (translate, shadow) frei mit
+ * dem 3D-Tilt komponieren können.
+ *
+ * Deaktiviert bei `prefers-reduced-motion` (kein 3D-Trick, nur Default-
+ * Hover-Animation aus Tailwind) und bei `pointer: coarse` (Touch ohne
+ * Hover-Phase — der Tilt würde nie greifen, der Listener nur Energie
+ * kosten).
+ */
+function useTilt() {
+  const ref = React.useRef<HTMLElement | null>(null);
+
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!matchMedia('(pointer: fine)').matches) return;
+
+    const onMove = (event: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      // Normalisiert auf -0.5 … +0.5 mit Mittelpunkt = 0
+      const nx = (event.clientX - rect.left) / rect.width - 0.5;
+      const ny = (event.clientY - rect.top) / rect.height - 0.5;
+      // Max 6° in jeder Achse — darüber wird der Tilt unangenehm.
+      el.style.setProperty('--tilt-x', `${(-ny * 6).toFixed(2)}deg`);
+      el.style.setProperty('--tilt-y', `${(nx * 6).toFixed(2)}deg`);
+    };
+
+    const onLeave = () => {
+      el.style.setProperty('--tilt-x', '0deg');
+      el.style.setProperty('--tilt-y', '0deg');
+    };
+
+    el.addEventListener('mousemove', onMove);
+    el.addEventListener('mouseleave', onLeave);
+    return () => {
+      el.removeEventListener('mousemove', onMove);
+      el.removeEventListener('mouseleave', onLeave);
+    };
+  }, []);
+
+  return ref;
+}
 
 function handleContactSubmit(event: FormEvent<HTMLFormElement>) {
   event.preventDefault();
@@ -181,18 +229,22 @@ export function HomePage() {
 
             <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
               <SkillCard
+                glyph="{ }"
                 title="Languages & Runtimes"
                 items={['TypeScript · Node.js', 'C# · .NET 8+', 'Bash, YAML', 'PL/pgSQL']}
               />
               <SkillCard
+                glyph="◇"
                 title="Platform & Infra"
                 items={['Kubernetes (on-prem)', 'Terraform · Kustomize', 'Docker (multi-stage)', 'Caddy · Traefik']}
               />
               <SkillCard
+                glyph="≣"
                 title="Data"
                 items={['PostgreSQL · pgvector', 'Redis (Sentinel)', 'SQL Server · ODBC', 'Object Storage (S3/MinIO)']}
               />
               <SkillCard
+                glyph="◉"
                 title="Observability & DevEx"
                 items={['Prometheus · Grafana · Loki', 'Jenkins · GitHub Actions', 'SOPS · age (Secrets)', 'SonarCloud · Semgrep']}
               />
@@ -385,17 +437,35 @@ function FactCard({ label, value }: FactCardProps) {
 }
 
 interface SkillCardProps {
+  /** Kurzes Schriftzeichen-Symbol als „Icon" — bewusst Glyph statt SVG,
+   *  damit der Stack ohne zusätzliche Asset-Dependencies auskommt. */
+  glyph: string;
   title: string;
   items: string[];
 }
 
-function SkillCard({ title, items }: SkillCardProps) {
+function SkillCard({ glyph, title, items }: SkillCardProps) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-cyan-400/30">
-      <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
-        {title}
-      </h3>
-      <ul className="mt-4 space-y-2 text-sm text-slate-300">
+    <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:-translate-y-0.5 hover:border-cyan-400/40 hover:shadow-[0_24px_60px_-45px_rgba(15,194,207,0.45)]">
+      {/* Dünner cyan-Top-Akzent, der bei Hover „eingeschaltet" wird —
+          subtile Bestätigung dass die Karte interaktiv ist, ohne
+          aggressive Farbflächen. */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/0 to-transparent transition-all duration-500 group-hover:via-cyan-400/70"
+      />
+      <div className="flex items-center gap-3">
+        <span
+          aria-hidden="true"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-slate-950/60 font-mono text-base text-cyan-300 transition group-hover:border-cyan-400/40 group-hover:text-cyan-200"
+        >
+          {glyph}
+        </span>
+        <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
+          {title}
+        </h3>
+      </div>
+      <ul className="mt-5 space-y-2 text-sm text-slate-300">
         {items.map((item) => (
           <li key={item} className="font-mono text-[0.8rem] tracking-tight text-slate-300">
             {item}
@@ -415,45 +485,84 @@ interface ProjectCardProps {
 }
 
 function ProjectCard({ title, subtitle, description, tags, href }: ProjectCardProps) {
+  const tiltRef = useTilt();
   const body = (
     <>
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-          {subtitle}
-        </span>
-        {href && (
-          <span
-            aria-hidden="true"
-            className="text-xs text-slate-500 transition group-hover:text-cyan-300"
-          >
-            ↗
+      {/*
+        Sheen-Layer: ein sehr dünner Cyan-Gradient, der nur beim Hover
+        aufblendet. Liegt unter dem Content und bekommt dieselbe
+        rounded-2xl-Border-Radius wie der Container, damit er bei der
+        Maus-Bewegung nicht „über die Ecke" tröpfelt.
+      */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/0 via-cyan-400/0 to-cyan-500/0 opacity-0 transition-opacity duration-300 group-hover:from-cyan-500/8 group-hover:via-cyan-400/4 group-hover:to-transparent group-hover:opacity-100"
+      />
+      <div className="relative flex h-full flex-col">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            {subtitle}
           </span>
-        )}
+          {href && (
+            <span
+              aria-hidden="true"
+              className="text-xs text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-cyan-300"
+            >
+              ↗
+            </span>
+          )}
+        </div>
+        <h3 className="mt-3 text-lg font-semibold text-slate-50">{title}</h3>
+        <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-300">{description}</p>
+        <ul className="mt-5 flex flex-wrap gap-1.5 text-[0.7rem]">
+          {tags.map((t) => (
+            <li
+              key={t}
+              className="rounded-full border border-white/10 bg-slate-950/60 px-2 py-0.5 font-mono tracking-tight text-slate-400"
+            >
+              {t}
+            </li>
+          ))}
+        </ul>
       </div>
-      <h3 className="mt-3 text-lg font-semibold text-slate-50">{title}</h3>
-      <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-300">{description}</p>
-      <ul className="mt-5 flex flex-wrap gap-1.5 text-[0.7rem]">
-        {tags.map((t) => (
-          <li
-            key={t}
-            className="rounded-full border border-white/10 bg-slate-950/60 px-2 py-0.5 font-mono tracking-tight text-slate-400"
-          >
-            {t}
-          </li>
-        ))}
-      </ul>
     </>
   );
 
+  // Inline-Styles kapseln den Tilt: die Custom-Properties werden vom
+  // Hook gesetzt, die Berechnung läuft über `transform`. `perspective`
+  // muss zwingend am gleichen Element wie `rotateX/Y` sitzen — wir
+  // können den Effekt deshalb nicht in Tailwind-Klassen ausdrücken.
+  const tiltStyle = {
+    transform:
+      'perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))',
+    transformStyle: 'preserve-3d' as const,
+    transition: 'transform 150ms ease-out, border-color .2s, box-shadow .3s'
+  };
+
   const baseClass =
-    "group flex h-full flex-col rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:-translate-y-0.5 hover:border-cyan-400/40 hover:shadow-[0_24px_60px_-45px_rgba(15,194,207,0.55)]";
+    "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 hover:border-cyan-400/40 hover:shadow-[0_24px_60px_-45px_rgba(15,194,207,0.55)] will-change-transform";
 
   if (href) {
     return (
-      <a href={href} target="_blank" rel="noopener" className={baseClass}>
+      <a
+        ref={tiltRef as React.RefObject<HTMLAnchorElement>}
+        href={href}
+        target="_blank"
+        rel="noopener"
+        className={baseClass}
+        style={tiltStyle}
+      >
         {body}
       </a>
     );
   }
-  return <div className={baseClass}>{body}</div>;
+  return (
+    <div
+      ref={tiltRef as React.RefObject<HTMLDivElement>}
+      className={baseClass}
+      style={tiltStyle}
+    >
+      {body}
+    </div>
+  );
 }
