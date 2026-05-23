@@ -85,7 +85,7 @@ export function ImpressumPage() {
         </section>
 
         <div className="pt-4">
-          <a href="#top" className="nav-link text-xs">Nach oben</a>
+          <a href="#top" className="btn-outline btn-sm">Nach oben</a>
         </div>
       </div>
     </main>

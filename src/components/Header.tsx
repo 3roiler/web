@@ -22,32 +22,64 @@ function safeHttpUrl(url: string | null | undefined): string | null {
   }
 }
 
+/**
+ * Top-level Navi. Hash-Einträge (`/#anchor`) sind Sprungmarken auf der
+ * Startseite, `to`-Einträge sind echte SPA-Routen. Dashboard/Druckanfrage
+ * sind permission-gegated und leben deshalb im Avatar-Dropdown — die
+ * Hauptzeile soll auf den ersten Blick lesbar bleiben.
+ */
 interface NavLinkSpec {
   label: string;
   href?: string;
   to?: string;
+  /** Pfad-Präfixe, die den Eintrag als aktiv markieren (zusätzlich zu `to`). */
+  prefixes?: string[];
 }
 
 const NAV_LINKS: NavLinkSpec[] = [
-  { label: 'Start',    href: '/#top' },
-  { label: 'Stack',    href: '/#skills' },
-  { label: 'Projekte', href: '/#projects' },
-  { label: 'Blog',     to: Routes.Blog },
-  { label: 'Streamclips', to: Routes.Streamclips.Home },
-  { label: 'Kontakt',  href: '/#contact' }
+  { label: 'Start',       href: '/#top' },
+  { label: 'Stack',       href: '/#skills' },
+  { label: 'Projekte',    href: '/#projects' },
+  { label: 'Blog',        to: Routes.Blog, prefixes: ['/blog'] },
+  { label: 'Streamclips', to: Routes.Streamclips.Home, prefixes: ['/streamclips'] },
+  { label: 'Kontakt',     href: '/#contact' }
 ];
+
+/**
+ * Liefert `true` wenn der Eintrag bei der aktuellen Location als aktiv
+ * gelten soll. Hash-Einträge (Anchors) sind nur auf `/` aktiv und müssen
+ * den Hash treffen — andernfalls würden alle Anchor-Items auf jeder
+ * Subseite den Active-Indikator zeigen.
+ */
+function isNavActive(entry: NavLinkSpec, pathname: string, hash: string): boolean {
+  if (entry.to) {
+    if (pathname === entry.to) return true;
+    return entry.prefixes?.some((p) => pathname.startsWith(p)) ?? false;
+  }
+  if (entry.href && pathname === '/') {
+    // Anker greifen nur, wenn der Hash 1:1 matched. Für `/#top` zählt auch
+    // der Default-Zustand (kein Hash) als aktiv, sonst hätte die Startseite
+    // beim ersten Aufruf keinen Indikator.
+    if (entry.href === '/#top') {
+      return hash === '' || hash === '#top';
+    }
+    return entry.href === `/${hash}`;
+  }
+  return false;
+}
 
 export function Header() {
   const [user, setUser] = React.useState<User | null>(null);
   const [avatarBroken, setAvatarBroken] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [accountOpen, setAccountOpen] = React.useState(false);
   const location = useLocation();
+  const accountMenuRef = React.useRef<HTMLDivElement | null>(null);
 
   /**
-   * Zeigt den Dashboard-Link, sobald der Nutzer mindestens `dashboard.view`
+   * Zeigt den Dashboard-Eintrag, sobald der Nutzer mindestens `dashboard.view`
    * (direkt oder via `admin.manage`) besitzt. Die einzelnen Unterbereiche
-   * (Blog / Nutzer / Gruppen) werden im Dashboard selbst weiter gefiltert,
-   * damit der Header nicht zuwuchert.
+   * (Blog / Nutzer / Gruppen) werden im Dashboard selbst weiter gefiltert.
    */
   const canSeeDashboard = Boolean(
     user?.permissions?.some((p) => p === 'dashboard.view' || p === 'admin.manage')
@@ -72,17 +104,18 @@ export function Header() {
   }, []);
 
   /**
-   * Close the mobile drawer whenever we navigate to a new path. Otherwise
-   * the menu would stay open behind the new page after a click on a link.
+   * Close the mobile drawer and the account dropdown whenever we navigate
+   * to a new path/hash. Otherwise the overlays would stay open behind the
+   * new page after a click on a link inside them.
    */
   React.useEffect(() => {
     setMobileOpen(false);
+    setAccountOpen(false);
   }, [location.pathname, location.hash]);
 
   /**
    * Lock background scroll while the drawer is open so the user can't
    * accidentally scroll the underlying page when swiping the menu.
-   * Restored on cleanup so navigation away leaves the body untouched.
    */
   React.useEffect(() => {
     if (!mobileOpen) return;
@@ -93,59 +126,96 @@ export function Header() {
     };
   }, [mobileOpen]);
 
+  /**
+   * Outside-click + Escape schließen das Account-Dropdown. Wir hängen die
+   * Listener nur ein, wenn das Menü offen ist — spart in 99 % der Zeit
+   * einen Document-Listener, der gar nichts zu tun hätte.
+   */
+  React.useEffect(() => {
+    if (!accountOpen) return;
+    const onPointer = (event: MouseEvent) => {
+      if (!accountMenuRef.current) return;
+      if (accountMenuRef.current.contains(event.target as Node)) return;
+      setAccountOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setAccountOpen(false);
+    };
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [accountOpen]);
+
   const displayName = user?.displayName || user?.display_name || user?.name || '';
   const avatarUrl = safeHttpUrl(user?.avatarUrl);
   const initial = displayName.slice(0, 1).toUpperCase() || '?';
 
   const handleLogout = () => {
+    setAccountOpen(false);
     logout().then(() => setUser(null));
   };
 
   /** Renders one nav entry — RouterLink for SPA paths, anchor otherwise. */
-  function renderNavEntry(entry: NavLinkSpec, className: string) {
+  function renderNavEntry(entry: NavLinkSpec, baseClass: string) {
+    const active = isNavActive(entry, location.pathname, location.hash);
+    const className = active ? `${baseClass} is-active` : baseClass;
+    const aria = active ? 'page' : undefined;
     if (entry.to) {
-      return <Link to={entry.to} className={className}>{entry.label}</Link>;
+      return <Link to={entry.to} className={className} aria-current={aria}>{entry.label}</Link>;
     }
-    return <a href={entry.href} className={className}>{entry.label}</a>;
+    return <a href={entry.href} className={className} aria-current={aria}>{entry.label}</a>;
   }
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-slate-900/80 backdrop-blur-md"
+      className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-md"
       id="global-nav"
     >
-      <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4 lg:px-16">
-        <Link to="/" className="text-base font-semibold text-cyan-400 shrink-0" onClick={() => setMobileOpen(false)}>
-          broiler.dev
+      <div className="flex items-center justify-between gap-6 px-4 py-3 sm:px-6 sm:py-4 lg:px-16">
+        <Link
+          to="/"
+          className="group flex items-center gap-2 shrink-0"
+          onClick={() => { setMobileOpen(false); setAccountOpen(false); }}
+        >
+          <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,.7)] transition-transform group-hover:scale-125" />
+          <span className="text-base font-semibold tracking-tight text-slate-100 group-hover:text-cyan-300 transition-colors">
+            broiler<span className="text-cyan-400">.dev</span>
+          </span>
         </Link>
 
-        {/* Desktop nav — collapses into the hamburger drawer below `md`. */}
-        <ul className="hidden md:flex items-center gap-2 lg:gap-3">
+        {/* Desktop nav — collapses into the hamburger drawer below `md`.
+            Pure text links with cyan active-underline. Gated entries
+            (Dashboard / Druckanfrage) live in the account dropdown right. */}
+        <ul className="hidden md:flex items-center gap-3 lg:gap-5">
           {NAV_LINKS.map((entry) => (
             <li key={entry.label}>{renderNavEntry(entry, 'nav-link')}</li>
           ))}
-          {canSeePrintRequest && (
-            <li><Link to={Routes.PrintRequest} className="nav-link">Druckanfrage</Link></li>
-          )}
-          {canSeeDashboard && (
-            <li><Link to={Routes.Dashboard.Home} className="nav-link">Dashboard</Link></li>
-          )}
         </ul>
 
-        {/* Desktop auth area. On mobile this lives inside the drawer. */}
-        <div className="hidden md:flex items-center gap-3">
-          <DesktopAuth
+        {/* Right side: account/auth dropdown. Single anchor for everything
+            user-related — keeps the bar quiet, gives users one consistent
+            place to find "everything that is mine". */}
+        <div className="hidden md:flex items-center gap-3" ref={accountMenuRef}>
+          <DesktopAccount
             user={user}
             displayName={displayName}
             avatarUrl={avatarUrl}
             avatarBroken={avatarBroken}
             initial={initial}
+            open={accountOpen}
+            onToggle={() => setAccountOpen((o) => !o)}
+            onClose={() => setAccountOpen(false)}
             onAvatarError={() => setAvatarBroken(true)}
             onLogout={handleLogout}
+            canSeeDashboard={canSeeDashboard}
+            canSeePrintRequest={canSeePrintRequest}
           />
         </div>
 
-        {/* Mobile hamburger. Larger hit area (44×44) than the visual icon. */}
+        {/* Mobile hamburger. Larger hit area (40×40) than the visual icon. */}
         <button
           type="button"
           onClick={() => setMobileOpen((o) => !o)}
@@ -159,17 +229,23 @@ export function Header() {
       </div>
 
       {/* Mobile drawer. Rendered inside the same nav so focus order stays
-          natural and CSS `border-b` of the bar separates it visually. */}
+          natural and CSS `border-b` of the bar separates it visually.
+          Mobile keeps the two login buttons visible (no dropdown) because
+          there's enough vertical space and a dropdown-inside-drawer would
+          feel like double-tap UX. */}
       <div
         id="mobile-menu"
-        className={`md:hidden overflow-hidden border-t border-white/10 bg-slate-900/95 backdrop-blur-md transition-[max-height,opacity] duration-200 ${
-          mobileOpen ? 'max-h-[80vh] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
+        className={`md:hidden overflow-hidden border-t border-white/10 bg-slate-950/95 backdrop-blur-md transition-[max-height,opacity] duration-200 ${
+          mobileOpen ? 'max-h-[85vh] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
         }`}
       >
         <ul className="flex flex-col gap-1 px-4 py-3">
           {NAV_LINKS.map((entry) => (
             <li key={entry.label}>{renderNavEntry(entry, 'mobile-nav-link')}</li>
           ))}
+          {(canSeePrintRequest || canSeeDashboard) && (
+            <li aria-hidden="true" className="my-2 border-t border-white/5" />
+          )}
           {canSeePrintRequest && (
             <li>
               <Link to={Routes.PrintRequest} className="mobile-nav-link">Druckanfrage</Link>
@@ -197,7 +273,155 @@ export function Header() {
   );
 }
 
-interface AuthBlockProps {
+interface DesktopAccountProps {
+  user: User | null;
+  displayName: string;
+  avatarUrl: string | null;
+  avatarBroken: boolean;
+  initial: string;
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  onAvatarError: () => void;
+  onLogout: () => void;
+  canSeeDashboard: boolean;
+  canSeePrintRequest: boolean;
+}
+
+function DesktopAccount(props: DesktopAccountProps) {
+  const {
+    user, displayName, avatarUrl, avatarBroken, initial,
+    open, onToggle, onClose, onAvatarError, onLogout,
+    canSeeDashboard, canSeePrintRequest
+  } = props;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className={
+          user
+            ? 'inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 py-1 pl-1 pr-3 text-sm font-medium text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-500/10'
+            : 'inline-flex items-center gap-1.5 rounded-full bg-cyan-500 px-4 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-400 sm:text-sm'
+        }
+      >
+        {user ? (
+          <>
+            {avatarUrl && !avatarBroken ? (
+              <img
+                src={avatarUrl}
+                alt=""
+                onError={onAvatarError}
+                className="h-7 w-7 rounded-full border border-white/10 bg-slate-900 object-cover"
+              />
+            ) : (
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-slate-900 text-[11px] font-semibold text-slate-300">
+                {initial}
+              </span>
+            )}
+            <span className="hidden lg:inline max-w-[10rem] truncate">{displayName}</span>
+            <ChevronIcon open={open} />
+          </>
+        ) : (
+          <>
+            Anmelden
+            <ChevronIcon open={open} />
+          </>
+        )}
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 mt-2 w-60 origin-top-right overflow-hidden rounded-xl border border-white/10 bg-slate-900/95 shadow-xl shadow-black/40 backdrop-blur-md"
+        >
+          {user ? (
+            <AccountMenuAuthed
+              displayName={displayName}
+              canSeeDashboard={canSeeDashboard}
+              canSeePrintRequest={canSeePrintRequest}
+              onLogout={onLogout}
+              onClose={onClose}
+            />
+          ) : (
+            <AccountMenuGuest onClose={onClose} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AccountMenuAuthed(props: {
+  displayName: string;
+  canSeeDashboard: boolean;
+  canSeePrintRequest: boolean;
+  onLogout: () => void;
+  onClose: () => void;
+}) {
+  const { displayName, canSeeDashboard, canSeePrintRequest, onLogout, onClose } = props;
+  return (
+    <>
+      <div className="border-b border-white/5 px-4 py-3">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Angemeldet als</p>
+        <p className="mt-1 truncate text-sm font-semibold text-slate-100">{displayName}</p>
+      </div>
+      <div className="py-1">
+        <Link to={Routes.Profile} className="menu-item" role="menuitem" onClick={onClose}>
+          Profil
+        </Link>
+        {canSeePrintRequest && (
+          <Link to={Routes.PrintRequest} className="menu-item" role="menuitem" onClick={onClose}>
+            Druckanfrage
+          </Link>
+        )}
+        {canSeeDashboard && (
+          <Link to={Routes.Dashboard.Home} className="menu-item" role="menuitem" onClick={onClose}>
+            Dashboard
+          </Link>
+        )}
+      </div>
+      <div className="border-t border-white/5 py-1">
+        <button
+          type="button"
+          onClick={onLogout}
+          className="menu-item w-full text-left text-slate-400 hover:text-red-300"
+          role="menuitem"
+        >
+          Abmelden
+        </button>
+      </div>
+    </>
+  );
+}
+
+function AccountMenuGuest({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="p-2">
+      <button
+        type="button"
+        onClick={() => { onClose(); loginToGithub(); }}
+        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/5"
+        role="menuitem"
+      >
+        <GithubIcon /> <span>Mit GitHub anmelden</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => { onClose(); loginToTwitch(); }}
+        className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/5"
+        role="menuitem"
+      >
+        <TwitchIcon /> <span>Mit Twitch anmelden</span>
+      </button>
+    </div>
+  );
+}
+
+interface MobileAuthProps {
   user: User | null;
   displayName: string;
   avatarUrl: string | null;
@@ -207,53 +431,7 @@ interface AuthBlockProps {
   onLogout: () => void;
 }
 
-function DesktopAuth(props: AuthBlockProps) {
-  const { user, displayName, avatarUrl, avatarBroken, initial, onAvatarError, onLogout } = props;
-  if (!user) {
-    return (
-      <>
-        <button
-          type="button"
-          onClick={() => loginToGithub()}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-cyan-500 px-3.5 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-400"
-        >
-          <GithubIcon /> GitHub
-        </button>
-        <button
-          type="button"
-          onClick={() => loginToTwitch()}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-[#9146FF] px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#772ce8]"
-        >
-          <TwitchIcon /> Twitch
-        </button>
-      </>
-    );
-  }
-  return (
-    <>
-      <Link to={Routes.Profile} className="flex items-center gap-2 group" aria-label="Profil">
-        {avatarUrl && !avatarBroken ? (
-          <img
-            src={avatarUrl}
-            alt=""
-            onError={onAvatarError}
-            className="h-8 w-8 rounded-full border border-white/10 bg-slate-900 object-cover group-hover:border-cyan-400/60"
-          />
-        ) : (
-          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-slate-900 text-xs font-semibold text-slate-300 group-hover:border-cyan-400/60">
-            {initial}
-          </span>
-        )}
-        <span className="hidden lg:inline text-sm text-slate-300 group-hover:text-cyan-300">
-          {displayName}
-        </span>
-      </Link>
-      <button type="button" onClick={onLogout} className="btn btn-sm">Abmelden</button>
-    </>
-  );
-}
-
-function MobileAuth(props: AuthBlockProps) {
+function MobileAuth(props: MobileAuthProps) {
   const { user, displayName, avatarUrl, avatarBroken, initial, onAvatarError, onLogout } = props;
   if (!user) {
     return (
@@ -263,14 +441,14 @@ function MobileAuth(props: AuthBlockProps) {
           onClick={() => loginToGithub()}
           className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-cyan-500 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
         >
-          <GithubIcon /> GitHub
+          <GithubIcon /> Mit GitHub anmelden
         </button>
         <button
           type="button"
           onClick={() => loginToTwitch()}
           className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#9146FF] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#772ce8]"
         >
-          <TwitchIcon /> Twitch
+          <TwitchIcon /> Mit Twitch anmelden
         </button>
       </div>
     );
@@ -299,6 +477,21 @@ function MobileAuth(props: AuthBlockProps) {
         Abmelden
       </button>
     </div>
+  );
+}
+
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      aria-hidden="true"
+      className={`transition-transform ${open ? 'rotate-180' : ''}`}
+    >
+      <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
