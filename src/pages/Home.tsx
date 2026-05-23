@@ -62,7 +62,7 @@ export function HomePage() {
         {/* Knoten-Netz im Hintergrund. Liegt unter „Ambient glow" und Grid,
             damit der Glow sanft über die Partikel washt und die Linien nicht
             knochig wirken. */}
-        <ParticleField className="pointer-events-none absolute inset-0 -z-20 h-full w-full" />
+        <ParticleField className="pointer-events-none absolute inset-0 -z-20" />
         {/* Ambient glow */}
         <div
           aria-hidden="true"

@@ -47,12 +47,13 @@ interface Particle {
   r: number;
 }
 
-const LINK_DISTANCE = 140;        // Maximaler Abstand für Linien zw. Punkten (px)
-const MOUSE_DISTANCE = 170;       // Einflussradius der Maus (px)
-const BASE_PARTICLE_OPACITY = 0.35;
-const PARTICLE_AREA_DIVISOR = 18000; // 1 Partikel pro N px² Hero-Fläche
-const PARTICLE_MIN = 20;
-const PARTICLE_MAX = 120;
+const LINK_DISTANCE = 160;        // Maximaler Abstand für Linien zw. Punkten (px)
+const MOUSE_DISTANCE = 180;       // Einflussradius der Maus (px)
+const BASE_PARTICLE_OPACITY = 0.55; // Cyan auf slate-950 braucht etwas Druck, um zu lesen
+const LINK_ALPHA_PEAK = 0.5;      // Alpha einer Linie zwischen zwei sehr nahen Punkten
+const PARTICLE_AREA_DIVISOR = 14000; // 1 Partikel pro N px² Hero-Fläche
+const PARTICLE_MIN = 24;
+const PARTICLE_MAX = 140;
 
 /**
  * Zufalls-Helfer. Bewusst über `crypto.getRandomValues` statt
@@ -102,7 +103,7 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
         y: rand() * h,
         vx: (rand() - 0.5) * 0.24,
         vy: (rand() - 0.5) * 0.24,
-        r: 1.1 + rand() * 0.9
+        r: 1.4 + rand() * 1.1
       };
     }
 
@@ -145,11 +146,12 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
     }
 
     /** Linien zwischen Punktpaaren mit Abstand < LINK_DISTANCE. Alpha
-     *  skaliert quadratisch mit der Nähe — entfernte Verbindungen sind
-     *  nahezu unsichtbar, sehr nahe Paare wirken wie gemalte Striche. */
+     *  skaliert linear mit der Nähe — fernere Verbindungen schwächer,
+     *  nahe Paare deutlich. Linear statt quadratisch, damit das Netz
+     *  auf dem dunklen Slate-Hintergrund überhaupt zu sehen ist. */
     function drawLinks() {
       const maxSq = LINK_DISTANCE * LINK_DISTANCE;
-      ctx!.lineWidth = 1;
+      ctx!.lineWidth = 1.1;
       for (let i = 0; i < particles.length; i++) {
         const a = particles[i];
         for (let j = i + 1; j < particles.length; j++) {
@@ -159,7 +161,7 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
           const distSq = dx * dx + dy * dy;
           if (distSq > maxSq) continue;
           const t = 1 - Math.sqrt(distSq) / LINK_DISTANCE;
-          ctx!.strokeStyle = `rgba(103, 232, 249, ${t * t * 0.32})`; // cyan-300
+          ctx!.strokeStyle = `rgba(103, 232, 249, ${t * LINK_ALPHA_PEAK})`; // cyan-300
           ctx!.beginPath();
           ctx!.moveTo(a.x, a.y);
           ctx!.lineTo(b.x, b.y);
@@ -180,16 +182,16 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
         const proximity = distSq < maxSq ? 1 - Math.sqrt(distSq) / MOUSE_DISTANCE : 0;
 
         if (proximity > 0) {
-          ctx!.strokeStyle = `rgba(34, 211, 238, ${proximity * 0.55})`; // cyan-400
+          ctx!.strokeStyle = `rgba(34, 211, 238, ${proximity * 0.7})`; // cyan-400
           ctx!.beginPath();
           ctx!.moveTo(p.x, p.y);
           ctx!.lineTo(mouseX, mouseY);
           ctx!.stroke();
         }
 
-        ctx!.fillStyle = `rgba(165, 243, 252, ${BASE_PARTICLE_OPACITY + proximity * 0.55})`; // cyan-200
+        ctx!.fillStyle = `rgba(165, 243, 252, ${BASE_PARTICLE_OPACITY + proximity * 0.4})`; // cyan-200
         ctx!.beginPath();
-        ctx!.arc(p.x, p.y, p.r + proximity * 1.4, 0, Math.PI * 2);
+        ctx!.arc(p.x, p.y, p.r + proximity * 1.6, 0, Math.PI * 2);
         ctx!.fill();
       }
     }
@@ -242,7 +244,13 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
       }
     }
 
-    resize();
+    // Initial-Resize aus dem nächsten Animation-Frame, damit der Layout-
+    // Pass garantiert durch ist. Bei sehr frühen Mounts (z. B. SSR-
+    // Hydration mit React 19) ist `getBoundingClientRect()` sonst noch
+    // 0×0, was beim Setzen von `canvas.width = 0` den Canvas auf eine
+    // 300×150-Default-Größe kollabiert und visuell „nichts passiert"
+    // aussieht.
+    requestAnimationFrame(resize);
     const ro = new ResizeObserver(() => resize());
     ro.observe(canvas);
     // mousemove auf `globalThis`, damit die Maus auch dann den Hover-
@@ -272,17 +280,22 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
   // Wir wrappen das canvas in einen aria-hidden div statt das Attribut
   // direkt aufs canvas zu legen (S6825). Das Canvas bleibt im DOM-Flow,
   // ist aber zusammen mit dem Wrapper für Screenreader unsichtbar.
+  //
+  // Wichtig: das `<canvas>` selbst ist `absolute inset-0 block`. Ein
+  // canvas mit `height: 100 %` auf einem nicht-fixed-sized Parent
+  // kollabiert in einigen Browsern auf die HTML-Default-Größe (300×150),
+  // was zu „Effekt deployed, aber unsichtbar" führt.
   return (
     <div
       aria-hidden="true"
       className={
         className ??
-        'pointer-events-none absolute inset-0 -z-10 h-full w-full'
+        'pointer-events-none absolute inset-0 -z-10'
       }
     >
       <canvas
         ref={canvasRef}
-        className="pointer-events-none h-full w-full"
+        className="pointer-events-none absolute inset-0 block h-full w-full"
       />
     </div>
   );
