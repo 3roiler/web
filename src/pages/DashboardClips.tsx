@@ -8,6 +8,7 @@ import { ClipEmbed } from "../components/streamclips/ClipEmbed";
 import {
   adminListClips,
   adminSetClipStatus,
+  adminBulkModerateClips,
   ApiError,
   type ClipStatus,
   type ClipWithContext
@@ -55,9 +56,16 @@ function ClipsQueue() {
   const [offset, setOffset] = React.useState(0);
   const [rows, setRows] = React.useState<ClipWithContext[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [selected, setSelected] = React.useState<Set<string>>(() => new Set());
+  const [bulkBusy, setBulkBusy] = React.useState(false);
+  const [bulkError, setBulkError] = React.useState<string | null>(null);
+  const [bulkRejectOpen, setBulkRejectOpen] = React.useState(false);
+  const [bulkRejectReason, setBulkRejectReason] = React.useState('');
 
   const reload = React.useCallback(() => {
     setRows(null);
+    setSelected(new Set()); // Bei jedem Reload Selection zurücksetzen, sonst zeigt
+    // die Toolbar Counts auf IDs, die nicht mehr in der Liste sind.
     adminListClips(filter.value, PAGE_SIZE, offset)
       .then(setRows)
       .catch((err: unknown) => {
@@ -76,6 +84,50 @@ function ClipsQueue() {
     setFilter(tab);
     setOffset(0);
   }
+
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (!rows) return;
+    setSelected((prev) => {
+      // Wenn aktuell alle ausgewählt sind → deselect; sonst → select all.
+      const allSelected = rows.every((r) => prev.has(r.id));
+      if (allSelected) return new Set();
+      return new Set(rows.map((r) => r.id));
+    });
+  }
+
+  async function doBulk(status: ClipStatus, rejectionReason?: string) {
+    if (selected.size === 0) return;
+    setBulkBusy(true);
+    setBulkError(null);
+    try {
+      const ids = [...selected];
+      const result = await adminBulkModerateClips(ids, status, rejectionReason);
+      if (result.ok < result.total) {
+        setBulkError(`Nur ${result.ok} von ${result.total} verarbeitet.`);
+      }
+      setBulkRejectOpen(false);
+      setBulkRejectReason('');
+      reload();
+    } catch (err: unknown) {
+      console.error(err);
+      setBulkError(err instanceof ApiError ? err.message : 'Bulk-Aktion fehlgeschlagen.');
+      setBulkBusy(false);
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  const allOnPage = (rows ?? []).every((r) => selected.has(r.id));
+  const someOnPage = !allOnPage && (rows ?? []).some((r) => selected.has(r.id));
 
   return (
     <div className="max-w-3xl space-y-5">
@@ -99,15 +151,104 @@ function ClipsQueue() {
         })}
       </div>
 
+      {/* Bulk-Toolbar — nur sichtbar wenn mindestens ein Clip selektiert.
+          Wir verstecken sie sonst komplett, damit normale Moderation nicht
+          unter einem permanent leeren Action-Bar leidet. */}
+      {selected.size > 0 && (
+        <div className="sticky top-20 z-10 rounded-2xl border border-cyan-400/30 bg-slate-900/95 px-4 py-3 backdrop-blur">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm font-semibold text-cyan-200">
+              {selected.size} ausgewählt
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelected(new Set())}
+              className="text-xs text-slate-400 transition hover:text-slate-200"
+            >
+              Auswahl aufheben
+            </button>
+            <div className="ml-auto flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={bulkBusy}
+                onClick={() => doBulk('approved')}
+                className="btn-sm bg-emerald-500/80 hover:bg-emerald-500 disabled:opacity-60"
+              >
+                Alle freigeben
+              </button>
+              <button
+                type="button"
+                disabled={bulkBusy}
+                onClick={() => setBulkRejectOpen(true)}
+                className="btn-sm bg-red-500/80 hover:bg-red-500 disabled:opacity-60"
+              >
+                Alle ablehnen
+              </button>
+            </div>
+          </div>
+          {bulkRejectOpen && (
+            <div className="mt-3 space-y-2">
+              <textarea
+                value={bulkRejectReason}
+                onChange={(e) => setBulkRejectReason(e.target.value)}
+                rows={2}
+                maxLength={500}
+                placeholder="Ablehnungsgrund — wird allen abgelehnten Clips zugewiesen."
+                className="block w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={bulkBusy}
+                  onClick={() => doBulk('rejected', bulkRejectReason.trim() || undefined)}
+                  className="btn-sm bg-red-500/80 hover:bg-red-500"
+                >
+                  {bulkBusy ? 'Verarbeite…' : 'Ablehnen bestätigen'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setBulkRejectOpen(false); setBulkRejectReason(''); }}
+                  className="btn-outline btn-sm"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          )}
+          {bulkError && <p className="mt-2 text-xs text-red-300">{bulkError}</p>}
+        </div>
+      )}
+
       {error && <p className="text-sm text-red-300">{error}</p>}
       {rows === null && !error && <p className="text-sm text-slate-400">Lade…</p>}
       {rows !== null && rows.length === 0 && (
         <p className="text-sm text-slate-500">Keine Clips im aktuellen Filter.</p>
       )}
 
+      {rows && rows.length > 0 && (
+        <label className="flex items-center gap-2 px-1 text-xs text-slate-400">
+          <input
+            type="checkbox"
+            checked={allOnPage}
+            ref={(node) => {
+              if (node) node.indeterminate = someOnPage;
+            }}
+            onChange={toggleAll}
+            className="accent-cyan-500"
+          />
+          Alle auf dieser Seite auswählen
+        </label>
+      )}
+
       <div className="space-y-3">
         {rows?.map((clip) => (
-          <ClipModCard key={clip.id} clip={clip} onChanged={reload} />
+          <ClipModCard
+            key={clip.id}
+            clip={clip}
+            selected={selected.has(clip.id)}
+            onToggleSelect={() => toggleOne(clip.id)}
+            onChanged={reload}
+          />
         ))}
       </div>
 
@@ -118,7 +259,17 @@ function ClipsQueue() {
   );
 }
 
-function ClipModCard({ clip, onChanged }: { clip: ClipWithContext; onChanged: () => void }) {
+function ClipModCard({
+  clip,
+  selected,
+  onToggleSelect,
+  onChanged
+}: {
+  clip: ClipWithContext;
+  selected: boolean;
+  onToggleSelect: () => void;
+  onChanged: () => void;
+}) {
   const [preview, setPreview] = React.useState(false);
   const [rejecting, setRejecting] = React.useState(false);
   const [reason, setReason] = React.useState("");
@@ -140,8 +291,21 @@ function ClipModCard({ clip, onChanged }: { clip: ClipWithContext; onChanged: ()
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <div
+      className={
+        selected
+          ? 'rounded-2xl border border-cyan-400/40 bg-cyan-500/5 p-4'
+          : 'rounded-2xl border border-white/10 bg-white/5 p-4'
+      }
+    >
       <div className="flex gap-3">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggleSelect}
+          aria-label={`Clip „${clip.title}" auswählen`}
+          className="mt-1 h-4 w-4 shrink-0 accent-cyan-500"
+        />
         {clip.thumbnailUrl && (
           <button type="button" onClick={() => setPreview((p) => !p)} className="shrink-0">
             <img src={clip.thumbnailUrl} alt="" className="h-16 w-28 rounded-lg border border-white/10 object-cover" loading="lazy" />

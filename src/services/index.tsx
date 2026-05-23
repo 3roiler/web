@@ -1760,6 +1760,50 @@ export async function adminSetClipStatus(
   }
 }
 
+export interface BulkModerateResult {
+  total: number;
+  ok: number;
+  results: { id: string; ok: boolean; error?: string }[];
+}
+
+export async function adminBulkModerateClips(
+  ids: string[],
+  status: ClipStatus,
+  rejectionReason?: string
+): Promise<BulkModerateResult> {
+  try {
+    const response = await axios.post<BulkModerateResult>(
+      `${getApiBaseUrl()}/admin/streamclips/clips/bulk-moderate`,
+      { ids, status, rejectionReason: rejectionReason ?? null },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Bulk-Aktion fehlgeschlagen.');
+  }
+}
+
+export interface DashboardStats {
+  clips: { pending: number; flagged: number; approved: number };
+  reports: { open: number };
+  blog: { published: number; drafts: number };
+  printRequests: { open: number };
+  users: { total: number; new30d: number };
+  ratings: { last7d: number };
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  try {
+    const response = await axios.get<DashboardStats>(
+      `${getApiBaseUrl()}/admin/dashboard-stats`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Dashboard-Statistiken konnten nicht geladen werden.');
+  }
+}
+
 export async function adminListAwards(): Promise<AwardCategory[]> {
   try {
     const response = await axios.get<AwardCategory[]>(`${getApiBaseUrl()}/admin/streamclips/awards`, AXIOS_OPTIONS);
@@ -1871,6 +1915,37 @@ export async function browseClips(): Promise<BrowseData> {
     return response.data;
   } catch (error: unknown) {
     toApiError(error, 'Übersicht konnte nicht geladen werden.');
+  }
+}
+
+export async function listClipsByBroadcaster(
+  broadcasterId: string,
+  opts: { excludeId?: string; limit?: number } = {}
+): Promise<ClipWithContext[]> {
+  try {
+    const params = new URLSearchParams();
+    if (opts.excludeId) params.set('excludeId', opts.excludeId);
+    if (opts.limit) params.set('limit', String(opts.limit));
+    const qs = params.toString();
+    const response = await axios.get<ClipWithContext[]>(
+      `${getApiBaseUrl()}/clips/by-broadcaster/${encodeURIComponent(broadcasterId)}${qs ? `?${qs}` : ''}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Weitere Clips konnten nicht geladen werden.');
+  }
+}
+
+export async function getPersonalClipFeed(limit = 12): Promise<ClipWithContext[]> {
+  try {
+    const response = await axios.get<ClipWithContext[]>(
+      `${getApiBaseUrl()}/clips/feed/foryou?limit=${limit}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, '„Für dich"-Feed konnte nicht geladen werden.');
   }
 }
 

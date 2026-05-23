@@ -10,6 +10,7 @@ import {
   browseClips,
   searchClips,
   getLeaderboard,
+  getPersonalClipFeed,
   loginToTwitch,
   type User,
   type BrowseData,
@@ -29,12 +30,23 @@ export function StreamclipsHomePage() {
   const [browse, setBrowse] = React.useState<BrowseData | null>(null);
   const [browseError, setBrowseError] = React.useState<string | null>(null);
   const [top30, setTop30] = React.useState<ClipWithContext[]>([]);
+  const [forYou, setForYou] = React.useState<ClipWithContext[]>([]);
   const [query, setQuery] = React.useState("");
   const [results, setResults] = React.useState<ClipWithContext[] | null>(null);
   const [searching, setSearching] = React.useState(false);
 
   React.useEffect(() => {
-    getMe().then(setMe).catch(() => setMe(null));
+    getMe()
+      .then((user) => {
+        setMe(user);
+        // „Für dich" nur für eingeloggte User. Fehler still schlucken —
+        // bei einem leeren Feed fallen wir auf die anderen Carousels
+        // zurück und zeigen einfach kein „Für dich"-Band.
+        if (user) {
+          getPersonalClipFeed(12).then(setForYou).catch(() => undefined);
+        }
+      })
+      .catch(() => setMe(null));
     browseClips()
       .then(setBrowse)
       .catch(() => setBrowseError("Übersicht konnte nicht geladen werden."));
@@ -99,7 +111,7 @@ export function StreamclipsHomePage() {
         {isSearching ? (
           <SearchResults query={query} results={results} searching={searching} />
         ) : (
-          <BrowseSections browse={browse} error={browseError} top30={top30} />
+          <BrowseSections browse={browse} error={browseError} top30={top30} forYou={forYou} />
         )}
       </div>
     </main>
@@ -136,11 +148,13 @@ function SearchResults({
 function BrowseSections({
   browse,
   error,
-  top30
+  top30,
+  forYou
 }: {
   browse: BrowseData | null;
   error: string | null;
   top30: ClipWithContext[];
+  forYou: ClipWithContext[];
 }) {
   if (error) return <p className="text-sm text-red-300">{error}</p>;
   if (browse === null) return <p className="text-sm text-slate-400">Lade…</p>;
@@ -157,6 +171,16 @@ function BrowseSections({
 
   return (
     <div className="space-y-12">
+      {forYou.length > 0 && (
+        <ClipCarousel
+          title={
+            <>
+              <span aria-hidden="true">✨</span>Für dich
+            </>
+          }
+          clips={forYou}
+        />
+      )}
       <ClipCarousel
         title={
           <>
