@@ -2,6 +2,7 @@ import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Routes } from "../config/routes";
 import { Seo, JsonLd, SITE_URL } from "../components/Seo";
+import { ParticleField } from "../components/ParticleField";
 
 function handleContactSubmit(event: FormEvent<HTMLFormElement>) {
   event.preventDefault();
@@ -52,19 +53,31 @@ export function HomePage() {
         ]}
       />
       {/* ─── Hero ───────────────────────────────────────────────────────── */}
-      <header id="top" className="relative overflow-hidden bg-slate-950 pt-32 pb-24 sm:pt-40 sm:pb-32">
+      {/* `isolate` erzeugt einen neuen Stacking-Context, damit die Hero-
+          internen `-z-*` Schichten (Partikel, Glow, Grid) garantiert
+          INNERHALB des Hero bleiben und nicht hinter den Body-Hintergrund
+          rutschen. Ohne das funktioniert der Trick zwar oft, ist aber
+          browser-spezifisch fragil. */}
+      <header id="top" className="relative isolate overflow-hidden bg-slate-950 pt-32 pb-24 sm:pt-40 sm:pb-32">
+        {/* Knoten-Netz im Hintergrund. Liegt unter „Ambient glow" und Grid,
+            damit der Glow sanft über die Partikel washt und die Linien nicht
+            knochig wirken. */}
+        <ParticleField className="pointer-events-none absolute inset-0 -z-20 h-full w-full" />
         {/* Ambient glow */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute left-1/2 top-20 -z-10 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-cyan-500/15 blur-[120px] sm:h-[700px] sm:w-[700px]"
         />
-        {/* Subtle grid */}
+        {/* Subtle grid — bewusst über dem Partikel-Layer, damit die Punkte
+            sich in das vorhandene Raster einreihen und nicht „über" der
+            Seite zu schweben scheinen. Geringere Opacity als zuvor (0.05
+            statt 0.08), sonst konkurriert das Grid mit den Linien. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.08)_1px,transparent_0)] bg-[size:32px_32px]"
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.05)_1px,transparent_0)] bg-[size:32px_32px]"
         />
 
-        <div className="mx-auto max-w-6xl px-6 sm:px-10 lg:px-16">
+        <div className="relative mx-auto max-w-6xl px-6 sm:px-10 lg:px-16">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-400">
             Paul Wechselberger · Platform &amp; Backend Engineer
           </p>
