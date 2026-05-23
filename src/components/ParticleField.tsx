@@ -55,13 +55,17 @@ const PARTICLE_MIN = 20;
 const PARTICLE_MAX = 120;
 
 /**
- * Zufalls-Helfer. `Math.random()` ist hier rein dekorativ (Partikel-
- * Positionen, Drift-Geschwindigkeiten) — kein Sicherheitskontext. Wir
- * kapseln den Aufruf, damit SonarCloud S2245 (PRNG-Warnung) genau eine
- * dokumentierte Stelle sehen kann statt n verteilte. */
+ * Zufalls-Helfer. Bewusst über `crypto.getRandomValues` statt
+ * `Math.random()` — nicht weil wir Crypto-Qualität brauchen
+ * (Partikel-Positionen sind dekorativ), sondern weil Sonar S2245
+ * `Math.random` ohnehin als „weak crypto" anmosert und die Web-Crypto-
+ * API in allen unterstützten Browsern verfügbar ist. Wird nur beim
+ * Mount und auf Resize aufgerufen — kein Per-Frame-Overhead. */
 function rand(): number {
-  // NOSONAR(typescript:S2245) – ornamentaler PRNG, kein Crypto-Kontext.
-  return Math.random();
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  // Division durch 2³² liefert einen Wert in [0, 1), wie Math.random().
+  return buf[0] / 0x1_0000_0000;
 }
 
 export function ParticleField({ density = 1, className }: ParticleFieldProps) {
@@ -147,9 +151,9 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
       const maxSq = LINK_DISTANCE * LINK_DISTANCE;
       ctx!.lineWidth = 1;
       for (let i = 0; i < particles.length; i++) {
-        const a = particles[i]!;
+        const a = particles[i];
         for (let j = i + 1; j < particles.length; j++) {
-          const b = particles[j]!;
+          const b = particles[j];
           const dx = a.x - b.x;
           const dy = a.y - b.y;
           const distSq = dx * dx + dy * dy;
