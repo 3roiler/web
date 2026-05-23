@@ -215,8 +215,20 @@ function UserRow({ user, me, permissions, busyKey, onGrant, onRevoke, onEdit, on
                 Du
               </span>
             )}
+            {user.deletedAt && (
+              <span
+                className="rounded-full bg-slate-500/20 px-2 py-0.5 text-slate-400"
+                title={`Anonymisiert am ${new Date(user.deletedAt).toLocaleString('de-DE')}`}
+              >
+                Anonymisiert
+              </span>
+            )}
           </div>
-          <h2 className="mt-1 truncate text-lg font-semibold text-slate-50">
+          <h2 className={
+            user.deletedAt
+              ? 'mt-1 truncate text-lg font-semibold text-slate-400 italic'
+              : 'mt-1 truncate text-lg font-semibold text-slate-50'
+          }>
             {user.displayName || user.name}
           </h2>
           <p className="text-xs text-slate-500">@{user.name}</p>
