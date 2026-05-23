@@ -38,34 +38,68 @@ interface NavItem {
   prefixes?: string[];
 }
 
+interface NavGroup {
+  /** Optionaler Gruppen-Header (nur auf Desktop sichtbar). Weglassen für die
+   *  oberste „Übersicht"-Gruppe, damit sie ohne Header rendert. */
+  label?: string;
+  items: NavItem[];
+}
+
 /**
- * Single source of truth for the dashboard menu. Adding a new section is
- * just a new entry here plus the matching permission in the API's
- * `ADMIN_PERMISSIONS`. The `admin.manage` umbrella permission implies all
- * `dashboard.*` keys on the backend, so admins always see everything.
+ * Single source of truth für das Dashboard-Menü, gruppiert nach Themen.
+ * Eine neue Sektion = neuer Eintrag hier + passende Permission im API-
+ * `ADMIN_PERMISSIONS`. Die `admin.manage`-Umbrella-Permission deckt alle
+ * `dashboard.*`-Keys auf dem Backend ab — Admins sehen automatisch alles.
+ *
+ * Auf mobilen Viewports wird die Gruppierung aufgelöst (horizontaler Tab-
+ * Strip) — Gruppen-Header in einer Scroll-Zeile wären optisch sinnlos.
  */
-const NAV_ITEMS: NavItem[] = [
-  { label: "Übersicht", to: Routes.Dashboard.Home, permission: "dashboard.view" },
-  { label: "Blog", to: Routes.Dashboard.Blog, permission: "dashboard.blog", prefixes: ["/dashboard/blog"] },
-  { label: "Nutzer", to: Routes.Dashboard.Users, permission: "dashboard.users" },
-  { label: "Gruppen", to: Routes.Dashboard.Groups, permission: "dashboard.groups", prefixes: ["/dashboard/groups"] },
-  { label: "Drucker", to: Routes.Dashboard.Printers, permission: "dashboard.printers", prefixes: ["/dashboard/printers"] },
-  { label: "G-Code", to: Routes.Dashboard.Gcode, permission: "dashboard.printers", prefixes: ["/dashboard/gcode"] },
-  // Editor sits next to the list because the most common entry is
-  // "let me edit something quickly" rather than "show me the library".
-  // The list page still owns deletion / per-file viewing.
-  { label: "Editor", to: Routes.Dashboard.GcodeNew, permission: "dashboard.printers" },
-  { label: "STL", to: Routes.Dashboard.Stl, permission: "dashboard.printers", prefixes: ["/dashboard/stl"] },
-  // Druckanfragen erscheinen sowohl für Anfrager (`print.request`) als
-  // auch für Moderatoren (`print.moderate`) — der Backend-Filter
-  // entscheidet was sie sehen. Wir gaten hier auf das schwächere
-  // Recht, damit jeder Anfrager den Eintrag findet.
-  { label: "Druckanfragen", to: Routes.Dashboard.PrintRequests, permission: "print.request", prefixes: ["/dashboard/druckanfragen"] },
-  // Streamclips-Moderation. `dashboard.clips` schaltet den Bereich frei;
-  // die Award-/Report-Unterseiten teilen sich denselben prefix.
-  { label: "Clips", to: Routes.Dashboard.Clips, permission: "dashboard.clips", prefixes: ["/dashboard/clips"] },
-  { label: "Einstellungen", to: Routes.Dashboard.Settings, permission: "dashboard.settings" },
-  { label: "Metriken", to: Routes.Dashboard.Metrics, permission: "dashboard.metrics" }
+const NAV_GROUPS: NavGroup[] = [
+  {
+    items: [
+      { label: "Übersicht", to: Routes.Dashboard.Home, permission: "dashboard.view" }
+    ]
+  },
+  {
+    label: "Inhalte",
+    items: [
+      { label: "Blog", to: Routes.Dashboard.Blog, permission: "dashboard.blog", prefixes: ["/dashboard/blog"] },
+      // Streamclips-Moderation. `dashboard.clips` schaltet den Bereich frei;
+      // die Award-/Report-Unterseiten teilen sich denselben prefix.
+      { label: "Clips", to: Routes.Dashboard.Clips, permission: "dashboard.clips", prefixes: ["/dashboard/clips"] }
+    ]
+  },
+  {
+    label: "Community",
+    items: [
+      { label: "Nutzer", to: Routes.Dashboard.Users, permission: "dashboard.users" },
+      { label: "Gruppen", to: Routes.Dashboard.Groups, permission: "dashboard.groups", prefixes: ["/dashboard/groups"] }
+    ]
+  },
+  {
+    label: "3D-Druck",
+    items: [
+      { label: "Drucker", to: Routes.Dashboard.Printers, permission: "dashboard.printers", prefixes: ["/dashboard/printers"] },
+      { label: "G-Code", to: Routes.Dashboard.Gcode, permission: "dashboard.printers", prefixes: ["/dashboard/gcode"] },
+      // Editor sitzt direkt neben der Liste — der häufigste Einstieg ist
+      // „schnell etwas editieren", nicht „die Library anschauen". Die
+      // Listenseite besitzt weiterhin Löschen / Per-File-Ansicht.
+      { label: "Editor", to: Routes.Dashboard.GcodeNew, permission: "dashboard.printers" },
+      { label: "STL", to: Routes.Dashboard.Stl, permission: "dashboard.printers", prefixes: ["/dashboard/stl"] },
+      // Druckanfragen erscheinen sowohl für Anfrager (`print.request`) als
+      // auch für Moderatoren (`print.moderate`) — der Backend-Filter
+      // entscheidet was sie sehen. Wir gaten hier auf das schwächere
+      // Recht, damit jeder Anfrager den Eintrag findet.
+      { label: "Druckanfragen", to: Routes.Dashboard.PrintRequests, permission: "print.request", prefixes: ["/dashboard/druckanfragen"] }
+    ]
+  },
+  {
+    label: "System",
+    items: [
+      { label: "Einstellungen", to: Routes.Dashboard.Settings, permission: "dashboard.settings" },
+      { label: "Metriken", to: Routes.Dashboard.Metrics, permission: "dashboard.metrics" }
+    ]
+  }
 ];
 
 /**
@@ -142,7 +176,13 @@ export function DashboardLayout({
     );
   }
 
-  const visibleItems = NAV_ITEMS.filter((item) => hasPermission(me, item.permission));
+  // Pro Gruppe nur sichtbare Items behalten; leere Gruppen fallen raus.
+  const visibleGroups = NAV_GROUPS
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => hasPermission(me, item.permission))
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <main className="min-h-screen bg-slate-950 pt-20 pb-12 sm:pt-24 sm:pb-16" id="top">
@@ -164,37 +204,48 @@ export function DashboardLayout({
 
         <div className="mt-6 grid grid-cols-1 gap-6 sm:mt-10 sm:gap-10 lg:grid-cols-[220px_minmax(0,1fr)]">
           {/*
-            On phones the sidebar becomes a horizontally scrollable tab strip:
-            the same items, just one row that overflow-scrolls instead of
-            wrapping into 4 lines of pills. `-mx-4 px-4` lets the strip bleed
-            to the screen edge on tiny viewports so the active item is always
-            grabable without inset thumb-space. From `lg` it reverts to the
-            classic vertical sidebar.
+            Auf Phones wird die Sidebar zu einem horizontal scrollbaren Tab-
+            Strip — gleiche Items, eine Zeile statt 4 (Gruppen-Header werden
+            dort ausgeblendet, weil sie horizontal keinen Sinn ergeben).
+            `-mx-4 px-4` lässt den Strip auf winzigen Viewports bis zum Rand
+            laufen, damit der aktive Eintrag ohne Daumen-Inset greifbar
+            bleibt. Ab `lg` klassische vertikale Sidebar mit EIGENER Scroll-
+            Spur (sticky + max-h), damit auch eine längere Liste auf
+            niedrigen Viewports erreichbar bleibt.
           */}
-          <aside className="lg:sticky lg:top-24">
+          <aside className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1 lg:[scrollbar-width:thin]">
             <nav
               aria-label="Dashboard-Navigation"
-              className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 sm:pb-0 lg:flex-col [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 sm:pb-0 lg:flex-col lg:gap-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {visibleItems.map((item) => {
-                const active =
-                  location.pathname === item.to ||
-                  (item.prefixes?.some((p) => location.pathname.startsWith(p)) ?? false);
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className={
-                      active
-                        ? "shrink-0 whitespace-nowrap rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-200 sm:text-sm"
-                        : "shrink-0 whitespace-nowrap rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-400 transition hover:text-slate-200 sm:text-sm"
-                    }
-                    aria-current={active ? "page" : undefined}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
+              {visibleGroups.map((group, gi) => (
+                <React.Fragment key={gi}>
+                  {group.label && (
+                    <h3 className="hidden lg:block lg:px-2 lg:pt-4 lg:pb-1 lg:text-[10px] lg:font-semibold lg:uppercase lg:tracking-[0.18em] lg:text-slate-500">
+                      {group.label}
+                    </h3>
+                  )}
+                  {group.items.map((item) => {
+                    const active =
+                      location.pathname === item.to ||
+                      (item.prefixes?.some((p) => location.pathname.startsWith(p)) ?? false);
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        className={
+                          active
+                            ? "shrink-0 whitespace-nowrap rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-200 sm:text-sm"
+                            : "shrink-0 whitespace-nowrap rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-400 transition hover:text-slate-200 sm:text-sm"
+                        }
+                        aria-current={active ? "page" : undefined}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
             </nav>
           </aside>
 
