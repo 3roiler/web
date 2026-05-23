@@ -2095,3 +2095,37 @@ export async function updateModerationSettings(input: Partial<ModerationSettings
     toApiError(error, 'Moderations-Einstellungen konnten nicht gespeichert werden.');
   }
 }
+
+export interface ForYouSettings {
+  weightMatching: number;
+  weightQuality: number;
+  weightRecency: number;
+  recencyWindowDays: number;
+  freshnessPoolDays: number;
+  minPositiveScore: number;
+}
+
+export async function getForYouSettings(): Promise<ForYouSettings> {
+  try {
+    const response = await axios.get<ForYouSettings>(
+      `${getApiBaseUrl()}/admin/streamclips/foryou-settings`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, '„Für dich"-Einstellungen konnten nicht geladen werden.');
+  }
+}
+
+export async function updateForYouSettings(input: Partial<ForYouSettings>): Promise<ForYouSettings> {
+  try {
+    const response = await axios.put<ForYouSettings>(
+      `${getApiBaseUrl()}/admin/streamclips/foryou-settings`,
+      input,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, '„Für dich"-Einstellungen konnten nicht gespeichert werden.');
+  }
+}

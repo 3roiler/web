@@ -2,9 +2,10 @@ import * as React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Routes } from "../../config/routes";
 
+// „Bewerten" + „Einreichen" sind auf der Landing schon große Primärbuttons
+// oben — hier nochmal als Pille zu listen ist Redundanz. Die Sub-Nav ist
+// für die Stöbern-/Profil-Aktionen.
 const LINKS = [
-  { label: "Bewerten", to: Routes.Streamclips.Vote },
-  { label: "Einreichen", to: Routes.Streamclips.Submit },
   { label: "Top-Clips", to: Routes.Streamclips.Leaderboard },
   { label: "Top-Einreicher", to: Routes.Streamclips.Contributors },
   { label: "Meine Clips", to: Routes.Streamclips.Me }
