@@ -115,17 +115,33 @@ export function KeyboardShortcuts() {
     }
   }, [cheatOpen]);
 
+  // Backdrop-Click schließt das Modal — wir registrieren das per
+  // pointerdown auf dem Wrapper-Element, statt einen onClick-Handler auf
+  // ein non-interactive div zu legen (löst a11y-S1082 aus, weil Click
+  // ohne Keyboard-Pendant signalisiert: das Element wäre nur für
+  // Maus-Nutzer schließbar — was hier nicht stimmt, denn Escape ist
+  // weiter oben registriert).
+  const backdropRef = React.useRef<HTMLDivElement | null>(null);
+  React.useEffect(() => {
+    if (!cheatOpen) return;
+    const node = backdropRef.current;
+    if (!node) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.target === node) setCheatOpen(false);
+    };
+    node.addEventListener('pointerdown', onPointerDown);
+    return () => node.removeEventListener('pointerdown', onPointerDown);
+  }, [cheatOpen]);
+
   if (!cheatOpen) return null;
 
   return (
     <div
+      ref={backdropRef}
       role="dialog"
       aria-modal="true"
       aria-label="Tastatur-Shortcuts"
       className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) setCheatOpen(false);
-      }}
     >
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl shadow-black/40">
         <div className="flex items-center justify-between">
