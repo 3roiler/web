@@ -13,6 +13,13 @@ function formatDate(iso: string | null): string {
   });
 }
 
+/** Grobe Lesezeit-Schätzung — exakter Algorithmus in BlogPost.tsx; hier
+ *  reicht eine schnelle Übersicht für die Listenansicht. */
+function estimateMinutes(content: string): number {
+  const words = content.trim().split(/\s+/).length;
+  return Math.max(1, Math.round(words / 200));
+}
+
 export function BlogPage() {
   const [posts, setPosts] = React.useState<BlogPost[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -42,9 +49,18 @@ export function BlogPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-400">Blog</p>
             <h1 className="mt-4 text-4xl font-semibold text-slate-50 sm:text-5xl">Gedanken &amp; Notizen</h1>
           </div>
-          {isAuthor && (
-            <Link to={Routes.Dashboard.Blog} className="btn-outline self-start sm:self-auto">Admin</Link>
-          )}
+          <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+            <a
+              href="/blog/rss.xml"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300 transition hover:border-cyan-400/40 hover:text-cyan-300"
+              aria-label="RSS-Feed"
+            >
+              <span aria-hidden="true">⌁</span> RSS
+            </a>
+            {isAuthor && (
+              <Link to={Routes.Dashboard.Blog} className="btn-outline">Admin</Link>
+            )}
+          </div>
         </div>
 
         <div className="mt-16 space-y-8">
@@ -56,10 +72,12 @@ export function BlogPage() {
           {posts?.map((post) => (
             <article key={post.id} className="group rounded-3xl border border-white/10 bg-white/5 p-8 transition hover:-translate-y-0.5 hover:border-cyan-400/40">
               <Link to={Routes.Blog + "/" + post.slug} className="block">
-                <div className="flex items-center gap-3 text-xs text-slate-400">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
                   <time dateTime={post.publishedAt ?? post.createdAt}>
                     {formatDate(post.publishedAt)}
                   </time>
+                  <span aria-hidden="true" className="text-slate-600">·</span>
+                  <span>{estimateMinutes(post.content)} min</span>
                   {post.publishedAt === null && (
                     <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-amber-300">Draft</span>
                   )}

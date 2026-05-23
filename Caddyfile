@@ -41,6 +41,16 @@
 		}
 	}
 
+	# RSS-Feed für den Blog (analog zur sitemap.xml). Muss VOR dem SPA-
+	# Handler stehen, sonst greift try_files → index.html und der Reader
+	# bekommt HTML statt RSS.
+	handle /blog/rss.xml {
+		rewrite * /prod/blog/rss.xml
+		reverse_proxy https://api.broiler.dev {
+			header_up Host api.broiler.dev
+		}
+	}
+
 	# Alles andere: SPA-Auslieferung mit Fallback. Das `route` erzwingt
 	# sequentielle Ausführung, damit der no-cache-Header nach dem try_files
 	# greift (auch /blog → /index.html bekommt ihn).
