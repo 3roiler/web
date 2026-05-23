@@ -6,7 +6,6 @@ import {
   postClipComment,
   deleteClipComment,
   getMe,
-  loginToTwitch,
   ApiError,
   type ClipComment,
   type User
@@ -201,11 +200,7 @@ export function ClipComments({ clipId, onSeek }: ClipCommentsProps) {
             placeholder="Was möchtest du dazu sagen? `1:23` im Text wird automatisch zum Sprung-Link."
             className="block w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-cyan-400/40 focus:outline-none"
           />
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-slate-500">
-              Tipp: <code className="font-mono text-cyan-300">1:23</code> im Text wird automatisch
-              zum Sprung-Link auf diese Stelle.
-            </p>
+          <div className="flex justify-end">
             <button
               type="submit"
               disabled={submitting || body.trim().length === 0}
@@ -217,16 +212,12 @@ export function ClipComments({ clipId, onSeek }: ClipCommentsProps) {
           {postError && <p className="text-xs text-red-300">{postError}</p>}
         </form>
       ) : (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
-          <p className="text-sm text-slate-400">Anmelden, um zu kommentieren.</p>
-          <button
-            type="button"
-            onClick={() => loginToTwitch()}
-            className="mt-3 inline-flex items-center justify-center gap-2 rounded-full bg-[#9146FF] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#772ce8]"
-          >
-            Mit Twitch anmelden
-          </button>
-        </div>
+        // Hinweis bewusst klein — den Twitch-Button gibt es schon im
+        // LoginHint weiter oben in der Body-Spalte; ein zweiter Anmelde-
+        // CTA hier würde sich doppeln.
+        <p className="text-xs text-slate-500">
+          Zum Kommentieren musst du angemeldet sein.
+        </p>
       )}
 
       {comments === null && !error && <p className="text-sm text-slate-400">Lade Kommentare…</p>}
