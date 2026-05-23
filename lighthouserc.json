@@ -3,9 +3,7 @@
     "collect": {
       "staticDistDir": "./dist",
       "url": [
-        "http://localhost/index.html",
-        "http://localhost/blog",
-        "http://localhost/streamclips"
+        "http://localhost/index.html"
       ],
       "numberOfRuns": 1,
       "settings": {
