@@ -274,6 +274,15 @@ interface CommentItemProps {
   depth: number;
 }
 
+/**
+ * Maximale visuelle Indent-Stufe. Backend erlaubt beliebige Threading-
+ * Tiefe (Reddit-Style); die visuelle Treppe stoppt aber bei 5 — danach
+ * wird flach weiterindentiert. Logisch bleibt der Baum komplett (jeder
+ * Knoten weiß seinen `parentCommentId`), nur der `border-l`-Indent
+ * wächst nicht weiter, damit Mobile-Viewports nicht hinten überlaufen.
+ */
+const MAX_VISUAL_INDENT_DEPTH = 5;
+
 function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged, depth }: CommentItemProps) {
   const { comment, replies } = node;
   const isAuthor = me?.id === comment.userId;
@@ -293,8 +302,9 @@ function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged
     : (comment.authorDisplayName ?? comment.authorName);
   const avatarUrl = isDeletedAuthor ? null : comment.authorAvatarUrl;
 
-  // Visuelles Indent — Top-Level: 0, Reply: 1, mehr ist nicht (Backend
-  // re-targeted Replies auf Replies auf den ursprünglichen Top-Parent).
+  // Visuelles Indent nur bis MAX_VISUAL_INDENT_DEPTH. Darunter behält
+  // jeder Reply die Border-Left-Linie, hat aber kein zusätzliches
+  // Padding mehr.
   const indentClass = depth > 0 ? 'border-l-2 border-white/10 pl-4 sm:pl-6' : '';
 
   return (
@@ -372,7 +382,7 @@ function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged
         {/* Aktionen — Reply nur bei Top-Level (depth 0), eigenes Löschen,
             Mod-Actions. */}
         <div className="mt-2 flex flex-wrap items-center justify-end gap-3 text-[0.7rem]">
-          {!isModeratedDelete && !isSelfDelete && me && depth === 0 && (
+          {!isModeratedDelete && !isSelfDelete && me && (
             <button
               type="button"
               onClick={() => setReplyOpen((o) => !o)}
@@ -460,7 +470,10 @@ function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged
         )}
       </div>
 
-      {/* Replies — bei collapsed ausgeblendet, sonst rekursiv. */}
+      {/* Replies — bei collapsed ausgeblendet, sonst rekursiv. Tiefe
+          wird beim Indent gecappt: nach MAX_VISUAL_INDENT_DEPTH bleibt
+          die border-l-Linie, das Padding aber nicht. So kann der Baum
+          beliebig tief gehen ohne dass die UI nach links/rechts läuft. */}
       {replies.length > 0 && !collapsed && (
         <ul className="mt-3 space-y-3">
           {replies.map((reply) => (
@@ -473,7 +486,7 @@ function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged
               targetKey={targetKey}
               onSeek={onSeek}
               onChanged={onChanged}
-              depth={depth + 1}
+              depth={Math.min(depth + 1, MAX_VISUAL_INDENT_DEPTH)}
             />
           ))}
         </ul>
