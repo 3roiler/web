@@ -76,7 +76,7 @@ export function DatenschutzPage() {
           <p className="text-xs text-slate-400">Stand: 2026-05-20</p>
         </div>
         <div className="flex flex-wrap gap-4">
-          <a href="/" className="nav-link">Zurück</a>
+          <a href="/" className="btn-outline btn-sm">Zurück</a>
           <button
             onClick={handleNuke}
             className="inline-flex items-center justify-center rounded-2xl bg-cyan-400/90 px-5 py-2 text-sm font-semibold text-slate-900 transition hover:bg-cyan-300"
