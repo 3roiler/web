@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
 import { ClipEmbed } from "../../components/streamclips/ClipEmbed";
 import { ClipCarousel } from "../../components/streamclips/ClipCarousel";
+import { ClipComments } from "../../components/streamclips/ClipComments";
 import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { Seo } from "../../components/Seo";
@@ -31,6 +32,16 @@ export function ClipDetailPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [loggedIn, setLoggedIn] = React.useState(false);
   const [related, setRelated] = React.useState<ClipWithContext[]>([]);
+  const [seekToSeconds, setSeekToSeconds] = React.useState<number | null>(null);
+  const [seekNonce, setSeekNonce] = React.useState(0);
+
+  const handleSeek = React.useCallback((seconds: number) => {
+    setSeekToSeconds(seconds);
+    setSeekNonce((n) => n + 1);
+    // Sanftes Scroll-to-Player, damit der Sprung sichtbar ist auch wenn
+    // der User gerade in den Kommentaren weiter unten gelesen hat.
+    globalThis.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   React.useEffect(() => {
     getMe().then(() => setLoggedIn(true)).catch(() => setLoggedIn(false));
@@ -60,7 +71,7 @@ export function ClipDetailPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 pt-20 pb-16 sm:pt-24" id="top">
-      <div className="mx-auto max-w-2xl px-4 pt-6 sm:px-6 sm:pt-12 lg:pt-16">
+      <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6 sm:pt-12 lg:pt-16">
         <Link to={Routes.Streamclips.Leaderboard} className="text-xs text-slate-400 hover:text-slate-200">
           ← Zurück zum Leaderboard
         </Link>
@@ -75,7 +86,12 @@ export function ClipDetailPage() {
               description={`Clip${clip.broadcasterName ? ` von ${clip.broadcasterName}` : ""}${clip.categoryName ? ` · ${clip.categoryName}` : ""} — bewertet auf Streamclips Germany.`}
               type="article"
             />
-            <ClipEmbed clipId={clip.twitchClipId} title={clip.title} />
+            <ClipEmbed
+              clipId={clip.twitchClipId}
+              title={clip.title}
+              seekToSeconds={seekToSeconds}
+              seekNonce={seekNonce}
+            />
 
             <div>
               <h1 className="text-xl font-semibold text-slate-50">{clip.title}</h1>
@@ -116,10 +132,12 @@ export function ClipDetailPage() {
             )}
 
             {loggedIn ? <ReportBlock clipId={clip.id} /> : <LoginHint />}
+
+            <ClipComments clipId={clip.id} onSeek={handleSeek} />
           </div>
         )}
 
-        {/* „Mehr von diesem Streamer" — bewusst außerhalb der max-w-2xl-
+        {/* „Mehr von diesem Streamer" — bewusst außerhalb der max-w-4xl-
             Spalte, damit das Karussell den vollen Container-Breitenraum
             nutzen kann. Erst gerendert, wenn wirklich etwas da ist. */}
         {clip && related.length > 0 && (
