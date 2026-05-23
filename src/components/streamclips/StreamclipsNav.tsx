@@ -6,6 +6,7 @@ const LINKS = [
   { label: "Bewerten", to: Routes.Streamclips.Vote },
   { label: "Einreichen", to: Routes.Streamclips.Submit },
   { label: "Top-Clips", to: Routes.Streamclips.Leaderboard },
+  { label: "Top-Einreicher", to: Routes.Streamclips.Contributors },
   { label: "Meine Clips", to: Routes.Streamclips.Me }
 ];
 

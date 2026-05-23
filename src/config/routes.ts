@@ -23,6 +23,7 @@ export const Routes = {
     Vote: "/streamclips/vote",
     Submit: "/streamclips/submit",
     Leaderboard: "/streamclips/leaderboard",
+    Contributors: "/streamclips/contributors",
     ClipDetail: "/streamclips/clip/:id",
     Me: "/streamclips/me",
   },

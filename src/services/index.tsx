@@ -1918,6 +1918,85 @@ export async function browseClips(): Promise<BrowseData> {
   }
 }
 
+export interface ClipComment {
+  id: string;
+  clipId: string;
+  userId: string;
+  body: string;
+  /** Sekunden im Clip — `null` = Kommentar ohne Zeitbezug. */
+  timestampSeconds: number | null;
+  deletedAt: string | null;
+  deletedByUserId: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  authorName: string;
+  authorDisplayName: string | null;
+  authorAvatarUrl: string | null;
+}
+
+export async function listClipComments(clipId: string): Promise<ClipComment[]> {
+  try {
+    const response = await axios.get<ClipComment[]>(
+      `${getApiBaseUrl()}/clips/${encodeURIComponent(clipId)}/comments`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Kommentare konnten nicht geladen werden.');
+  }
+}
+
+export async function postClipComment(
+  clipId: string,
+  body: string,
+  timestampSeconds: number | null
+): Promise<ClipComment> {
+  try {
+    const response = await axios.post<ClipComment>(
+      `${getApiBaseUrl()}/clips/${encodeURIComponent(clipId)}/comments`,
+      { body, timestampSeconds },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Kommentar konnte nicht gespeichert werden.');
+  }
+}
+
+export async function deleteClipComment(commentId: string): Promise<void> {
+  try {
+    await axios.delete(
+      `${getApiBaseUrl()}/comments/${encodeURIComponent(commentId)}`,
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Kommentar konnte nicht gelöscht werden.');
+  }
+}
+
+export interface ClipContributor {
+  userId: string;
+  name: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  clipCount: number;
+  avgScore: number | null;
+  topClipId: string | null;
+  topClipTitle: string | null;
+}
+
+export async function listClipContributors(limit = 25): Promise<ClipContributor[]> {
+  try {
+    const response = await axios.get<ClipContributor[]>(
+      `${getApiBaseUrl()}/clips/contributors?limit=${limit}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Top-Einreicher konnten nicht geladen werden.');
+  }
+}
+
 export async function listClipsByBroadcaster(
   broadcasterId: string,
   opts: { excludeId?: string; limit?: number } = {}

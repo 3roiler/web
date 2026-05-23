@@ -186,7 +186,12 @@ export function DashboardLayout({
 
   return (
     <main className="min-h-screen bg-slate-950 pt-20 pb-12 sm:pt-24 sm:pb-16" id="top">
-      <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 sm:pt-12 lg:px-16 lg:pt-16">
+      {/* Dashboard nutzt mehr horizontalen Raum als die öffentlichen
+          Seiten — die Widget-Reihe + Tile-Grid quetscht sich sonst auf
+          max-w-6xl unschön zusammen. 7xl gibt auf 1440-px-Displays gut
+          120 px mehr Atmungsfreiraum, ohne auf 1080-p-Laptops zu wirken
+          als würde der Content randlos ausufern. */}
+      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 sm:pt-12 lg:px-12 lg:pt-16">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400 sm:text-sm sm:tracking-[0.3em]">

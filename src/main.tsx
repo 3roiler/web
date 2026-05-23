@@ -29,6 +29,7 @@ import { StreamclipsHomePage } from './pages/streamclips/Landing';
 import { VotePage } from './pages/streamclips/Vote';
 import { SubmitClipPage } from './pages/streamclips/Submit';
 import { LeaderboardPage } from './pages/streamclips/Leaderboard';
+import { StreamclipsContributorsPage } from './pages/streamclips/Contributors';
 import { ClipDetailPage } from './pages/streamclips/ClipDetail';
 import { MyClipsPage } from './pages/streamclips/Me';
 import { DashboardClipsPage } from './pages/DashboardClips';
@@ -93,6 +94,7 @@ function AppRoot() {
           <Route path={Routes.Streamclips.Vote} element={<VotePage />} />
           <Route path={Routes.Streamclips.Submit} element={<SubmitClipPage />} />
           <Route path={Routes.Streamclips.Leaderboard} element={<LeaderboardPage />} />
+          <Route path={Routes.Streamclips.Contributors} element={<StreamclipsContributorsPage />} />
           <Route path={Routes.Streamclips.ClipDetail} element={<ClipDetailPage />} />
           <Route path={Routes.Streamclips.Me} element={<MyClipsPage />} />
 
