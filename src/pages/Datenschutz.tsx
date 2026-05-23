@@ -2,19 +2,35 @@ import { navigateTo, Routes } from "../config/routes";
 import { nuke } from "../services";
 import { Seo } from "../components/Seo";
 
-async function handleNuke() {
+/**
+ * Konto-Anonymisierung. Backend erfolgt seit Migration 038 als
+ * Soft-Delete + PII-Wipe — die Foreign-Key-Beziehungen aus Clips und
+ * Kommentaren bleiben bestehen, der Author erscheint dort fortan als
+ * „Gelöschter Nutzer". Hard-Delete würde die Beiträge mit reißen,
+ * was Community-Wissen zerstören würde. Der Begriff „Nuke" im UI
+ * wäre also irreführend; Buttontext + Bestätigungs-Text spiegeln das
+ * neue Verhalten.
+ */
+async function handleAnonymize() {
+  const confirmation = confirm(
+    [
+      'Konto löschen?',
+      '',
+      'Dein Profil wird sofort anonymisiert: Name, E-Mail, Avatar und OAuth-Verknüpfungen werden entfernt.',
+      '',
+      'Deine eingereichten Clips, Bewertungen und Kommentare BLEIBEN ÖFFENTLICH SICHTBAR, werden aber nur noch als "Gelöschter Nutzer" angezeigt.',
+      '',
+      'Diese Aktion ist endgültig — eine Wiederherstellung ist nicht möglich.'
+    ].join('\n')
+  );
+  if (!confirmation) return;
+
   try {
-    const confirmation = confirm("Bist du sicher, dass du dein Konto löschen möchtest? Dieser Vorgang ist irreversibel. Naja, du willst es ja auch so :)");
-    
-    if (!confirmation) {
-      return;
-    }
-    
     await nuke();
-    alert("Dein Konto wurde gelöscht. Du wirst zur Startseite weitergeleitet.");
+    alert('Dein Konto wurde anonymisiert. Eingereichte Inhalte bleiben unter "Gelöschter Nutzer" sichtbar. Du wirst jetzt ausgeloggt.');
     navigateTo(Routes.Home);
   } catch {
-    alert("Beim Löschen deines Kontos ist ein Fehler aufgetreten. Bitte versuche es später erneut.");
+    alert('Beim Anonymisieren ist ein Fehler aufgetreten. Bitte versuche es später erneut oder schreib uns eine kurze Nachricht.');
   }
 }
 
@@ -75,14 +91,31 @@ export function DatenschutzPage() {
           </section>
           <p className="text-xs text-slate-400">Stand: 2026-05-20</p>
         </div>
-        <div className="flex flex-wrap gap-4">
+        <section className="panel p-5 border-red-400/30">
+          <h2 className="font-semibold text-slate-50">Konto löschen</h2>
+          <p className="mt-1 text-slate-300">
+            Konto-Löschung läuft als Anonymisierung: dein Profil wird sofort
+            entfernt (Name, E-Mail, Avatar, OAuth-Verknüpfungen), deine
+            <strong className="text-slate-100"> Beiträge bleiben aber öffentlich</strong>{' '}
+            (Clips, Bewertungen, Kommentare) und werden als
+            <em className="text-slate-300"> „Gelöschter Nutzer"</em> angezeigt.
+            So bleibt der Community-Kontext (Threads, Bewertungen) erhalten,
+            ohne dass deine Identität damit verbunden ist.
+          </p>
+          <p className="mt-2 text-slate-300">
+            Wenn du auch die Beiträge selbst entfernt haben möchtest,
+            schreib uns bitte per E-Mail — wir prüfen das im Einzelfall
+            (DSGVO-Art. 17 mit den dort vorgesehenen Ausnahmen).
+          </p>
+        </section>
+        <div className="flex flex-wrap items-center gap-4">
           <a href="/" className="btn-outline btn-sm">Zurück</a>
           <button
-            onClick={handleNuke}
-            className="inline-flex items-center justify-center rounded-2xl bg-cyan-400/90 px-5 py-2 text-sm font-semibold text-slate-900 transition hover:bg-cyan-300"
-            aria-label="Automatische Kontolöschung starten"
+            onClick={handleAnonymize}
+            className="inline-flex items-center justify-center rounded-full bg-red-500/80 px-5 py-2 text-sm font-semibold text-white transition hover:bg-red-500"
+            aria-label="Konto anonymisieren"
           >
-            Konto-Löschung anstoßen
+            Konto anonymisieren
           </button>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
 import { ClipEmbed } from "../../components/streamclips/ClipEmbed";
 import { ClipCarousel } from "../../components/streamclips/ClipCarousel";
-import { ClipComments } from "../../components/streamclips/ClipComments";
+import { Comments } from "../../components/comments/Comments";
 import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { Seo } from "../../components/Seo";
@@ -133,7 +133,7 @@ export function ClipDetailPage() {
 
             {loggedIn ? <ReportBlock clipId={clip.id} /> : <LoginHint />}
 
-            <ClipComments clipId={clip.id} onSeek={handleSeek} />
+            <Comments targetType="clip" targetKey={clip.id} onSeek={handleSeek} />
           </div>
         )}
 

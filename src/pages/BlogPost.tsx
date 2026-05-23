@@ -6,6 +6,7 @@ import rehypeHighlight from "rehype-highlight";
 import { getBlogPost, getMe, type BlogPost as BlogPostModel, type User } from "../services";
 import { Routes } from "../config/routes";
 import { Seo, JsonLd, SITE_URL } from "../components/Seo";
+import { Comments } from "../components/comments/Comments";
 import "highlight.js/styles/github-dark.css";
 
 function formatDate(iso: string | null): string {
@@ -322,6 +323,15 @@ export function BlogPostPage() {
                 {post.content}
               </ReactMarkdown>
             </div>
+
+            {/* Kommentare nur unter veröffentlichten Posts — Drafts sehen
+                nur Autoren über die Admin-Vorschau, dort macht eine
+                Kommentar-Sektion keinen Sinn. */}
+            {post.publishedAt !== null && (
+              <div className="mt-12 border-t border-white/10 pt-8">
+                <Comments targetType="blog_post" targetKey={post.slug} />
+              </div>
+            )}
           </article>
 
           {/* TOC: sticky Sidebar ab lg. Nur bei Posts mit ≥3 Headings,

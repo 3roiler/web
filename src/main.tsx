@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { KeyboardShortcuts } from './components/KeyboardShortcuts';
 import { KonamiEasterEgg } from './components/KonamiEasterEgg';
+import { ViewTransitions } from './components/ViewTransitions';
 import { HomePage } from './pages/Home';
 import { ImpressumPage } from './pages/Impressum';
 import { DatenschutzPage } from './pages/Datenschutz';
@@ -38,6 +39,7 @@ import { DashboardAwardsPage } from './pages/DashboardAwards';
 import { DashboardClipCategoriesPage } from './pages/DashboardClipCategories';
 import { DashboardClipSettingsPage } from './pages/DashboardClipSettings';
 import { DashboardReportsPage } from './pages/DashboardReports';
+import { DashboardMutesPage } from './pages/DashboardMutes';
 import { NotFoundPage } from './pages/NotFound';
 import { Routes } from './config/routes';
 
@@ -82,6 +84,7 @@ function AppRoot() {
       <Header />
       <KeyboardShortcuts />
       <KonamiEasterEgg />
+      <ViewTransitions />
       <React.Suspense fallback={<RouteFallback />}>
         <RouterRoutes>
           <Route path={Routes.Home} element={<HomePage />} />
@@ -134,6 +137,7 @@ function AppRoot() {
           <Route path={Routes.Dashboard.ClipsCategories} element={<DashboardClipCategoriesPage />} />
           <Route path={Routes.Dashboard.ClipsSettings} element={<DashboardClipSettingsPage />} />
           <Route path={Routes.Dashboard.ClipsReports} element={<DashboardReportsPage />} />
+          <Route path={Routes.Dashboard.ClipsMutes} element={<DashboardMutesPage />} />
 
           <Route path={Routes.BlogPost} element={<BlogPostPage />} />
           <Route path={Routes.Callback.Github} element={<GithubCallbackPage />} />

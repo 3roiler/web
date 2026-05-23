@@ -41,6 +41,7 @@ export function DashboardClipsPage() {
           <Link to={Routes.Dashboard.ClipsCategories} className="btn-outline btn-sm">Kategorien</Link>
           <Link to={Routes.Dashboard.ClipsSettings} className="btn-outline btn-sm">Einstellungen</Link>
           <Link to={Routes.Dashboard.ClipsReports} className="btn-outline btn-sm">Meldungen</Link>
+          <Link to={Routes.Dashboard.ClipsMutes} className="btn-outline btn-sm">Mutes</Link>
         </>
       }
     >

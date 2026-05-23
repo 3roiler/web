@@ -39,6 +39,9 @@ export interface User {
   displayName?: string | null;
   email: string;
   avatarUrl?: string | null;
+  /** Wenn gesetzt: Account ist anonymisiert. UI rendert „Gelöschter
+   *  Nutzer", Login ist bereits abgelaufen. */
+  deletedAt?: string | null;
   permissions?: string[];
   socialLinks?: SocialLink[];
 }
@@ -54,6 +57,8 @@ export interface AdminUser {
   name: string;
   displayName: string | null;
   email: string | null;
+  /** Set when the account has been self-anonymized. UI shows a marker. */
+  deletedAt?: string | null;
   createdAt: string;
   updatedAt: string | null;
   /** Direct + group-inherited permissions, distinct and sorted. */
@@ -1918,25 +1923,38 @@ export async function browseClips(): Promise<BrowseData> {
   }
 }
 
-export interface ClipComment {
+export type CommentTargetType = 'clip' | 'blog_post';
+
+export interface Comment {
   id: string;
-  clipId: string;
+  parentCommentId: string | null;
+  targetType: CommentTargetType;
+  targetId: string;
   userId: string;
   body: string;
-  /** Sekunden im Clip — `null` = Kommentar ohne Zeitbezug. */
+  /** Sekunden im Clip — null für Blog-Comments. */
   timestampSeconds: number | null;
   deletedAt: string | null;
   deletedByUserId: string | null;
+  /** Grund bei Moderator-Soft-Delete. Bei Self-Delete null. */
+  deletionReason: string | null;
   createdAt: string;
   updatedAt: string | null;
   authorName: string;
   authorDisplayName: string | null;
   authorAvatarUrl: string | null;
+  /** Wenn gesetzt: Author ist anonymisiert (Account gelöscht). */
+  authorDeletedAt: string | null;
 }
 
-export async function listClipComments(clipId: string): Promise<ClipComment[]> {
+/** Backwards-compatibility alias — die alte ClipComment-Form hatte
+ *  `clipId` statt `targetId`. Komponenten, die noch nicht migriert
+ *  sind, importieren das hier. */
+export type ClipComment = Comment;
+
+export async function listClipComments(clipId: string): Promise<Comment[]> {
   try {
-    const response = await axios.get<ClipComment[]>(
+    const response = await axios.get<Comment[]>(
       `${getApiBaseUrl()}/clips/${encodeURIComponent(clipId)}/comments`,
       AXIOS_OPTIONS
     );
@@ -1949,12 +1967,42 @@ export async function listClipComments(clipId: string): Promise<ClipComment[]> {
 export async function postClipComment(
   clipId: string,
   body: string,
-  timestampSeconds: number | null
-): Promise<ClipComment> {
+  timestampSeconds: number | null,
+  parentCommentId: string | null = null
+): Promise<Comment> {
   try {
-    const response = await axios.post<ClipComment>(
+    const response = await axios.post<Comment>(
       `${getApiBaseUrl()}/clips/${encodeURIComponent(clipId)}/comments`,
-      { body, timestampSeconds },
+      { body, timestampSeconds, parentCommentId },
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Kommentar konnte nicht gespeichert werden.');
+  }
+}
+
+export async function listBlogComments(slug: string): Promise<Comment[]> {
+  try {
+    const response = await axios.get<Comment[]>(
+      `${getApiBaseUrl()}/blog/${encodeURIComponent(slug)}/comments`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Kommentare konnten nicht geladen werden.');
+  }
+}
+
+export async function postBlogComment(
+  slug: string,
+  body: string,
+  parentCommentId: string | null = null
+): Promise<Comment> {
+  try {
+    const response = await axios.post<Comment>(
+      `${getApiBaseUrl()}/blog/${encodeURIComponent(slug)}/comments`,
+      { body, parentCommentId },
       AXIOS_OPTIONS
     );
     return response.data;
@@ -1971,6 +2019,82 @@ export async function deleteClipComment(commentId: string): Promise<void> {
     );
   } catch (error: unknown) {
     toApiError(error, 'Kommentar konnte nicht gelöscht werden.');
+  }
+}
+
+/** Soft-Delete durch Moderator mit Begründung (transparent angezeigt). */
+export async function moderateDeleteComment(commentId: string, reason: string): Promise<void> {
+  try {
+    await axios.patch(
+      `${getApiBaseUrl()}/comments/${encodeURIComponent(commentId)}/moderate`,
+      { reason },
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Moderations-Löschung fehlgeschlagen.');
+  }
+}
+
+export async function restoreComment(commentId: string): Promise<void> {
+  try {
+    await axios.patch(
+      `${getApiBaseUrl()}/comments/${encodeURIComponent(commentId)}/restore`,
+      {},
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Wiederherstellen fehlgeschlagen.');
+  }
+}
+
+export interface CommentMute {
+  userId: string;
+  reason: string;
+  mutedByUserId: string;
+  mutedUntil: string | null;
+  createdAt: string;
+  userName: string;
+  userDisplayName: string | null;
+  userAvatarUrl: string | null;
+  userDeletedAt: string | null;
+}
+
+export async function listCommentMutes(): Promise<CommentMute[]> {
+  try {
+    const response = await axios.get<CommentMute[]>(
+      `${getApiBaseUrl()}/admin/streamclips/mutes`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Mute-Liste konnte nicht geladen werden.');
+  }
+}
+
+export async function muteUserForComments(
+  userId: string,
+  reason: string,
+  mutedUntil: string | null
+): Promise<void> {
+  try {
+    await axios.post(
+      `${getApiBaseUrl()}/admin/streamclips/users/${encodeURIComponent(userId)}/mute`,
+      { reason, mutedUntil },
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Mute fehlgeschlagen.');
+  }
+}
+
+export async function unmuteUserForComments(userId: string): Promise<void> {
+  try {
+    await axios.delete(
+      `${getApiBaseUrl()}/admin/streamclips/users/${encodeURIComponent(userId)}/mute`,
+      AXIOS_OPTIONS
+    );
+  } catch (error: unknown) {
+    toApiError(error, 'Unmute fehlgeschlagen.');
   }
 }
 

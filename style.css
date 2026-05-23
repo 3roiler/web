@@ -127,3 +127,30 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .glitch-layer {animation:none !important;}
 }
+
+/* ───── View-Transitions zwischen SPA-Routen ─────────────────────────
+   Triggert via React-Router 7 `navigate({ viewTransition: true })` —
+   global verkabelt in components/ViewTransitions.tsx. Hier nur die
+   CSS-Animation-Kurven. Browsern ohne Support fallen ohne Animation
+   zurück (nicht-`@view-transition` Selectors greifen einfach nicht). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 240ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+::view-transition-old(root) {
+  animation-name: vt-fade-out;
+}
+::view-transition-new(root) {
+  animation-name: vt-fade-in;
+}
+@keyframes vt-fade-out {
+  to {opacity:0; transform:translateY(-6px);}
+}
+@keyframes vt-fade-in {
+  from {opacity:0; transform:translateY(8px);}
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {animation-duration:1ms !important;}
+}
