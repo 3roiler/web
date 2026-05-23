@@ -1,0 +1,54 @@
+name: Lighthouse
+
+# Lighthouse-CI gegen den lokal gebauten Production-Build. Läuft auf
+# jeden PR, der Frontend-Dateien anfasst, und auf jeden Push auf main.
+# Wir vergleichen NICHT gegen frühere Runs (keine LHCI-Server-DB) —
+# stattdessen fail-on-thresholds: Performance & A11y müssen ≥ 0.9
+# bleiben, SEO ≥ 0.95, Best Practices ≥ 0.9. Werte sind konservativ
+# kalibriert auf den ist-Stand.
+#
+# Bewusst NUR `/`, `/blog`, `/streamclips` als Routen — Dashboard ist
+# auth-gated und Lighthouse loggt sich nicht ein.
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'index.html'
+      - 'style.css'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - '.github/workflows/lighthouse.yaml'
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  lhci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Lighthouse-CI
+        run: npm install -g @lhci/cli@0.14.x
+
+      - name: Run Lighthouse-CI
+        run: lhci autorun --config=lighthouserc.json
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}

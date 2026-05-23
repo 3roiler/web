@@ -1,0 +1,37 @@
+{
+  "ci": {
+    "collect": {
+      "staticDistDir": "./dist",
+      "url": [
+        "http://localhost/index.html"
+      ],
+      "numberOfRuns": 1,
+      "settings": {
+        "chromeFlags": "--no-sandbox --disable-dev-shm-usage --headless=new"
+      }
+    },
+    "assert": {
+      "_comment": [
+        "Alle Floors als 'warn', nicht 'error'. LHCI gegen einen lokal-",
+        "gebauten staticDistDir-Build liefert für eine clientseitig-",
+        "renderende SPA stark verzerrte Werte: SEO 0.5 weil Lighthouse",
+        "nur den leeren <div id='root'> sieht bevor JS hydratisiert,",
+        "Best-Practices wegen http-statt-https, Performance ist auf",
+        "GitHub-Actions-Runnern hochgradig instabil. Echte Werte gegen",
+        "broiler.dev wären deutlich höher. Bis wir einen echten",
+        "preview-server mit SPA-Fallback + Production-like Headers",
+        "einsetzen, ist LHCI hier als Sichtbarkeits-Tool gedacht (Report",
+        "via temporary-public-storage), nicht als Quality-Gate."
+      ],
+      "assertions": {
+        "categories:performance": ["warn", { "minScore": 0.85 }],
+        "categories:accessibility": ["warn", { "minScore": 0.9 }],
+        "categories:best-practices": ["warn", { "minScore": 0.85 }],
+        "categories:seo": ["warn", { "minScore": 0.95 }]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

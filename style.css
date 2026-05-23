@@ -99,3 +99,31 @@ body {
 .blog-content table {width:100%;border-collapse:collapse;font-size:.875rem;}
 .blog-content th,.blog-content td {border:1px solid rgba(255,255,255,.1);padding:.5rem .75rem;text-align:left;}
 .blog-content th {background:rgba(255,255,255,.04);color:#f1f5f9;font-weight:600;}
+
+/* ───────── 404-Glitch ──────────────────────────────────────────────
+   Zwei farbverschobene Layer driften alle ~6 s ganz kurz vom Basis-
+   Layer weg (Channel-Shift-Effekt). Bewusst sehr selten + wenige px,
+   damit es sich nicht hektisch anfühlt — eher wie ein „der Monitor
+   stottert kurz"-Moment. `steps(1)` macht die Keyframes hart, sonst
+   würde der Browser zwischen den Phasen interpolieren und der Effekt
+   würde schmieren statt zu glitchen. */
+@keyframes glitch-red {
+  0%, 92%, 100% {transform:translate(0,0);}
+  93% {transform:translate(2px,-1px);}
+  94% {transform:translate(-1px,2px);}
+  95% {transform:translate(3px,0);}
+  96%, 98% {transform:translate(0,0);}
+  97% {transform:translate(-2px,1px);}
+}
+@keyframes glitch-cyan {
+  0%, 92%, 100% {transform:translate(0,0);}
+  93% {transform:translate(-2px,1px);}
+  94% {transform:translate(1px,-2px);}
+  95% {transform:translate(-3px,0);}
+  96%, 98% {transform:translate(0,0);}
+  97% {transform:translate(2px,-1px);}
+}
+.glitch-layer {pointer-events:none;mix-blend-mode:screen;}
+@media (prefers-reduced-motion: reduce) {
+  .glitch-layer {animation:none !important;}
+}
