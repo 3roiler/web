@@ -17,7 +17,11 @@ import {
   type CommentTargetType
 } from "../../services";
 
-const ANONYMIZED_NAME_CHECK = "Gelöschter Nutzer";
+// Reine Defensive für Legacy-Datensätze: Falls die API mal ein
+// Comment-Objekt ohne `authorDeletedAt` liefert (z. B. Cache-Mismatch),
+// erkennen wir den Anonymisierten anhand des Namens. Der echte Pfad
+// ist `comment.authorDeletedAt !== null`.
+const ANONYMIZED_NAME_FALLBACK = "Gelöschter Nutzer";
 
 export interface CommentsProps {
   targetType: CommentTargetType;
@@ -288,9 +292,16 @@ function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged
   const isAuthor = me?.id === comment.userId;
   const isModeratedDelete = comment.deletedAt !== null && comment.deletionReason !== null;
   const isSelfDelete = comment.deletedAt !== null && comment.deletionReason === null;
+  // `authorDeletedAt` ist die single source of truth — kommt direkt aus
+  // dem JOIN auf `user.deleted_at`. Der Name-Check ist nur Fallback,
+  // falls ein gerade angelegter „echter" User zufällig „Gelöschter
+  // Nutzer" als Display-Name wählt (Display-Names sind ansonsten
+  // free-text, Kollision ist möglich).
   const isDeletedAuthor =
-    (comment.authorDeletedAt !== null && comment.authorDeletedAt !== undefined) ||
-    (comment.authorDisplayName ?? comment.authorName) === ANONYMIZED_NAME_CHECK;
+    comment.authorDeletedAt !== null && comment.authorDeletedAt !== undefined
+      ? true
+      : comment.authorDeletedAt === undefined &&
+        (comment.authorDisplayName ?? comment.authorName) === ANONYMIZED_NAME_FALLBACK;
 
   const [replyOpen, setReplyOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
