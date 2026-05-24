@@ -272,23 +272,42 @@ export async function nuke(): Promise<void> {
 }
 
 /**
- * Generates a cryptographically-random state string for OAuth flows.
- * Replaces Math.random (SonarCloud javascript:S2245).
+ * Holt einen OAuth-`state` vom Backend.
+ *
+ * Hintergrund: Bisher wurde der State client-seitig mit
+ * `crypto.getRandomValues` gewürfelt und in der OAuth-URL mitgegeben.
+ * Das schützt gegen Brute-Force-Raten, NICHT aber gegen Login-CSRF:
+ * ohne server-seitige Bindung kann ein Angreifer den Flow des Opfers
+ * mit eigenem `state` entführen.
+ *
+ * Neu: Das Backend würfelt den State, legt ihn als kurzlebiges
+ * HttpOnly-Cookie ab und gibt ihn zusätzlich im Body zurück. Beim
+ * Callback geht derselbe State im Body wieder hoch und das Backend
+ * validiert ihn gegen das Cookie. `withCredentials: true` ist Pflicht
+ * — sonst landet das Cookie nicht im Browser-Jar (Cross-Subdomain
+ * `api.broiler.dev` → `broiler.dev`).
  */
-function secureRandomState(byteLength = 16): string {
-  const buf = new Uint8Array(byteLength);
-  crypto.getRandomValues(buf);
-  return Array.from(buf, b => b.toString(16).padStart(2, '0')).join('');
+async function fetchOauthState(provider: 'github' | 'twitch'): Promise<string> {
+  try {
+    const response = await axios.get<{ state: string }>(
+      `${getApiBaseUrl()}/${provider}/oauth-state`,
+      AXIOS_OPTIONS
+    );
+    return response.data.state;
+  } catch (error: unknown) {
+    toApiError(error, 'OAuth-State konnte nicht angefordert werden.');
+  }
 }
 
-export function loginToGithub(): void {
+export async function loginToGithub(): Promise<void> {
   const { host, protocol } = globalThis.location;
+  const state = await fetchOauthState('github');
 
   const params = new URLSearchParams({
     redirect_uri: `${protocol}//${host}${Routes.Callback.Github}`,
     client_id: ClientId,
     scope: Scope,
-    state: secureRandomState()
+    state
   });
 
   globalThis.location.href = `${Routes.External.GithubOauth}?${params.toString()}`;
@@ -1483,14 +1502,15 @@ function getTwitchClientId(): string {
   return TWITCH_CLIENT_IDS[getApiEnvironment()] ?? TWITCH_CLIENT_IDS.Development;
 }
 
-export function loginToTwitch(): void {
+export async function loginToTwitch(): Promise<void> {
   const { host, protocol } = globalThis.location;
+  const state = await fetchOauthState('twitch');
   const params = new URLSearchParams({
     client_id: getTwitchClientId(),
     redirect_uri: `${protocol}//${host}${Routes.Callback.Twitch}`,
     response_type: 'code',
     scope: TwitchScope,
-    state: secureRandomState()
+    state
   });
   globalThis.location.href = `${Routes.External.TwitchOauth}?${params.toString()}`;
 }
@@ -1500,12 +1520,12 @@ export interface TwitchLoginResult {
   twitch: { login: string; displayName: string };
 }
 
-export async function authenticateTwitch(code: string): Promise<TwitchLoginResult> {
+export async function authenticateTwitch(code: string, state: string): Promise<TwitchLoginResult> {
   try {
     const redirectUri = `${globalThis.location.protocol}//${globalThis.location.host}${Routes.Callback.Twitch}`;
     const response = await axios.post<TwitchLoginResult>(
       `${getApiBaseUrl()}/twitch/oauth`,
-      { code, redirect_uri: redirectUri },
+      { code, state, redirect_uri: redirectUri },
       AXIOS_OPTIONS
     );
     return response.data;

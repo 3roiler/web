@@ -1,5 +1,6 @@
 import * as React from "react";
 import { DashboardLayout } from "../components/DashboardLayout";
+import { safeHttpUrl } from "../lib/url";
 import {
   listCommentMutes,
   unmuteUserForComments,
@@ -89,12 +90,13 @@ function MutesList() {
           const name = isAnonymized
             ? 'Gelöschter Nutzer'
             : (m.userDisplayName ?? m.userName);
+          const avatar = isAnonymized ? undefined : safeHttpUrl(m.userAvatarUrl);
           return (
             <li key={m.userId} className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <div className="flex items-center gap-3">
-                {m.userAvatarUrl && !isAnonymized ? (
+                {avatar ? (
                   <img
-                    src={m.userAvatarUrl}
+                    src={avatar}
                     alt=""
                     className="h-10 w-10 rounded-full border border-white/10 bg-slate-900 object-cover"
                   />

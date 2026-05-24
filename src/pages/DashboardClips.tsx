@@ -4,6 +4,7 @@ import { DashboardLayout } from "../components/DashboardLayout";
 import { Pagination } from "../components/Pagination";
 import { Routes } from "../config/routes";
 import { formatDate } from "../lib/asset-helpers";
+import { safeHttpUrl } from "../lib/url";
 import { ClipEmbed } from "../components/streamclips/ClipEmbed";
 import {
   adminListClips,
@@ -277,6 +278,7 @@ function ClipModCard({
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const meta = STATUS_META[clip.status];
+  const thumb = safeHttpUrl(clip.thumbnailUrl);
 
   async function setStatus(status: ClipStatus, rejectionReason?: string) {
     setBusy(true);
@@ -307,9 +309,9 @@ function ClipModCard({
           aria-label={`Clip „${clip.title}" auswählen`}
           className="mt-1 h-4 w-4 shrink-0 accent-cyan-500"
         />
-        {clip.thumbnailUrl && (
+        {thumb && (
           <button type="button" onClick={() => setPreview((p) => !p)} className="shrink-0">
-            <img src={clip.thumbnailUrl} alt="" className="h-16 w-28 rounded-lg border border-white/10 object-cover" loading="lazy" />
+            <img src={thumb} alt="" className="h-16 w-28 rounded-lg border border-white/10 object-cover" loading="lazy" />
           </button>
         )}
         <div className="min-w-0 flex-1">

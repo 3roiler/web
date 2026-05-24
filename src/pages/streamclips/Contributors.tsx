@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
 import { Seo } from "../../components/Seo";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
+import { safeHttpUrl } from "../../lib/url";
 import { listClipContributors, ApiError, type ClipContributor } from "../../services";
 
 /**
@@ -84,6 +85,7 @@ function ContributorRow({ row, rank }: { row: ClipContributor; rank: number }) {
           : 'text-slate-500';
 
   const displayName = row.displayName ?? row.name;
+  const avatar = safeHttpUrl(row.avatarUrl);
 
   return (
     <li className={`flex items-center gap-4 rounded-2xl border p-4 ${rankTone}`}>
@@ -92,9 +94,9 @@ function ContributorRow({ row, rank }: { row: ClipContributor; rank: number }) {
       >
         {rank}
       </span>
-      {row.avatarUrl ? (
+      {avatar ? (
         <img
-          src={row.avatarUrl}
+          src={avatar}
           alt=""
           className="h-12 w-12 shrink-0 rounded-full border border-white/10 bg-slate-900 object-cover"
         />

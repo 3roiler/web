@@ -5,6 +5,7 @@ import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
 import { Seo } from "../../components/Seo";
+import { safeHttpUrl } from "../../lib/url";
 import {
   getLeaderboard,
   getSections,
@@ -111,6 +112,7 @@ export function LeaderboardPage() {
 
 function LeaderboardRow({ clip, rank }: { clip: ClipWithContext; rank: number }) {
   const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : null;
+  const thumb = safeHttpUrl(clip.thumbnailUrl);
   return (
     <Link
       to={Routes.Streamclips.ClipDetail.replace(":id", clip.id)}
@@ -119,9 +121,9 @@ function LeaderboardRow({ clip, rank }: { clip: ClipWithContext; rank: number })
       <div className="flex w-8 shrink-0 items-center justify-center text-lg font-bold tabular-nums text-slate-400">
         {medal ?? rank}
       </div>
-      {clip.thumbnailUrl && (
+      {thumb && (
         <img
-          src={clip.thumbnailUrl}
+          src={thumb}
           alt=""
           className="h-16 w-28 shrink-0 rounded-lg border border-white/10 object-cover"
           loading="lazy"

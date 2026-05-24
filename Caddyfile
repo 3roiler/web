@@ -10,6 +10,23 @@
 	root * /srv
 	encode zstd gzip
 
+	# Security-Header für alle Antworten. HSTS-Preload setzt voraus, dass
+	# https://broiler.dev/ konsequent über HTTPS ausgeliefert wird (TLS-
+	# Terminierung übernimmt der DigitalOcean-LB, deshalb hier ohne
+	# Caddy-eigenes auto_https). Die CSP listet die externen Origins
+	# explizit auf, die index.html und ClipEmbed.tsx aktuell brauchen
+	# (Google Fonts, Google AdSense + Consent-Tag-Manager, Twitch-Embed).
+	# `frame-ancestors 'none'` ersetzt im modernen Browser X-Frame-Options;
+	# letzteres bleibt als Fallback für sehr alte UAs.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; frame-src https://clips.twitch.tv https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net; connect-src 'self' https://api.broiler.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+	}
+
 	# Long-term cache for hashed/static assets (set before the handlers so
 	# it applies regardless of SPA fallback rewrite).
 	@assets path *.js *.css *.woff2 *.woff *.svg *.png *.jpg *.jpeg *.gif *.ico
