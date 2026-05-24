@@ -603,7 +603,9 @@ function ModerateDeleteForm({
         Moderator-Löschung
       </p>
       <p className="text-[0.7rem] text-slate-400">
-        Grund wird Lesern transparent angezeigt. Action ist nicht still.
+        Grund wird Lesern transparent angezeigt. Bitte <strong className="text-slate-200">keine
+        personenbezogenen Daten</strong> (Mails, IPs, Klarnamen) im Text — der Eintrag
+        ist öffentlich.
       </p>
       <textarea
         value={reason}
