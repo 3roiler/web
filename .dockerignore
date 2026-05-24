@@ -3,3 +3,11 @@ dist
 npm-debug.log
 .git
 .env
+.github
+.devcontainer
+.vscode
+*.md
+README.md
+CLAUDE.md
+.local-backup
+lighthouserc.json

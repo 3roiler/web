@@ -4,6 +4,7 @@ import { DashboardLayout } from "../components/DashboardLayout";
 import { Pagination } from "../components/Pagination";
 import { Routes } from "../config/routes";
 import { formatDate } from "../lib/asset-helpers";
+import { safeHttpUrl } from "../lib/url";
 import {
   adminListReports,
   adminResolveReport,
@@ -61,11 +62,13 @@ function ReportsList() {
         <p className="text-sm text-slate-500">Keine offenen Meldungen. 🎉</p>
       )}
 
-      {rows?.map((report) => (
+      {rows?.map((report) => {
+        const thumb = safeHttpUrl(report.clipThumbnailUrl);
+        return (
         <div key={report.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="flex gap-3">
-            {report.clipThumbnailUrl && (
-              <img src={report.clipThumbnailUrl} alt="" className="h-14 w-24 shrink-0 rounded-lg object-cover" loading="lazy" />
+            {thumb && (
+              <img src={thumb} alt="" className="h-14 w-24 shrink-0 rounded-lg object-cover" loading="lazy" />
             )}
             <div className="min-w-0 flex-1">
               <p className="text-xs text-slate-500">{formatDate(report.createdAt)} · {report.reporterName}</p>
@@ -87,7 +90,8 @@ function ReportsList() {
             </button>
           </div>
         </div>
-      ))}
+        );
+      })}
 
       {rows !== null && (
         <Pagination offset={offset} pageSize={PAGE_SIZE} count={rows.length} onChange={setOffset} />

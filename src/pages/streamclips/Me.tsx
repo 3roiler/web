@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
 import { formatDate } from "../../lib/asset-helpers";
+import { safeHttpUrl } from "../../lib/url";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
 import {
@@ -82,14 +83,15 @@ export function MyClipsPage() {
             <ul className="space-y-3">
               {clips?.map((clip) => {
                 const badge = STATUS_BADGE[clip.status];
+                const thumb = safeHttpUrl(clip.thumbnailUrl);
                 return (
                   <li key={clip.id}>
                     <Link
                       to={Routes.Streamclips.ClipDetail.replace(":id", clip.id)}
                       className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 transition hover:border-[#9146FF]/40"
                     >
-                      {clip.thumbnailUrl && (
-                        <img src={clip.thumbnailUrl} alt="" className="h-14 w-24 shrink-0 rounded-lg object-cover" loading="lazy" />
+                      {thumb && (
+                        <img src={thumb} alt="" className="h-14 w-24 shrink-0 rounded-lg object-cover" loading="lazy" />
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 text-xs">

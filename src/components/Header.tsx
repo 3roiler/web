@@ -2,25 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { loginToGithub, loginToTwitch, logout, getMe, User } from '../services';
 import { Routes } from '../config/routes';
-
-
-/**
- * Only returns `url` if it parses as http(s). Prevents user-controlled
- * strings from landing in an <img src=> that CodeQL would flag as
- * "DOM text reinterpreted as HTML".
- */
-function safeHttpUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
-    // Return the parser's canonical string so CodeQL's taint analysis
-    // considers the value sanitized (raw pass-through is not recognised).
-    return parsed.toString();
-  } catch {
-    return null;
-  }
-}
+import { safeHttpUrl } from '../lib/url';
 
 /**
  * Top-level Navi. Hash-Einträge (`/#anchor`) sind Sprungmarken auf der
@@ -369,7 +351,7 @@ export function Header() {
 interface DesktopAccountProps {
   user: User | null;
   displayName: string;
-  avatarUrl: string | null;
+  avatarUrl: string | undefined;
   avatarBroken: boolean;
   initial: string;
   open: boolean;
@@ -517,7 +499,7 @@ function AccountMenuGuest({ onClose }: { onClose: () => void }) {
 interface MobileAuthProps {
   user: User | null;
   displayName: string;
-  avatarUrl: string | null;
+  avatarUrl: string | undefined;
   avatarBroken: boolean;
   initial: string;
   onAvatarError: () => void;

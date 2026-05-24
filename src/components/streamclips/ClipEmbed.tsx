@@ -63,6 +63,18 @@ export function ClipEmbed({
         title={title ?? "Twitch Clip"}
         allowFullScreen
         loading="lazy"
+        // `sandbox` schließt das Twitch-iframe in eine eigene Origin-
+        // Bubble ein und lässt nur die Capabilities zu, die der Player
+        // tatsächlich braucht: JS (Player-Logik), same-origin (Cookies
+        // für Twitchs eigene Auth), Fullscreen-Presentation und das
+        // Auf-Twitch-öffnen via Popup. Damit kann ein böswilliger
+        // Player z. B. nicht mehr ungefragt Top-Frame-Navigation
+        // (`top.location = …`) oder Forms in `_self` ausführen.
+        sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+        // Twitch braucht den Origin (broiler.dev) für die `parent`-
+        // Validierung; deshalb `origin` statt `no-referrer`. Voller
+        // Pfad würde unnötig leaken.
+        referrerPolicy="origin"
         className="absolute inset-0 h-full w-full"
       />
     </div>

@@ -10,6 +10,7 @@ import {
   type User
 } from "../services";
 import { Routes } from "../config/routes";
+import { safeHttpUrl } from "../lib/url";
 
 /**
  * Self-service profile page for the logged-in user. Lets them edit
@@ -21,28 +22,6 @@ import { Routes } from "../config/routes";
  */
 const SOCIAL_LINKS_MAX = 12;
 const LABEL_MAX = 60;
-
-/**
- * Returns `url` iff it parses as an http(s) URL, otherwise null.
- * Used before dropping user-controlled strings into `src=` — CodeQL
- * flags raw pass-through as "DOM text reinterpreted as HTML" because
- * a `javascript:` URL in an <img src> won't fire in modern browsers
- * but could still be a footgun if the same value is ever reused in a
- * sink that does execute it.
- */
-function safeHttpUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
-    // Return the URL parser's canonical string, not the raw input — CodeQL's
-    // taint tracking only recognises a value as sanitized after it has gone
-    // through the `URL` constructor AND come back out via `.toString()`.
-    return parsed.toString();
-  } catch {
-    return null;
-  }
-}
 
 export function ProfilePage() {
   const navigate = useNavigate();

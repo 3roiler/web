@@ -2,6 +2,16 @@ import * as React from "react";
 import { authenticateGithub, authenticateTwitch } from "../services";
 import { Routes, navigateTo } from "../config/routes";
 
+/**
+ * GitHub-Callback. Das Backend setzt nach erfolgreichem Code-Tausch das
+ * httpOnly-Session-Cookie — der Header lädt den User dann via
+ * `getMe()`. Wir persistieren das User-Objekt bewusst NICHT mehr im
+ * `localStorage`: vor allem `permissions[]` dort liegen zu haben war ein
+ * Footgun (XSS könnte sie lesen / fälschen, und Komponenten wären in
+ * Versuchung, daraus UI-Berechtigungen abzuleiten ohne erneut zu
+ * validieren). Stattdessen ist `getMe()` jetzt die single source of
+ * truth, und das httpOnly-Cookie bleibt nicht-zugänglich.
+ */
 function GithubCallbackPage() {
   React.useEffect(() => {
     const params = new URLSearchParams(globalThis.location.search);
@@ -9,8 +19,7 @@ function GithubCallbackPage() {
     const state = params.get('state');
 
     if (code && state) {
-      authenticateGithub(code, state).then(user => {
-          localStorage.setItem('user', JSON.stringify(user));
+      authenticateGithub(code, state).then(() => {
           navigateTo(Routes.Home);
         }).catch((error: unknown) => {
           console.error(error);
@@ -34,22 +43,25 @@ function GithubCallbackPage() {
  * tauscht den Code gegen ein Token, legt/verknüpft den Nutzer an und
  * setzt das Session-Cookie. Nach Erfolg geht es zum Vote-Feed — der
  * natürliche Einstieg in Streamclips.
+ *
+ * Auch hier kein `localStorage.setItem('user', …)` mehr (siehe Kommentar
+ * an `GithubCallbackPage`).
  */
 function TwitchCallbackPage() {
   React.useEffect(() => {
     const params = new URLSearchParams(globalThis.location.search);
     const code = params.get('code');
+    const state = params.get('state');
 
-    if (code) {
-      authenticateTwitch(code).then(({ user }) => {
-          localStorage.setItem('user', JSON.stringify(user));
+    if (code && state) {
+      authenticateTwitch(code, state).then(() => {
           navigateTo(Routes.Streamclips.Vote);
         }).catch((error: unknown) => {
           console.error(error);
           navigateTo(Routes.Callback.Error);
         });
     } else {
-      console.error("Missing code in Twitch callback URL");
+      console.error("Missing code or state in Twitch callback URL");
       navigateTo(Routes.Callback.Error);
     }
   }, []);

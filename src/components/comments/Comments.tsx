@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
+import { safeHttpUrl } from "../../lib/url";
 import {
   listClipComments,
   postClipComment,
@@ -311,7 +312,7 @@ function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged
   const displayName = isDeletedAuthor
     ? 'Gelöschter Nutzer'
     : (comment.authorDisplayName ?? comment.authorName);
-  const avatarUrl = isDeletedAuthor ? null : comment.authorAvatarUrl;
+  const avatarUrl = isDeletedAuthor ? undefined : safeHttpUrl(comment.authorAvatarUrl);
 
   // Visuelles Indent nur bis MAX_VISUAL_INDENT_DEPTH. Darunter behält
   // jeder Reply die Border-Left-Linie, hat aber kein zusätzliches

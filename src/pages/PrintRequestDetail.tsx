@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { Routes } from "../config/routes";
 import { formatDate } from "../lib/asset-helpers";
+import { safeHttpUrl } from "../lib/url";
 import {
   getPrintRequest,
   updatePrintRequest,
@@ -171,16 +172,25 @@ function DetailContent({ id, me }: { id: string; me: User }) {
               ) : (
                 <span className="text-slate-500 italic">STL gelöscht</span>
               )
-            ) : (
-              <a
-                href={data.externalUrl ?? "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-cyan-300 hover:underline"
-              >
-                {data.externalUrl}
-              </a>
-            )}
+            ) : (() => {
+              // `externalUrl` ist Backend-stammend und User-Controlled —
+              // `javascript:`-Schemata würden den XSS-Hotspot triggern,
+              // sobald jemand draufklickt. Vor dem Render durch
+              // `safeHttpUrl()` rauschen lassen.
+              const safeExternal = safeHttpUrl(data.externalUrl);
+              return safeExternal ? (
+                <a
+                  href={safeExternal}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-300 hover:underline"
+                >
+                  {safeExternal}
+                </a>
+              ) : (
+                <span className="text-slate-500 italic">Ungültiger Link</span>
+              );
+            })()}
           </dd>
 
           {data.printerName && (
@@ -315,11 +325,12 @@ function CommentThread({ requestId, comments, onPosted }: CommentThreadProps) {
       <ul className="space-y-2">
         {comments.map((c) => {
           const author = c.authorDisplayName || c.authorName;
+          const avatar = safeHttpUrl(c.authorAvatarUrl);
           return (
             <li key={c.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
               <div className="flex items-center gap-3">
-                {c.authorAvatarUrl ? (
-                  <img src={c.authorAvatarUrl} alt="" className="h-7 w-7 rounded-full" referrerPolicy="no-referrer" />
+                {avatar ? (
+                  <img src={avatar} alt="" className="h-7 w-7 rounded-full" referrerPolicy="no-referrer" />
                 ) : (
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-700 text-[10px] font-semibold text-slate-300">
                     {author.slice(0, 2).toUpperCase()}
