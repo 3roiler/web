@@ -80,6 +80,17 @@
 		}
 	}
 
+	# RSS-Feed für Streamclips Germany (IDEA-31). Selber Mechanismus
+	# wie blog/rss.xml; API rendert `/clips/rss.xml`, wir mappen
+	# `/streamclips/rss.xml` darauf — die Public-URL bleibt nah am
+	# Feature-Namen.
+	handle /streamclips/rss.xml {
+		rewrite * /prod/clips/rss.xml
+		reverse_proxy https://api.broiler.dev {
+			header_up Host api.broiler.dev
+		}
+	}
+
 	# Alles andere: SPA-Auslieferung mit Fallback. Das `route` erzwingt
 	# sequentielle Ausführung, damit der no-cache-Header nach dem try_files
 	# greift (auch /blog → /index.html bekommt ihn).

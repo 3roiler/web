@@ -82,6 +82,11 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Übersicht', to: Routes.Streamclips.Home },
       { label: 'Top-Clips', to: Routes.Streamclips.Leaderboard },
       { label: 'Top-Einreicher', to: Routes.Streamclips.Contributors },
+      // RSS-Feed analog zum Blog — externer Pfad (Caddy → API), daher
+      // `href` statt `to`; das `NavItemLink`-Rendering setzt automatisch
+      // `target="_blank" rel="external"`, damit `ViewTransitions` nicht
+      // interceptet.
+      { label: 'RSS-Feed', href: '/streamclips/rss.xml' },
       // Auth-/Permission-gegated — der User sieht im Dropdown nichts,
       // wozu er ohnehin nicht klicken könnte.
       { label: 'Clip einreichen', to: Routes.Streamclips.Submit, permission: 'clips.submit' },
