@@ -7,7 +7,12 @@ import { Comments } from "../../components/comments/Comments";
 import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { Seo, JsonLd, SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "../../components/Seo";
-import { clipDetailPath, parseClipPathId } from "../../lib/clip-path";
+import {
+  clipDetailPath,
+  parseClipPathId,
+  streamerHubPath,
+  categoryHubPath
+} from "../../lib/clip-path";
 import {
   getClip,
   getClipByShortid,
@@ -53,6 +58,70 @@ function isoDurationFromSeconds(seconds: number): string {
  */
 function twitchEmbedUrl(twitchClipId: string): string {
   return `https://clips.twitch.tv/embed?clip=${encodeURIComponent(twitchClipId)}&parent=broiler.dev`;
+}
+
+/**
+ * Baut das VideoObject-JSON-LD-Objekt für einen freigegebenen Clip.
+ * Eigene Funktion, damit `ClipDetailPage` selbst nicht zu viele
+ * Verzweigungen aufhäuft (Sonar S3776 / Cognitive Complexity). Optionale
+ * Felder werden nur ausgegeben, wenn die zugrundeliegenden Daten
+ * vorhanden sind — leere oder Null-Werte würden im Rich-Results-Test
+ * Warnungen auslösen.
+ *
+ * Pflicht-Felder laut Google: name, description, thumbnailUrl, uploadDate.
+ */
+function buildVideoObjectJsonLd(clip: ClipDetailType): Record<string, unknown> {
+  // Beschreibungsteile als Array zusammenbauen — vermeidet verschachtelte
+  // Template-Literals (Sonar S4624), die mit `${ ... ? \`x ${y}\` : "" }`
+  // schwer zu lesen sind.
+  const parts: string[] = ["Clip"];
+  if (clip.broadcasterName) parts.push(" von ", clip.broadcasterName);
+  if (clip.categoryName) parts.push(" aus der Twitch-Kategorie ", clip.categoryName);
+  if (clip.creatorName) parts.push(" — geclippt von ", clip.creatorName);
+  parts.push(" auf Streamclips Germany.");
+  const description = parts.join("");
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: clip.title,
+    description,
+    thumbnailUrl: clip.thumbnailUrl ?? DEFAULT_OG_IMAGE,
+    // uploadDate bevorzugt das Twitch-Erstellungsdatum (echter Aufnahme-
+    // Zeitpunkt). Fallback: Submit-Datum bei broiler — besser als nichts.
+    uploadDate: clip.clipCreatedAt ?? clip.createdAt,
+    embedUrl: clip.embedUrl ?? twitchEmbedUrl(clip.twitchClipId),
+    publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+    inLanguage: clip.language ?? "de",
+    url: `${SITE_URL}${clipDetailPath(clip)}`
+  };
+  if (clip.videoUrl) jsonLd.contentUrl = clip.videoUrl;
+  if (clip.durationSeconds && clip.durationSeconds > 0) {
+    jsonLd.duration = isoDurationFromSeconds(clip.durationSeconds);
+  }
+  if (clip.broadcasterName) {
+    jsonLd.creator = { "@type": "Person", name: clip.broadcasterName };
+  }
+  // Aggregate-Rating nur wenn echte Stimmen da sind — sonst schluckt
+  // Google das als „inkorrekt" im Rich-Results-Test.
+  if (clip.ratingCount > 0 && clip.avgScore !== null) {
+    jsonLd.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: Number(clip.avgScore.toFixed(2)),
+      ratingCount: clip.ratingCount,
+      bestRating: 5,
+      worstRating: 1
+    };
+  }
+  // View-Count aus Twitch (kein eigener Watch-Counter). InteractionType
+  // = WatchAction ist die schema.org-Konvention für „Views".
+  if (clip.viewCount > 0) {
+    jsonLd.interactionStatistic = {
+      "@type": "InteractionCounter",
+      interactionType: "https://schema.org/WatchAction",
+      userInteractionCount: clip.viewCount
+    };
+  }
+  return jsonLd;
 }
 
 export function ClipDetailPage() {
@@ -165,76 +234,12 @@ export function ClipDetailPage() {
                 ]
               }}
             />
-            {/* VideoObject-JSON-LD: damit Google den Clip als Video-Rich-
-                Result indexieren kann (Karussell, Video-Tab, „Key Moments").
-                Nur für freigegebene, öffentliche Clips — pending/rejected
-                sind ohnehin auf noindex bzw. nicht erreichbar.
-                Pflicht-Felder laut Google: name, description, thumbnailUrl,
-                uploadDate. Optionale Felder (duration, embedUrl, aggregate
-                Rating, interactionStatistic) werden nur geliefert, wenn
-                die zugrundeliegenden Daten vorhanden sind — leere oder
-                Null-Werte würden im Rich-Results-Test Warnungen auslösen. */}
-            {clip.status === "approved" && (
-              <JsonLd
-                data={{
-                  "@context": "https://schema.org",
-                  "@type": "VideoObject",
-                  name: clip.title,
-                  description: `Clip${clip.broadcasterName ? ` von ${clip.broadcasterName}` : ""}${clip.categoryName ? ` aus der Twitch-Kategorie ${clip.categoryName}` : ""}${clip.creatorName ? ` — geclippt von ${clip.creatorName}` : ""} auf Streamclips Germany.`,
-                  thumbnailUrl: clip.thumbnailUrl ?? DEFAULT_OG_IMAGE,
-                  // uploadDate bevorzugt das Twitch-Erstellungsdatum
-                  // (entspricht dem tatsächlichen Aufnahme-Zeitpunkt).
-                  // Fallback: Submit-Datum bei broiler — besser als nichts.
-                  uploadDate: clip.clipCreatedAt ?? clip.createdAt,
-                  embedUrl: clip.embedUrl ?? twitchEmbedUrl(clip.twitchClipId),
-                  ...(clip.videoUrl ? { contentUrl: clip.videoUrl } : {}),
-                  ...(clip.durationSeconds && clip.durationSeconds > 0
-                    ? { duration: isoDurationFromSeconds(clip.durationSeconds) }
-                    : {}),
-                  ...(clip.broadcasterName
-                    ? {
-                        creator: {
-                          "@type": "Person",
-                          name: clip.broadcasterName
-                        }
-                      }
-                    : {}),
-                  publisher: {
-                    "@type": "Organization",
-                    name: SITE_NAME,
-                    url: SITE_URL
-                  },
-                  inLanguage: clip.language ?? "de",
-                  url: `${SITE_URL}${clipDetailPath(clip)}`,
-                  // Aggregate-Rating nur wenn echte Stimmen da sind.
-                  // Google schluckt aggregateRating mit 0 Bewertungen
-                  // sonst als „inkorrekt".
-                  ...(clip.ratingCount > 0 && clip.avgScore !== null
-                    ? {
-                        aggregateRating: {
-                          "@type": "AggregateRating",
-                          ratingValue: Number(clip.avgScore.toFixed(2)),
-                          ratingCount: clip.ratingCount,
-                          bestRating: 5,
-                          worstRating: 1
-                        }
-                      }
-                    : {}),
-                  // View-Count aus Twitch (kein eigener Watch-Counter
-                  // bei broiler). InteractionType = WatchAction ist die
-                  // schema.org-Konvention für „Views".
-                  ...(clip.viewCount > 0
-                    ? {
-                        interactionStatistic: {
-                          "@type": "InteractionCounter",
-                          interactionType: "https://schema.org/WatchAction",
-                          userInteractionCount: clip.viewCount
-                        }
-                      }
-                    : {})
-                }}
-              />
-            )}
+            {/* VideoObject-JSON-LD: Google rendert den Clip als Video-Rich-
+                Result (Karussell, Video-Tab). Nur für freigegebene Clips —
+                pending/rejected sind ohnehin auf noindex. JSON-LD-Aufbau
+                in `buildVideoObjectJsonLd` ausgelagert, damit diese
+                Komponente unter dem Cognitive-Complexity-Limit bleibt. */}
+            {clip.status === "approved" && <JsonLd data={buildVideoObjectJsonLd(clip)} />}
             <ClipEmbed
               clipId={clip.twitchClipId}
               title={clip.title}
@@ -245,8 +250,27 @@ export function ClipDetailPage() {
             <div>
               <h1 className="text-xl font-semibold text-slate-50">{clip.title}</h1>
               <p className="mt-1 text-xs text-slate-400">
-                {clip.broadcasterName ?? "?"}
-                {clip.categoryName && <> · {clip.categoryName}</>}
+                {clip.broadcasterName ? (
+                  <Link
+                    to={streamerHubPath(clip.broadcasterName) ?? "#"}
+                    className="text-slate-300 hover:text-slate-100"
+                  >
+                    {clip.broadcasterName}
+                  </Link>
+                ) : (
+                  "?"
+                )}
+                {clip.categoryName && (
+                  <>
+                    {" · "}
+                    <Link
+                      to={categoryHubPath(clip.categoryName) ?? "#"}
+                      className="text-slate-300 hover:text-slate-100"
+                    >
+                      {clip.categoryName}
+                    </Link>
+                  </>
+                )}
                 {clip.creatorName && <> · Clip von {clip.creatorName}</>}
               </p>
             </div>

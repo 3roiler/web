@@ -34,6 +34,9 @@ import { LeaderboardPage } from './pages/streamclips/Leaderboard';
 import { StreamclipsContributorsPage } from './pages/streamclips/Contributors';
 import { ClipDetailPage } from './pages/streamclips/ClipDetail';
 import { MyClipsPage } from './pages/streamclips/Me';
+import { StreamerHubPage } from './pages/streamclips/StreamerHub';
+import { CategoryHubPage } from './pages/streamclips/CategoryHub';
+import { AwardHubPage } from './pages/streamclips/AwardHub';
 import { DashboardClipsPage } from './pages/DashboardClips';
 import { DashboardAwardsPage } from './pages/DashboardAwards';
 import { DashboardClipCategoriesPage } from './pages/DashboardClipCategories';
@@ -102,6 +105,9 @@ function AppRoot() {
           <Route path={Routes.Streamclips.Contributors} element={<StreamclipsContributorsPage />} />
           <Route path={Routes.Streamclips.ClipDetail} element={<ClipDetailPage />} />
           <Route path={Routes.Streamclips.Me} element={<MyClipsPage />} />
+          <Route path={Routes.Streamclips.StreamerHub} element={<StreamerHubPage />} />
+          <Route path={Routes.Streamclips.CategoryHub} element={<CategoryHubPage />} />
+          <Route path={Routes.Streamclips.AwardHub} element={<AwardHubPage />} />
 
           {/* Dashboard: zentrale Verwaltung. Alle Berechtigungsprüfungen
               laufen sowohl im DashboardLayout (UX) als auch im API-Handler. */}
