@@ -1,8 +1,8 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { Routes } from "../../config/routes";
 import { StarRating } from "./StarRating";
 import { safeHttpUrl } from "../../lib/url";
+import { clipDetailPath } from "../../lib/clip-path";
 import type { ClipWithContext } from "../../services";
 
 /** Kompakte Clip-Kachel für Carousels und Suchergebnisse. */
@@ -10,7 +10,7 @@ export function ClipCard({ clip }: { clip: ClipWithContext }) {
   const thumb = safeHttpUrl(clip.thumbnailUrl);
   return (
     <Link
-      to={Routes.Streamclips.ClipDetail.replace(":id", clip.id)}
+      to={clipDetailPath(clip)}
       className="group block overflow-hidden rounded-xl border border-white/10 bg-white/5 transition hover:border-[#9146FF]/40"
     >
       <div className="relative w-full overflow-hidden bg-black" style={{ aspectRatio: "16 / 9" }}>

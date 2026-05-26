@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
 import { Seo } from "../../components/Seo";
+import { clipDetailPath } from "../../lib/clip-path";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
 import { safeHttpUrl } from "../../lib/url";
 import { listClipContributors, ApiError, type ClipContributor } from "../../services";
@@ -111,7 +112,7 @@ function ContributorRow({ row, rank }: { row: ClipContributor; rank: number }) {
           <p className="mt-0.5 truncate text-xs text-slate-500">
             Top-Clip:{' '}
             <Link
-              to={Routes.Streamclips.ClipDetail.replace(':id', row.topClipId)}
+              to={clipDetailPath({ id: row.topClipId, slug: row.topClipSlug })}
               className="text-cyan-300 hover:text-cyan-200"
             >
               {row.topClipTitle}

@@ -1,0 +1,68 @@
+/**
+ * Helpers für die kanonische Streamclip-URL:
+ *
+ *     /streamclips/clip/<slug>-<shortid>
+ *
+ * - `slug` stammt aus dem Titel (siehe Backend `slugifyTitle` /
+ *   Migration `040_clip_slugs.js`) und trägt die Keywords für SEO.
+ * - `shortid` sind die ersten 8 Hex-Zeichen der UUID (Bindestriche
+ *   entfernt) und sind der eigentliche Lookup-Key. Ohne shortid wäre
+ *   die URL nicht eindeutig (zwei Clips mit identischem Titel würden
+ *   denselben Slug erzeugen).
+ *
+ * Die alte UUID-Form (`/streamclips/clip/<uuid>`) bleibt funktional:
+ * der React-Router-Pattern `:id` matched beides; der ClipDetail-Page
+ * erkennt das Format und navigiert per `replace` zur kanonischen Slug-
+ * Form. Für Crawler erledigt das ein 301-Redirect im API-OG-Renderer.
+ */
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SHORTID_RE = /^[0-9a-f]{8}$/i;
+const SLUG_ID_RE = /^([a-z0-9][a-z0-9-]{0,118}?)-([0-9a-f]{8})$/i;
+
+/** Erste 8 Hex-Zeichen der UUID — Disambiguator in der Slug-URL. */
+export function shortidFromId(id: string): string {
+  return id.replace(/-/g, '').slice(0, 8).toLowerCase();
+}
+
+/**
+ * Baut den kanonischen Detail-Pfad für einen Clip.
+ *
+ * Das `clip` muss mindestens `id` und `slug` mitliefern — beides ist
+ * im `Clip`-Interface Pflicht (siehe `services/index.tsx`). Vor der
+ * Backend-Migration `040_clip_slugs.js` haben ältere Builds des
+ * Frontends ggf. noch keinen Slug erhalten; in dem Fall fällt der
+ * Pfad auf die UUID-Form zurück, damit nichts crashed.
+ */
+export function clipDetailPath(clip: { id: string; slug?: string | null }): string {
+  if (!clip.slug) return `/streamclips/clip/${clip.id}`;
+  return `/streamclips/clip/${clip.slug}-${shortidFromId(clip.id)}`;
+}
+
+export type ParsedClipPathId =
+  | { kind: 'uuid'; uuid: string }
+  | { kind: 'shortid'; slug: string; shortid: string }
+  | null;
+
+/**
+ * Klassifiziert den `:id`-Parameter der ClipDetail-Route.
+ *
+ * - UUID-Form → kommt vermutlich aus einem alten, geteilten Link;
+ *   wird vom Detail-Page nach erfolgreichem Lookup zur Slug-Form
+ *   umnavigiert (302 clientseitig per `navigate(replace)`).
+ * - Slug-Form (`text-<8hex>`) → kanonische URL.
+ * - Sonst → `null`, Detail-Page rendert NotFound.
+ */
+export function parseClipPathId(raw: string | undefined | null): ParsedClipPathId {
+  if (!raw) return null;
+  if (UUID_RE.test(raw)) return { kind: 'uuid', uuid: raw.toLowerCase() };
+  const match = SLUG_ID_RE.exec(raw);
+  if (match) {
+    return { kind: 'shortid', slug: match[1].toLowerCase(), shortid: match[2].toLowerCase() };
+  }
+  // Toleranz: nur eine 8-Hex-shortid ohne Slug-Prefix („/clip/-a1b2c3d4"
+  // oder „/clip/a1b2c3d4") akzeptieren, damit copy-paste aus Logs nicht
+  // direkt auf 404 läuft.
+  if (SHORTID_RE.test(raw)) return { kind: 'shortid', slug: '', shortid: raw.toLowerCase() };
+  return null;
+}
