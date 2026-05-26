@@ -24,7 +24,14 @@
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
-		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; frame-src https://clips.twitch.tv https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net; connect-src 'self' https://api.broiler.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+		# `Reporting-Endpoints` ist das neue Format (Reporting-API);
+		# `report-to` in der CSP verweist namentlich darauf. `report-uri`
+		# bleibt als Fallback für Browser, die die neue API noch nicht
+		# implementiert haben (vor allem ältere Mobile-Safari). Der
+		# Endpoint lebt in der api unter `/csp-report`; CSP-Reports
+		# loggen wir log-only (kein Persistieren — meist Extension-Noise).
+		Reporting-Endpoints "csp-endpoint=\"https://api.broiler.dev/prod/csp-report\""
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; frame-src https://clips.twitch.tv https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net; connect-src 'self' https://api.broiler.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; report-uri https://api.broiler.dev/prod/csp-report; report-to csp-endpoint"
 	}
 
 	# Long-term cache for hashed/static assets (set before the handlers so
