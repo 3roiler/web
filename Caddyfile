@@ -32,14 +32,26 @@
 	@assets path *.js *.css *.woff2 *.woff *.svg *.png *.jpg *.jpeg *.gif *.ico
 	header @assets Cache-Control "public, max-age=31536000, immutable"
 
-	# Social-Crawler (kein JS) für teilbare Seiten an den Open-Graph-Renderer
-	# der API umleiten — sonst zeigen Link-Vorschauen (WhatsApp/Discord/X/…)
-	# nur die generische index.html. Echte Nutzer (andere User-Agents)
-	# fallen in den SPA-Handler unten. Die `handle`-Blöcke sind sich
-	# gegenseitig ausschließend, daher kein Doppel-Handling.
+	# Crawler ohne (zuverlässiges) JS-Rendering an den Open-Graph-Renderer
+	# der API umleiten. Drei Gruppen werden erfasst:
+	#   1. Social-Crawler (Link-Vorschauen): facebook, twitter, discord,
+	#      whatsapp, linkedin, slack, telegram, reddit, mastodon, bluesky,
+	#      threads, embedly, …
+	#   2. Suchmaschinen ohne JS: bingbot, yandex, duckduckbot, baidu-
+	#      spider, applebot, adidxbot.
+	#   3. AI-Crawler (kein JS): gptbot, oai-searchbot, chatgpt-user,
+	#      perplexitybot, claudebot, anthropic-ai, ccbot.
+	# Googlebot fehlt bewusst — Google rendert SPAs zuverlässig und sieht
+	# beim Blog dann den Markdown-Volltext statt nur des OG-Stub-Excerpts.
+	# Wenn das in der Search Console „Rendered HTML" jemals auseinander-
+	# läuft, kann Googlebot nachträglich in die Liste.
+	#
+	# Echte Nutzer (andere User-Agents) fallen in den SPA-Handler unten.
+	# Die `handle`-Blöcke sind sich gegenseitig ausschließend, daher kein
+	# Doppel-Handling.
 	@og_bots {
 		path /streamclips/clip/* /blog/*
-		header_regexp User-Agent (?i)(facebookexternalhit|facebot|twitterbot|discordbot|whatsapp|linkedinbot|slackbot|telegrambot|pinterest|redditbot|vkshare|skypeuripreview|embedly|applebot|mastodon|bsky|threads)
+		header_regexp User-Agent (?i)(facebookexternalhit|facebot|twitterbot|discordbot|whatsapp|linkedinbot|slackbot|telegrambot|pinterest|redditbot|vkshare|skypeuripreview|embedly|applebot|mastodon|bsky|threads|bingbot|adidxbot|yandex(bot|images)?|duckduckbot|baiduspider|gptbot|oai-searchbot|chatgpt-user|perplexitybot|claudebot|claude-web|anthropic-ai|ccbot)
 	}
 	handle @og_bots {
 		rewrite * /prod/og{path}

@@ -4,7 +4,7 @@ import { Routes } from "../../config/routes";
 import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
-import { Seo } from "../../components/Seo";
+import { Seo, JsonLd, SITE_URL } from "../../components/Seo";
 import { safeHttpUrl } from "../../lib/url";
 import {
   getLeaderboard,
@@ -46,6 +46,39 @@ export function LeaderboardPage() {
   return (
     <main className="min-h-screen bg-slate-950 pt-20 pb-16 sm:pt-24" id="top">
       <Seo title="Top-Clips — Streamclips Germany" description="Die bestbewerteten deutschen Twitch-Clips, von der Community gewählt — Leaderboard für Allzeit, 30 und 7 Tage." />
+      {/* Breadcrumb — Home > Streamclips > Leaderboard. Sichtbar als
+          Pfad in Googles SERPs statt der nackten URL. */}
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Start", item: `${SITE_URL}/` },
+            { "@type": "ListItem", position: 2, name: "Streamclips Germany", item: `${SITE_URL}/streamclips` },
+            { "@type": "ListItem", position: 3, name: "Top-Clips", item: `${SITE_URL}/streamclips/leaderboard` }
+          ]
+        }}
+      />
+      {/* ItemList der aktuell sichtbaren Top-Clips. Crawler bekommen
+          beim ersten Render die Default-Liste (alle Sektionen, allzeit).
+          Wechselt der User Filter, ändert sich das JSON-LD im DOM mit —
+          relevant ist aber nur die initial-Render-Sicht für SEO. */}
+      {clips && clips.length > 0 && (
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            itemListOrder: "https://schema.org/ItemListOrderDescending",
+            numberOfItems: clips.length,
+            itemListElement: clips.map((c, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              url: `${SITE_URL}/streamclips/clip/${c.id}`,
+              name: c.title
+            }))
+          }}
+        />
+      )}
       <div className="mx-auto max-w-3xl px-4 pt-6 sm:px-6 sm:pt-12 lg:px-16 lg:pt-16">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-1">
