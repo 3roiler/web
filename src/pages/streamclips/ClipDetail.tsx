@@ -6,7 +6,7 @@ import { ClipCarousel } from "../../components/streamclips/ClipCarousel";
 import { Comments } from "../../components/comments/Comments";
 import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
-import { Seo } from "../../components/Seo";
+import { Seo, JsonLd, SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "../../components/Seo";
 import {
   getClip,
   reportClip,
@@ -25,6 +25,33 @@ const STATUS_BADGE: Record<ClipStatus, { label: string; className: string }> = {
   rejected: { label: "Abgelehnt", className: "bg-red-500/20 text-red-200" },
   flagged: { label: "Gemeldet", className: "bg-orange-500/20 text-orange-200" }
 };
+
+/**
+ * ISO-8601-Duration aus Sekunden — `VideoObject.duration` erwartet das
+ * Format „PTnHnMnS". Twitch-Clips sind typischerweise <60s, also reicht
+ * „PT30S"; trotzdem korrekt für längere Werte (z. B. „PT1M30S").
+ */
+function isoDurationFromSeconds(seconds: number): string {
+  const total = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  let out = "PT";
+  if (h) out += `${h}H`;
+  if (m) out += `${m}M`;
+  // Wenn alles 0 ist, mindestens „PT0S" zurückgeben (gültiges ISO-8601).
+  if (s || (!h && !m)) out += `${s}S`;
+  return out;
+}
+
+/**
+ * Baut das Twitch-Embed-URL als Fallback, falls die API kein `embedUrl`
+ * mitschickt. `parent` muss die ausliefernde Domain sein, sonst lädt
+ * Twitch das iFrame nicht.
+ */
+function twitchEmbedUrl(twitchClipId: string): string {
+  return `https://clips.twitch.tv/embed?clip=${encodeURIComponent(twitchClipId)}&parent=broiler.dev`;
+}
 
 export function ClipDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -85,7 +112,98 @@ export function ClipDetailPage() {
               title={clip.title}
               description={`Clip${clip.broadcasterName ? ` von ${clip.broadcasterName}` : ""}${clip.categoryName ? ` · ${clip.categoryName}` : ""} — bewertet auf Streamclips Germany.`}
               type="article"
+              // Nur freigegebene Clips sollen in den Index — pending/
+              // rejected/flagged sind entweder noch in Moderation oder
+              // bewusst ausgeschlossen. Sie tauchen ohnehin nicht in der
+              // dynamischen Sitemap auf (siehe api/.../sitemap.ts), aber
+              // ein direkt geteilter Link könnte sie sonst trotzdem in
+              // den Google-Index drücken.
+              noindex={clip.status !== "approved"}
             />
+            {/* BreadcrumbList — sichtbarer Pfad in den SERPs. Auch bei
+                pending/rejected/flagged Clips ok, da die rendern auch
+                trotz noindex (Markup ohne URL-Eintrag schadet nicht). */}
+            <JsonLd
+              data={{
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                itemListElement: [
+                  { "@type": "ListItem", position: 1, name: "Start", item: `${SITE_URL}/` },
+                  { "@type": "ListItem", position: 2, name: "Streamclips Germany", item: `${SITE_URL}/streamclips` },
+                  { "@type": "ListItem", position: 3, name: clip.title, item: `${SITE_URL}/streamclips/clip/${clip.id}` }
+                ]
+              }}
+            />
+            {/* VideoObject-JSON-LD: damit Google den Clip als Video-Rich-
+                Result indexieren kann (Karussell, Video-Tab, „Key Moments").
+                Nur für freigegebene, öffentliche Clips — pending/rejected
+                sind ohnehin auf noindex bzw. nicht erreichbar.
+                Pflicht-Felder laut Google: name, description, thumbnailUrl,
+                uploadDate. Optionale Felder (duration, embedUrl, aggregate
+                Rating, interactionStatistic) werden nur geliefert, wenn
+                die zugrundeliegenden Daten vorhanden sind — leere oder
+                Null-Werte würden im Rich-Results-Test Warnungen auslösen. */}
+            {clip.status === "approved" && (
+              <JsonLd
+                data={{
+                  "@context": "https://schema.org",
+                  "@type": "VideoObject",
+                  name: clip.title,
+                  description: `Clip${clip.broadcasterName ? ` von ${clip.broadcasterName}` : ""}${clip.categoryName ? ` aus der Twitch-Kategorie ${clip.categoryName}` : ""}${clip.creatorName ? ` — geclippt von ${clip.creatorName}` : ""} auf Streamclips Germany.`,
+                  thumbnailUrl: clip.thumbnailUrl ?? DEFAULT_OG_IMAGE,
+                  // uploadDate bevorzugt das Twitch-Erstellungsdatum
+                  // (entspricht dem tatsächlichen Aufnahme-Zeitpunkt).
+                  // Fallback: Submit-Datum bei broiler — besser als nichts.
+                  uploadDate: clip.clipCreatedAt ?? clip.createdAt,
+                  embedUrl: clip.embedUrl ?? twitchEmbedUrl(clip.twitchClipId),
+                  ...(clip.videoUrl ? { contentUrl: clip.videoUrl } : {}),
+                  ...(clip.durationSeconds && clip.durationSeconds > 0
+                    ? { duration: isoDurationFromSeconds(clip.durationSeconds) }
+                    : {}),
+                  ...(clip.broadcasterName
+                    ? {
+                        creator: {
+                          "@type": "Person",
+                          name: clip.broadcasterName
+                        }
+                      }
+                    : {}),
+                  publisher: {
+                    "@type": "Organization",
+                    name: SITE_NAME,
+                    url: SITE_URL
+                  },
+                  inLanguage: clip.language ?? "de",
+                  url: `${SITE_URL}/streamclips/clip/${clip.id}`,
+                  // Aggregate-Rating nur wenn echte Stimmen da sind.
+                  // Google schluckt aggregateRating mit 0 Bewertungen
+                  // sonst als „inkorrekt".
+                  ...(clip.ratingCount > 0 && clip.avgScore !== null
+                    ? {
+                        aggregateRating: {
+                          "@type": "AggregateRating",
+                          ratingValue: Number(clip.avgScore.toFixed(2)),
+                          ratingCount: clip.ratingCount,
+                          bestRating: 5,
+                          worstRating: 1
+                        }
+                      }
+                    : {}),
+                  // View-Count aus Twitch (kein eigener Watch-Counter
+                  // bei broiler). InteractionType = WatchAction ist die
+                  // schema.org-Konvention für „Views".
+                  ...(clip.viewCount > 0
+                    ? {
+                        interactionStatistic: {
+                          "@type": "InteractionCounter",
+                          interactionType: "https://schema.org/WatchAction",
+                          userInteractionCount: clip.viewCount
+                        }
+                      }
+                    : {})
+                }}
+              />
+            )}
             <ClipEmbed
               clipId={clip.twitchClipId}
               title={clip.title}

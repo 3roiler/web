@@ -14,7 +14,9 @@ const DEFAULT_DESCRIPTION =
   "Portfolio von Paul Wechselberger: Platform- & Backend-Engineering, Blog und Streamclips Germany — die Community-Plattform für deutsche Twitch-Clips.";
 // 1200×630-Vorschaubild. Liegt auf dem DigitalOcean-Spaces-CDN; bitte dort
 // hochladen (siehe PR-Beschreibung). Bis dahin zeigen Vorschauen kein Bild.
-const DEFAULT_IMAGE = "https://broiler.fra1.cdn.digitaloceanspaces.com/og-image.png";
+// Exportiert, damit auch JSON-LD-Konsumenten (z. B. VideoObject ohne
+// Thumbnail) denselben Fallback verwenden können.
+export const DEFAULT_OG_IMAGE = "https://broiler.fra1.cdn.digitaloceanspaces.com/og-image.png";
 
 interface SeoProps {
   /** Seitentitel ohne Site-Suffix (wird als „Titel · broiler.dev" gesetzt). */
@@ -31,7 +33,7 @@ interface SeoProps {
 export function Seo({
   title,
   description = DEFAULT_DESCRIPTION,
-  image = DEFAULT_IMAGE,
+  image = DEFAULT_OG_IMAGE,
   type = "website",
   noindex = false,
   canonicalPath

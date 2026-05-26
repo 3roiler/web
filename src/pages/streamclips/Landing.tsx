@@ -2,7 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
-import { Seo } from "../../components/Seo";
+import { Seo, JsonLd, SITE_URL } from "../../components/Seo";
 import { ClipCarousel } from "../../components/streamclips/ClipCarousel";
 import { ClipCard } from "../../components/streamclips/ClipCard";
 import {
@@ -76,6 +76,54 @@ export function StreamclipsHomePage() {
   return (
     <main className="min-h-screen bg-slate-950 pt-20 pb-16 sm:pt-24" id="top">
       <Seo title="Streamclips Germany — deutsche Twitch-Clips" description="Die besten deutschen Twitch-Clips, von der Community gewählt. Entdecken, bewerten und einreichen." />
+      {/* CollectionPage — explizites Signal an Google, dass diese Seite
+          eine Sammlung weiterer Inhalte ist (kein einzelner Artikel/Video).
+          Hilft bei der korrekten Klassifizierung als „Hub" der Plattform.
+          BreadcrumbList: Home > Streamclips. */}
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Streamclips Germany",
+          description:
+            "Die besten deutschen Twitch-Clips, von der Community gewählt. Entdecken, bewerten und einreichen.",
+          url: `${SITE_URL}/streamclips`,
+          inLanguage: "de",
+          isPartOf: { "@type": "WebSite", name: "broiler.dev", url: SITE_URL }
+        }}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Start", item: `${SITE_URL}/` },
+            { "@type": "ListItem", position: 2, name: "Streamclips Germany", item: `${SITE_URL}/streamclips` }
+          ]
+        }}
+      />
+      {/* ItemList der Top-Monatsclips. Wird im UI als „Top-30 (Monat)"
+          Karussell gezeigt; im JSON-LD geben wir die exakt selbe
+          Reihenfolge weiter — bei leerer Liste (z. B. ganz frischer
+          DB-Stand) das Element weglassen, damit kein leeres Markup
+          rumliegt. */}
+      {top30.length > 0 && (
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            name: "Top-Clips (30 Tage)",
+            itemListOrder: "https://schema.org/ItemListOrderDescending",
+            numberOfItems: top30.length,
+            itemListElement: top30.map((c, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              url: `${SITE_URL}/streamclips/clip/${c.id}`,
+              name: c.title
+            }))
+          }}
+        />
+      )}
       <div className="mx-auto max-w-5xl px-4 pt-6 sm:px-6 sm:pt-12 lg:px-16 lg:pt-16">
         <header className="mb-6 space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#bf94ff] sm:tracking-[0.3em]">
