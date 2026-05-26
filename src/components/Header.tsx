@@ -500,8 +500,20 @@ function NavItemLink({ item, active }: { item: NavSubItem; active: boolean }) {
       </Link>
     );
   }
+  // `href`-Items sind nicht-SPA-Ziele (z. B. `/blog/rss.xml`, das Caddy
+  // an die API proxyt und nicht über React-Router laufen darf, sonst
+  // matched die Route `/blog/:slug` und versucht `rss.xml` als Post-
+  // Slug zu laden). `rel="external"` weist `ViewTransitions` an, den
+  // Klick nicht zu intercepten; `target="_blank"` öffnet im neuen Tab,
+  // damit der User seinen broiler.dev-Kontext nicht verliert.
   return (
-    <a href={item.href} className={className} role="menuitem">
+    <a
+      href={item.href}
+      className={className}
+      role="menuitem"
+      target="_blank"
+      rel="external noopener noreferrer"
+    >
       {item.label}
     </a>
   );
@@ -571,7 +583,18 @@ function NavItemMobileLink({ item, active }: { item: NavSubItem; active: boolean
       </Link>
     );
   }
-  return <a href={item.href} className={className}>{item.label}</a>;
+  // Siehe Kommentar in `NavItemLink` — `href`-Items sind externe Ziele
+  // (z. B. RSS-Endpunkt), nicht SPA-Routen.
+  return (
+    <a
+      href={item.href}
+      className={className}
+      target="_blank"
+      rel="external noopener noreferrer"
+    >
+      {item.label}
+    </a>
+  );
 }
 
 // ─── Account-Dropdown (rechts) — unverändert übernommen ──────────────
