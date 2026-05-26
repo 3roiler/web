@@ -7,7 +7,12 @@ import { Comments } from "../../components/comments/Comments";
 import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { Seo, JsonLd, SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "../../components/Seo";
-import { clipDetailPath, parseClipPathId } from "../../lib/clip-path";
+import {
+  clipDetailPath,
+  parseClipPathId,
+  streamerHubPath,
+  categoryHubPath
+} from "../../lib/clip-path";
 import {
   getClip,
   getClipByShortid,
@@ -245,8 +250,27 @@ export function ClipDetailPage() {
             <div>
               <h1 className="text-xl font-semibold text-slate-50">{clip.title}</h1>
               <p className="mt-1 text-xs text-slate-400">
-                {clip.broadcasterName ?? "?"}
-                {clip.categoryName && <> · {clip.categoryName}</>}
+                {clip.broadcasterName ? (
+                  <Link
+                    to={streamerHubPath(clip.broadcasterName) ?? "#"}
+                    className="text-slate-300 hover:text-slate-100"
+                  >
+                    {clip.broadcasterName}
+                  </Link>
+                ) : (
+                  "?"
+                )}
+                {clip.categoryName && (
+                  <>
+                    {" · "}
+                    <Link
+                      to={categoryHubPath(clip.categoryName) ?? "#"}
+                      className="text-slate-300 hover:text-slate-100"
+                    >
+                      {clip.categoryName}
+                    </Link>
+                  </>
+                )}
                 {clip.creatorName && <> · Clip von {clip.creatorName}</>}
               </p>
             </div>

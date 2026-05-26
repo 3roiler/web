@@ -1720,6 +1720,75 @@ export async function getClipByShortid(shortid: string): Promise<ClipDetail> {
   }
 }
 
+// ─── Hub-Page-Endpunkte ──────────────────────────────────────────────
+// Long-Tail-SEO: pro Streamer / Kategorie / Award eine Listenseite. Die
+// Backends geben jeweils ein Wrapper-Objekt mit Header-Metadaten zurück,
+// damit die Page ohne separaten Lookup einen aussagekräftigen Titel
+// rendern kann.
+
+export interface StreamerHubData {
+  broadcasterId: string | null;
+  broadcasterName: string;
+  clips: ClipWithContext[];
+}
+
+export interface CategoryHubData {
+  category: {
+    id: string;
+    name: string;
+    section: ClipSection | null;
+    slug: string;
+  };
+  clips: ClipWithContext[];
+}
+
+export interface AwardHubData {
+  award: {
+    id: string;
+    key: string;
+    displayName: string;
+    emoji: string | null;
+    color: string | null;
+  };
+  clips: ClipWithContext[];
+}
+
+export async function getClipsByBroadcasterName(name: string): Promise<StreamerHubData> {
+  try {
+    const response = await axios.get<StreamerHubData>(
+      `${getApiBaseUrl()}/clips/by-broadcaster-name/${encodeURIComponent(name)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Streamer-Übersicht konnte nicht geladen werden.');
+  }
+}
+
+export async function getClipsByCategorySlug(slug: string): Promise<CategoryHubData> {
+  try {
+    const response = await axios.get<CategoryHubData>(
+      `${getApiBaseUrl()}/clips/by-category/${encodeURIComponent(slug)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Kategorie-Übersicht konnte nicht geladen werden.');
+  }
+}
+
+export async function getClipsByAwardKey(key: string): Promise<AwardHubData> {
+  try {
+    const response = await axios.get<AwardHubData>(
+      `${getApiBaseUrl()}/clips/by-award/${encodeURIComponent(key)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Award-Übersicht konnte nicht geladen werden.');
+  }
+}
+
 export async function reportClip(id: string, reason: string): Promise<void> {
   try {
     await axios.post(`${getApiBaseUrl()}/clips/${encodeURIComponent(id)}/report`, { reason }, AXIOS_OPTIONS);

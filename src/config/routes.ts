@@ -26,6 +26,14 @@ export const Routes = {
     Contributors: "/streamclips/contributors",
     ClipDetail: "/streamclips/clip/:id",
     Me: "/streamclips/me",
+    // SEO-Hub-Pages — Long-Tail-Listenseiten je Streamer / Twitch-
+    // Kategorie / Award. Slugs (lowercased Login / `slugifyTitle` /
+    // `award_category.key`) werden vom Backend gematcht — siehe
+    // `api/src/controllers/clip.ts` → byBroadcasterName/byCategorySlug/
+    // byAwardKey.
+    StreamerHub: "/streamclips/streamer/:name",
+    CategoryHub: "/streamclips/kategorie/:slug",
+    AwardHub: "/streamclips/award/:key"
   },
 
   Dashboard: {

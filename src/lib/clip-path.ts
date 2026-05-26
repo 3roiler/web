@@ -45,6 +45,55 @@ export type ParsedClipPathId =
   | null;
 
 /**
+ * URL-Slugify für Hub-Page-URLs (Streamer / Kategorie / Award). Muss
+ * Byte-genau dasselbe Ergebnis liefern wie `slugifyTitle` im Backend
+ * (`api/src/services/clip.ts`) — sonst rendert die Hub-Page-Liste
+ * Links auf Slugs, die der Backend-Lookup nicht findet. Pflege beide
+ * Funktionen synchron.
+ */
+export function slugifyTitle(title: string | null | undefined): string {
+  let s = (title ?? '').toLowerCase();
+  s = s.replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+  s = s.replace(/[éèêë]/g, 'e');
+  s = s.replace(/[áàâãå]/g, 'a');
+  s = s.replace(/[óòôõø]/g, 'o');
+  s = s.replace(/[úùûü]/g, 'u');
+  s = s.replace(/[íìîï]/g, 'i');
+  s = s.replace(/ç/g, 'c').replace(/ñ/g, 'n');
+  s = s.replace(/[^a-z0-9]+/g, '-');
+  // Leading/trailing dashes ohne Regex trimmen (Sonar S5852).
+  let start = 0;
+  while (start < s.length && s.charCodeAt(start) === 45) start++;
+  let end = s.length;
+  while (end > start && s.charCodeAt(end - 1) === 45) end--;
+  s = s.slice(start, end).slice(0, 100);
+  return s || 'clip';
+}
+
+/**
+ * Baut den Pfad zur Streamer-Hub-Seite. Broadcaster-Namen sind Twitch-
+ * Logins (`[a-zA-Z0-9_]`), wir lowercasen für eine einheitliche URL-
+ * Form. `null` Broadcaster (sehr selten — Helix lieferte keinen Namen)
+ * → `null`, der Aufrufer sollte den Link dann nicht rendern.
+ */
+export function streamerHubPath(broadcasterName: string | null | undefined): string | null {
+  if (!broadcasterName) return null;
+  return `/streamclips/streamer/${encodeURIComponent(broadcasterName.toLowerCase())}`;
+}
+
+/** Pfad zur Twitch-Kategorie-Hub-Seite. Slug aus dem Kategorie-Namen. */
+export function categoryHubPath(categoryName: string | null | undefined): string | null {
+  if (!categoryName) return null;
+  return `/streamclips/kategorie/${slugifyTitle(categoryName)}`;
+}
+
+/** Pfad zur Award-Hub-Seite. Award-`key` ist bereits Slug-Form. */
+export function awardHubPath(awardKey: string | null | undefined): string | null {
+  if (!awardKey) return null;
+  return `/streamclips/award/${encodeURIComponent(awardKey)}`;
+}
+
+/**
  * Klassifiziert den `:id`-Parameter der ClipDetail-Route.
  *
  * - UUID-Form → kommt vermutlich aus einem alten, geteilten Link;
