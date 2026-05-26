@@ -6,6 +6,7 @@ import { Footer } from './components/Footer';
 import { KeyboardShortcuts } from './components/KeyboardShortcuts';
 import { KonamiEasterEgg } from './components/KonamiEasterEgg';
 import { ViewTransitions } from './components/ViewTransitions';
+import { HashScroll } from './components/HashScroll';
 import { HomePage } from './pages/Home';
 import { ImpressumPage } from './pages/Impressum';
 import { DatenschutzPage } from './pages/Datenschutz';
@@ -88,6 +89,7 @@ function AppRoot() {
       <KeyboardShortcuts />
       <KonamiEasterEgg />
       <ViewTransitions />
+      <HashScroll />
       <React.Suspense fallback={<RouteFallback />}>
         <RouterRoutes>
           <Route path={Routes.Home} element={<HomePage />} />
