@@ -1,9 +1,9 @@
-import axios, { AxiosError, AxiosHeaders } from 'axios';
-import { getApiBaseUrl, getApiEnvironment } from '../config/api';
-import { Routes } from '../config/routes';
+import axios, { AxiosError, AxiosHeaders } from "axios";
+import { getApiBaseUrl, getApiEnvironment } from "../config/api";
+import { Routes } from "../config/routes";
 
-const ClientId = 'Ov23liULYLUWCVnTGLLN';
-const Scope = 'read:user user:email';
+const ClientId = "Ov23liULYLUWCVnTGLLN";
+const Scope = "read:user user:email";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -11,7 +11,7 @@ export class ApiError extends Error {
 
   constructor(status: number, identifier: string, message: string) {
     super(`API Error (${status}, ${identifier}): ${message}`);
-    this.name = 'ApiError';
+    this.name = "ApiError";
     this.status = status;
     this.identifier = identifier;
   }
@@ -154,7 +154,11 @@ function toApiError(error: unknown, fallback: string): never {
     const response = axiosError.response;
     if (response) {
       const payload = response.data ?? {};
-      throw new ApiError(response.status, payload.identifier ?? 'unknown', payload.message ?? axiosError.message);
+      throw new ApiError(
+        response.status,
+        payload.identifier ?? "unknown",
+        payload.message ?? axiosError.message
+      );
     }
   }
   throw new Error(fallback);
@@ -174,7 +178,7 @@ const AXIOS_OPTIONS = {
  * Cookie gesetzt war) holen wir den Token neu und wiederholen den Request
  * genau einmal.
  */
-const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete']);
+const MUTATING_METHODS = new Set(["post", "put", "patch", "delete"]);
 let csrfToken: string | null = null;
 
 async function fetchCsrfToken(): Promise<string | null> {
@@ -189,13 +193,13 @@ async function fetchCsrfToken(): Promise<string | null> {
 
 function setCsrfHeader(headers: AxiosHeaders | undefined, token: string): AxiosHeaders {
   const h = headers ?? new AxiosHeaders();
-  h.set('X-CSRF-Token', token);
+  h.set("X-CSRF-Token", token);
   return h;
 }
 
 axios.interceptors.request.use(async (config) => {
-  const method = (config.method ?? 'get').toLowerCase();
-  const url = typeof config.url === 'string' ? config.url : '';
+  const method = (config.method ?? "get").toLowerCase();
+  const url = typeof config.url === "string" ? config.url : "";
   if (MUTATING_METHODS.has(method) && url.startsWith(getApiBaseUrl())) {
     const token = csrfToken ?? (await fetchCsrfToken());
     if (token) config.headers = setCsrfHeader(config.headers, token);
@@ -209,7 +213,7 @@ axios.interceptors.response.use(
     if (axios.isAxiosError(error) && error.response?.status === 403 && error.config) {
       const payload = error.response.data as ApiErrorPayload | undefined;
       const original = error.config as typeof error.config & { _csrfRetried?: boolean };
-      if (payload?.identifier === 'CSRF_TOKEN' && !original._csrfRetried) {
+      if (payload?.identifier === "CSRF_TOKEN" && !original._csrfRetried) {
         original._csrfRetried = true;
         const token = await fetchCsrfToken();
         if (token) original.headers = setCsrfHeader(original.headers as AxiosHeaders, token);
@@ -225,7 +229,7 @@ export async function getMe(): Promise<User> {
     const response = await axios.get<User>(`${getApiBaseUrl()}/user/me`, AXIOS_OPTIONS);
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'An unknown error occurred while fetching user data.');
+    toApiError(error, "An unknown error occurred while fetching user data.");
   }
 }
 
@@ -234,7 +238,7 @@ export async function updateMe(input: UpdateMeInput): Promise<User> {
     const response = await axios.put<User>(`${getApiBaseUrl()}/user/me`, input, AXIOS_OPTIONS);
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Profil konnte nicht gespeichert werden.');
+    toApiError(error, "Profil konnte nicht gespeichert werden.");
   }
 }
 
@@ -259,7 +263,7 @@ export async function searchUsers(query: string, limit = 10): Promise<UserSummar
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Suche fehlgeschlagen.');
+    toApiError(error, "Suche fehlgeschlagen.");
   }
 }
 
@@ -267,7 +271,7 @@ export async function nuke(): Promise<void> {
   try {
     await axios.post(`${getApiBaseUrl()}/user/nuke`, {}, AXIOS_OPTIONS);
   } catch (error: unknown) {
-    toApiError(error, 'An unknown error occurred while attempting to delete the user account.');
+    toApiError(error, "An unknown error occurred while attempting to delete the user account.");
   }
 }
 
@@ -287,7 +291,7 @@ export async function nuke(): Promise<void> {
  * — sonst landet das Cookie nicht im Browser-Jar (Cross-Subdomain
  * `api.broiler.dev` → `broiler.dev`).
  */
-async function fetchOauthState(provider: 'github' | 'twitch'): Promise<string> {
+async function fetchOauthState(provider: "github" | "twitch"): Promise<string> {
   try {
     const response = await axios.get<{ state: string }>(
       `${getApiBaseUrl()}/${provider}/oauth-state`,
@@ -295,13 +299,13 @@ async function fetchOauthState(provider: 'github' | 'twitch'): Promise<string> {
     );
     return response.data.state;
   } catch (error: unknown) {
-    toApiError(error, 'OAuth-State konnte nicht angefordert werden.');
+    toApiError(error, "OAuth-State konnte nicht angefordert werden.");
   }
 }
 
 export async function loginToGithub(): Promise<void> {
   const { host, protocol } = globalThis.location;
-  const state = await fetchOauthState('github');
+  const state = await fetchOauthState("github");
 
   const params = new URLSearchParams({
     redirect_uri: `${protocol}//${host}${Routes.Callback.Github}`,
@@ -315,14 +319,18 @@ export async function loginToGithub(): Promise<void> {
 
 export async function authenticateGithub(code: string, state: string): Promise<User> {
   try {
-    const response = await axios.post<User>(`${getApiBaseUrl()}/github/oauth`, {
-      code,
-      state
-    }, AXIOS_OPTIONS);
+    const response = await axios.post<User>(
+      `${getApiBaseUrl()}/github/oauth`,
+      {
+        code,
+        state
+      },
+      AXIOS_OPTIONS
+    );
 
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'An unknown error occurred during GitHub authentication.');
+    toApiError(error, "An unknown error occurred during GitHub authentication.");
   }
 }
 
@@ -330,16 +338,16 @@ export async function logout(): Promise<void> {
   try {
     await axios.post(`${getApiBaseUrl()}/logout`, {}, AXIOS_OPTIONS);
   } catch (error: unknown) {
-    toApiError(error, 'An unknown error occurred during logout.');
+    toApiError(error, "An unknown error occurred during logout.");
   }
 }
 
 /** Hängt optionale limit/offset an eine Query an → „?…"-Suffix (oder ""). */
 function withPagingQuery(params: URLSearchParams, limit?: number, offset?: number): string {
-  if (limit != null) params.set('limit', String(limit));
-  if (offset != null) params.set('offset', String(offset));
+  if (limit != null) params.set("limit", String(limit));
+  if (offset != null) params.set("offset", String(offset));
   const qs = params.toString();
-  return qs ? `?${qs}` : '';
+  return qs ? `?${qs}` : "";
 }
 
 // Blog
@@ -351,23 +359,26 @@ export async function listBlogPosts(
 ): Promise<BlogPost[]> {
   try {
     const params = new URLSearchParams();
-    if (includeDrafts) params.set('drafts', 'true');
+    if (includeDrafts) params.set("drafts", "true");
     const response = await axios.get<BlogPost[]>(
       `${getApiBaseUrl()}/blog${withPagingQuery(params, limit, offset)}`,
       AXIOS_OPTIONS
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Beim Laden der Blog-Liste ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Laden der Blog-Liste ist ein Fehler aufgetreten.");
   }
 }
 
 export async function getBlogPost(slug: string): Promise<BlogPost> {
   try {
-    const response = await axios.get<BlogPost>(`${getApiBaseUrl()}/blog/${encodeURIComponent(slug)}`, AXIOS_OPTIONS);
+    const response = await axios.get<BlogPost>(
+      `${getApiBaseUrl()}/blog/${encodeURIComponent(slug)}`,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Beim Laden des Blog-Posts ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Laden des Blog-Posts ist ein Fehler aufgetreten.");
   }
 }
 
@@ -376,16 +387,20 @@ export async function createBlogPost(input: BlogPostInput): Promise<BlogPost> {
     const response = await axios.post<BlogPost>(`${getApiBaseUrl()}/blog`, input, AXIOS_OPTIONS);
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Beim Erstellen des Blog-Posts ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Erstellen des Blog-Posts ist ein Fehler aufgetreten.");
   }
 }
 
 export async function updateBlogPost(id: string, input: Partial<BlogPostInput>): Promise<BlogPost> {
   try {
-    const response = await axios.put<BlogPost>(`${getApiBaseUrl()}/blog/${encodeURIComponent(id)}`, input, AXIOS_OPTIONS);
+    const response = await axios.put<BlogPost>(
+      `${getApiBaseUrl()}/blog/${encodeURIComponent(id)}`,
+      input,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Beim Aktualisieren des Blog-Posts ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Aktualisieren des Blog-Posts ist ein Fehler aufgetreten.");
   }
 }
 
@@ -393,7 +408,7 @@ export async function deleteBlogPost(id: string): Promise<void> {
   try {
     await axios.delete(`${getApiBaseUrl()}/blog/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
   } catch (error: unknown) {
-    toApiError(error, 'Beim Löschen des Blog-Posts ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Löschen des Blog-Posts ist ein Fehler aufgetreten.");
   }
 }
 
@@ -409,26 +424,29 @@ export async function listAdminUsers(
 ): Promise<AdminUserPage> {
   try {
     const params = new URLSearchParams();
-    if (opts.q) params.set('q', opts.q);
-    if (opts.limit != null) params.set('limit', String(opts.limit));
-    if (opts.offset != null) params.set('offset', String(opts.offset));
+    if (opts.q) params.set("q", opts.q);
+    if (opts.limit != null) params.set("limit", String(opts.limit));
+    if (opts.offset != null) params.set("offset", String(opts.offset));
     const qs = params.toString();
     const response = await axios.get<AdminUserPage>(
-      `${getApiBaseUrl()}/admin/users${qs ? `?${qs}` : ''}`,
+      `${getApiBaseUrl()}/admin/users${qs ? `?${qs}` : ""}`,
       AXIOS_OPTIONS
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Beim Laden der Benutzerliste ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Laden der Benutzerliste ist ein Fehler aufgetreten.");
   }
 }
 
 export async function listGrantablePermissions(): Promise<PermissionDefinition[]> {
   try {
-    const response = await axios.get<PermissionDefinition[]>(`${getApiBaseUrl()}/admin/permissions`, AXIOS_OPTIONS);
+    const response = await axios.get<PermissionDefinition[]>(
+      `${getApiBaseUrl()}/admin/permissions`,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Beim Laden der Berechtigungsliste ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Laden der Berechtigungsliste ist ein Fehler aufgetreten.");
   }
 }
 
@@ -440,7 +458,7 @@ export async function grantPermission(userId: string, permission: string): Promi
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Berechtigung konnte nicht erteilt werden.');
+    toApiError(error, "Berechtigung konnte nicht erteilt werden.");
   }
 }
 
@@ -451,7 +469,7 @@ export async function revokePermission(userId: string, permission: string): Prom
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Berechtigung konnte nicht entzogen werden.');
+    toApiError(error, "Berechtigung konnte nicht entzogen werden.");
   }
 }
 
@@ -464,7 +482,7 @@ export async function updateAdminUser(id: string, input: UserUpdateInput): Promi
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Beim Aktualisieren des Nutzers ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Aktualisieren des Nutzers ist ein Fehler aufgetreten.");
   }
 }
 
@@ -472,7 +490,7 @@ export async function deleteAdminUser(id: string): Promise<void> {
   try {
     await axios.delete(`${getApiBaseUrl()}/admin/users/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
   } catch (error: unknown) {
-    toApiError(error, 'Beim Löschen des Nutzers ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Löschen des Nutzers ist ein Fehler aufgetreten.");
   }
 }
 
@@ -480,10 +498,13 @@ export async function deleteAdminUser(id: string): Promise<void> {
 
 export async function listAdminGroups(): Promise<AdminGroup[]> {
   try {
-    const response = await axios.get<AdminGroup[]>(`${getApiBaseUrl()}/admin/groups`, AXIOS_OPTIONS);
+    const response = await axios.get<AdminGroup[]>(
+      `${getApiBaseUrl()}/admin/groups`,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Beim Laden der Gruppen ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Laden der Gruppen ist ein Fehler aufgetreten.");
   }
 }
 
@@ -495,7 +516,7 @@ export async function getAdminGroup(id: string): Promise<AdminGroupDetail> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Beim Laden der Gruppe ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Laden der Gruppe ist ein Fehler aufgetreten.");
   }
 }
 
@@ -508,7 +529,7 @@ export async function createAdminGroup(input: GroupCreateInput): Promise<AdminGr
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Beim Anlegen der Gruppe ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Anlegen der Gruppe ist ein Fehler aufgetreten.");
   }
 }
 
@@ -521,7 +542,7 @@ export async function updateAdminGroup(id: string, input: GroupUpdateInput): Pro
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Beim Aktualisieren der Gruppe ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Aktualisieren der Gruppe ist ein Fehler aufgetreten.");
   }
 }
 
@@ -529,7 +550,7 @@ export async function deleteAdminGroup(id: string): Promise<void> {
   try {
     await axios.delete(`${getApiBaseUrl()}/admin/groups/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
   } catch (error: unknown) {
-    toApiError(error, 'Beim Löschen der Gruppe ist ein Fehler aufgetreten.');
+    toApiError(error, "Beim Löschen der Gruppe ist ein Fehler aufgetreten.");
   }
 }
 
@@ -541,7 +562,7 @@ export async function addGroupMember(groupId: string, userId: string): Promise<v
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Mitglied konnte nicht hinzugefügt werden.');
+    toApiError(error, "Mitglied konnte nicht hinzugefügt werden.");
   }
 }
 
@@ -552,7 +573,7 @@ export async function removeGroupMember(groupId: string, userId: string): Promis
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Mitglied konnte nicht entfernt werden.');
+    toApiError(error, "Mitglied konnte nicht entfernt werden.");
   }
 }
 
@@ -564,7 +585,7 @@ export async function grantGroupPermission(groupId: string, permission: string):
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Berechtigung konnte nicht erteilt werden.');
+    toApiError(error, "Berechtigung konnte nicht erteilt werden.");
   }
 }
 
@@ -575,7 +596,7 @@ export async function revokeGroupPermission(groupId: string, permission: string)
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Berechtigung konnte nicht entzogen werden.');
+    toApiError(error, "Berechtigung konnte nicht entzogen werden.");
   }
 }
 
@@ -600,10 +621,13 @@ export interface AppSecretMeta {
 
 export async function listAppSettings(): Promise<AppSetting[]> {
   try {
-    const response = await axios.get<AppSetting[]>(`${getApiBaseUrl()}/admin/settings`, AXIOS_OPTIONS);
+    const response = await axios.get<AppSetting[]>(
+      `${getApiBaseUrl()}/admin/settings`,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Einstellungen konnten nicht geladen werden.');
+    toApiError(error, "Einstellungen konnten nicht geladen werden.");
   }
 }
 
@@ -616,7 +640,7 @@ export async function getAppSetting<T = unknown>(key: string): Promise<AppSettin
     return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error) && error.response?.status === 404) return null;
-    toApiError(error, 'Einstellung konnte nicht geladen werden.');
+    toApiError(error, "Einstellung konnte nicht geladen werden.");
   }
 }
 
@@ -633,15 +657,18 @@ export async function upsertAppSetting<T = unknown>(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Einstellung konnte nicht gespeichert werden.');
+    toApiError(error, "Einstellung konnte nicht gespeichert werden.");
   }
 }
 
 export async function deleteAppSetting(key: string): Promise<void> {
   try {
-    await axios.delete(`${getApiBaseUrl()}/admin/settings/${encodeURIComponent(key)}`, AXIOS_OPTIONS);
+    await axios.delete(
+      `${getApiBaseUrl()}/admin/settings/${encodeURIComponent(key)}`,
+      AXIOS_OPTIONS
+    );
   } catch (error: unknown) {
-    toApiError(error, 'Einstellung konnte nicht gelöscht werden.');
+    toApiError(error, "Einstellung konnte nicht gelöscht werden.");
   }
 }
 
@@ -653,7 +680,7 @@ export async function listAppSecrets(): Promise<AppSecretMeta[]> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Secrets konnten nicht geladen werden.');
+    toApiError(error, "Secrets konnten nicht geladen werden.");
   }
 }
 
@@ -670,7 +697,7 @@ export async function writeAppSecret(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Secret konnte nicht gespeichert werden.');
+    toApiError(error, "Secret konnte nicht gespeichert werden.");
   }
 }
 
@@ -681,7 +708,7 @@ export async function deleteAppSecret(key: string): Promise<void> {
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Secret konnte nicht gelöscht werden.');
+    toApiError(error, "Secret konnte nicht gelöscht werden.");
   }
 }
 
@@ -691,7 +718,7 @@ export async function deleteAppSecret(key: string): Promise<void> {
  * Metric time window accepted by the backend proxy. Mirrors
  * `VALID_WINDOWS` in `api/src/services/metrics.ts`.
  */
-export type MetricsWindow = '1h' | '6h' | '24h';
+export type MetricsWindow = "1h" | "6h" | "24h";
 
 export interface MetricsStatus {
   tokenConfigured: boolean;
@@ -737,7 +764,7 @@ export async function getMetricsStatus(): Promise<MetricsStatus> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Metriken-Status konnte nicht geladen werden.');
+    toApiError(error, "Metriken-Status konnte nicht geladen werden.");
   }
 }
 
@@ -749,7 +776,7 @@ export async function listMetricsApps(): Promise<MetricsApp[]> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'App-Liste konnte nicht geladen werden.');
+    toApiError(error, "App-Liste konnte nicht geladen werden.");
   }
 }
 
@@ -761,7 +788,7 @@ export async function getAppSummary<T = unknown>(appId: string): Promise<T> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'App-Status konnte nicht geladen werden.');
+    toApiError(error, "App-Status konnte nicht geladen werden.");
   }
 }
 
@@ -770,7 +797,7 @@ export async function getDatabaseSummary<T = unknown>(): Promise<T> {
     const response = await axios.get<T>(`${getApiBaseUrl()}/admin/metrics/database`, AXIOS_OPTIONS);
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Datenbank-Status konnte nicht geladen werden.');
+    toApiError(error, "Datenbank-Status konnte nicht geladen werden.");
   }
 }
 
@@ -782,7 +809,7 @@ async function fetchTimeSeries(path: string, window: MetricsWindow): Promise<DoT
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Metrik konnte nicht geladen werden.');
+    toApiError(error, "Metrik konnte nicht geladen werden.");
   }
 }
 
@@ -791,16 +818,16 @@ export const getAppCpu = (appId: string, window: MetricsWindow) =>
 export const getAppMemory = (appId: string, window: MetricsWindow) =>
   fetchTimeSeries(`/admin/metrics/app/${encodeURIComponent(appId)}/memory`, window);
 export const getDatabaseCpu = (window: MetricsWindow) =>
-  fetchTimeSeries('/admin/metrics/database/cpu', window);
+  fetchTimeSeries("/admin/metrics/database/cpu", window);
 export const getDatabaseMemory = (window: MetricsWindow) =>
-  fetchTimeSeries('/admin/metrics/database/memory', window);
+  fetchTimeSeries("/admin/metrics/database/memory", window);
 export const getDatabaseDisk = (window: MetricsWindow) =>
-  fetchTimeSeries('/admin/metrics/database/disk', window);
+  fetchTimeSeries("/admin/metrics/database/disk", window);
 
 // ─── Drucker & G-Code ─────────────────────────────────────────────────────
 
-export type PrinterStatus = 'offline' | 'online' | 'error';
-export type PrinterRole = 'owner' | 'operator' | 'contributor' | 'viewer';
+export type PrinterStatus = "offline" | "online" | "error";
+export type PrinterRole = "owner" | "operator" | "contributor" | "viewer";
 
 export interface Printer {
   id: string;
@@ -872,10 +899,13 @@ export interface GcodeFile {
 
 export async function listPrinters(): Promise<PrinterWithRole[]> {
   try {
-    const response = await axios.get<PrinterWithRole[]>(`${getApiBaseUrl()}/printer`, AXIOS_OPTIONS);
+    const response = await axios.get<PrinterWithRole[]>(
+      `${getApiBaseUrl()}/printer`,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Drucker konnten nicht geladen werden.');
+    toApiError(error, "Drucker konnten nicht geladen werden.");
   }
 }
 
@@ -887,7 +917,7 @@ export async function getPrinter(id: string): Promise<PrinterWithRole> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Drucker konnte nicht geladen werden.');
+    toApiError(error, "Drucker konnte nicht geladen werden.");
   }
 }
 
@@ -900,7 +930,7 @@ export async function createPrinter(input: CreatePrinterInput): Promise<CreatePr
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Drucker konnte nicht angelegt werden.');
+    toApiError(error, "Drucker konnte nicht angelegt werden.");
   }
 }
 
@@ -913,7 +943,7 @@ export async function updatePrinter(id: string, input: { name?: string }): Promi
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Drucker konnte nicht aktualisiert werden.');
+    toApiError(error, "Drucker konnte nicht aktualisiert werden.");
   }
 }
 
@@ -921,7 +951,7 @@ export async function deletePrinter(id: string): Promise<void> {
   try {
     await axios.delete(`${getApiBaseUrl()}/printer/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
   } catch (error: unknown) {
-    toApiError(error, 'Drucker konnte nicht gelöscht werden.');
+    toApiError(error, "Drucker konnte nicht gelöscht werden.");
   }
 }
 
@@ -934,7 +964,7 @@ export async function rotatePrinterToken(id: string): Promise<string> {
     );
     return response.data.agentToken;
   } catch (error: unknown) {
-    toApiError(error, 'Agent-Token konnte nicht rotiert werden.');
+    toApiError(error, "Agent-Token konnte nicht rotiert werden.");
   }
 }
 
@@ -946,7 +976,7 @@ export async function listPrinterAccess(id: string): Promise<PrinterAccessWithUs
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Zugriffsliste konnte nicht geladen werden.');
+    toApiError(error, "Zugriffsliste konnte nicht geladen werden.");
   }
 }
 
@@ -954,7 +984,7 @@ export async function grantPrinterAccess(
   id: string,
   input: {
     userId: string;
-    role: 'operator' | 'contributor' | 'viewer';
+    role: "operator" | "contributor" | "viewer";
     canViewCamera?: boolean;
     canViewQueue?: boolean;
   }
@@ -967,7 +997,7 @@ export async function grantPrinterAccess(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Zugriff konnte nicht erteilt werden.');
+    toApiError(error, "Zugriff konnte nicht erteilt werden.");
   }
 }
 
@@ -978,7 +1008,7 @@ export async function revokePrinterAccess(id: string, userId: string): Promise<v
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Zugriff konnte nicht entzogen werden.');
+    toApiError(error, "Zugriff konnte nicht entzogen werden.");
   }
 }
 
@@ -1017,8 +1047,8 @@ function buildAssetClient<TFile>(basePath: string, label: string) {
         const r = await axios.post<TFile>(base(), file, {
           ...AXIOS_OPTIONS,
           headers: {
-            'Content-Type': 'application/octet-stream',
-            'X-Filename': file.name
+            "Content-Type": "application/octet-stream",
+            "X-Filename": file.name
           }
         });
         return r.data;
@@ -1036,7 +1066,7 @@ function buildAssetClient<TFile>(basePath: string, label: string) {
   };
 }
 
-const gcodeAssets = buildAssetClient<GcodeFile>('gcode', 'G-Code');
+const gcodeAssets = buildAssetClient<GcodeFile>("gcode", "G-Code");
 
 export const listGcodeFiles = (limit?: number, offset?: number): Promise<GcodeFile[]> =>
   gcodeAssets.list(limit, offset);
@@ -1053,18 +1083,22 @@ export async function getGcodeContent(id: string): Promise<string> {
   try {
     const response = await axios.get<string>(
       `${getApiBaseUrl()}/gcode/${encodeURIComponent(id)}/content`,
-      { ...AXIOS_OPTIONS, responseType: 'text', transformResponse: [(d: unknown) => String(d ?? '')] }
+      {
+        ...AXIOS_OPTIONS,
+        responseType: "text",
+        transformResponse: [(d: unknown) => String(d ?? "")]
+      }
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'G-Code-Inhalt konnte nicht geladen werden.');
+    toApiError(error, "G-Code-Inhalt konnte nicht geladen werden.");
   }
 }
 
 // ─── STL ───────────────────────────────────────────────────────────────────
 
 export interface StlMetadata {
-  format?: 'ascii' | 'binary';
+  format?: "ascii" | "binary";
   triangleCount?: number;
 }
 
@@ -1078,7 +1112,7 @@ export interface StlFile {
   createdAt: string;
 }
 
-const stlAssets = buildAssetClient<StlFile>('stl', 'STL');
+const stlAssets = buildAssetClient<StlFile>("stl", "STL");
 
 export const listStlFiles = (limit?: number, offset?: number): Promise<StlFile[]> =>
   stlAssets.list(limit, offset);
@@ -1088,14 +1122,14 @@ export const deleteStlFile = (id: string): Promise<void> => stlAssets.delete(id)
 // ─── Print-Request ─────────────────────────────────────────────────────────
 
 export type PrintRequestStatus =
-  | 'new'
-  | 'accepted'
-  | 'printing'
-  | 'done'
-  | 'rejected'
-  | 'cancelled';
+  | "new"
+  | "accepted"
+  | "printing"
+  | "done"
+  | "rejected"
+  | "cancelled";
 
-export type PrintRequestSourceType = 'stl_upload' | 'external_link';
+export type PrintRequestSourceType = "stl_upload" | "external_link";
 
 export interface PrintRequest {
   id: string;
@@ -1155,15 +1189,15 @@ export async function listPrintRequests(opts?: {
 }): Promise<PrintRequestWithContext[]> {
   try {
     const params = new URLSearchParams();
-    if (opts?.mine) params.set('mine', '1');
-    if (opts?.status?.length) params.set('status', opts.status.join(','));
+    if (opts?.mine) params.set("mine", "1");
+    if (opts?.status?.length) params.set("status", opts.status.join(","));
     const response = await axios.get<PrintRequestWithContext[]>(
       `${getApiBaseUrl()}/print-request${withPagingQuery(params, opts?.limit, opts?.offset)}`,
       AXIOS_OPTIONS
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckanfragen konnten nicht geladen werden.');
+    toApiError(error, "Druckanfragen konnten nicht geladen werden.");
   }
 }
 
@@ -1175,7 +1209,7 @@ export async function getPrintRequest(id: string): Promise<PrintRequestDetail> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckanfrage konnte nicht geladen werden.');
+    toApiError(error, "Druckanfrage konnte nicht geladen werden.");
   }
 }
 
@@ -1188,7 +1222,7 @@ export async function createPrintRequest(input: CreatePrintRequestInput): Promis
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckanfrage konnte nicht angelegt werden.');
+    toApiError(error, "Druckanfrage konnte nicht angelegt werden.");
   }
 }
 
@@ -1204,7 +1238,7 @@ export async function updatePrintRequest(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckanfrage konnte nicht aktualisiert werden.');
+    toApiError(error, "Druckanfrage konnte nicht aktualisiert werden.");
   }
 }
 
@@ -1217,7 +1251,7 @@ export async function cancelPrintRequest(id: string): Promise<PrintRequest> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckanfrage konnte nicht zurückgezogen werden.');
+    toApiError(error, "Druckanfrage konnte nicht zurückgezogen werden.");
   }
 }
 
@@ -1233,7 +1267,7 @@ export async function addPrintRequestComment(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Kommentar konnte nicht gesendet werden.');
+    toApiError(error, "Kommentar konnte nicht gesendet werden.");
   }
 }
 
@@ -1246,25 +1280,25 @@ export async function getStlContent(id: string): Promise<ArrayBuffer> {
   try {
     const response = await axios.get<ArrayBuffer>(
       `${getApiBaseUrl()}/stl/${encodeURIComponent(id)}/content`,
-      { ...AXIOS_OPTIONS, responseType: 'arraybuffer' }
+      { ...AXIOS_OPTIONS, responseType: "arraybuffer" }
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'STL-Inhalt konnte nicht geladen werden.');
+    toApiError(error, "STL-Inhalt konnte nicht geladen werden.");
   }
 }
 
 // ─── Druck-Jobs ────────────────────────────────────────────────────────────
 
 export type PrintJobState =
-  | 'requested'
-  | 'queued'
-  | 'transferring'
-  | 'printing'
-  | 'paused'
-  | 'completed'
-  | 'failed'
-  | 'cancelled';
+  | "requested"
+  | "queued"
+  | "transferring"
+  | "printing"
+  | "paused"
+  | "completed"
+  | "failed"
+  | "cancelled";
 
 export interface PrintJob {
   id: string;
@@ -1310,17 +1344,17 @@ export async function listPrintJobs(
 ): Promise<PrintJob[]> {
   try {
     const params = new URLSearchParams();
-    if (opts?.state?.length) params.set('state', opts.state.join(','));
-    if (opts?.limit !== undefined) params.set('limit', String(opts.limit));
-    if (opts?.offset !== undefined) params.set('offset', String(opts.offset));
+    if (opts?.state?.length) params.set("state", opts.state.join(","));
+    if (opts?.limit !== undefined) params.set("limit", String(opts.limit));
+    if (opts?.offset !== undefined) params.set("offset", String(opts.offset));
     const qs = params.toString();
     const response = await axios.get<PrintJob[]>(
-      `${getApiBaseUrl()}/printer/${encodeURIComponent(printerId)}/jobs${qs ? `?${qs}` : ''}`,
+      `${getApiBaseUrl()}/printer/${encodeURIComponent(printerId)}/jobs${qs ? `?${qs}` : ""}`,
       AXIOS_OPTIONS
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckqueue konnte nicht geladen werden.');
+    toApiError(error, "Druckqueue konnte nicht geladen werden.");
   }
 }
 
@@ -1337,7 +1371,7 @@ export async function getCurrentPrintJob(printerId: string): Promise<PrintJob | 
     if (response.status === 204) return null;
     return response.data as PrintJob;
   } catch (error: unknown) {
-    toApiError(error, 'Aktiver Druckjob konnte nicht geladen werden.');
+    toApiError(error, "Aktiver Druckjob konnte nicht geladen werden.");
   }
 }
 
@@ -1362,7 +1396,7 @@ export async function createPrintJobRequest(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckjob konnte nicht angelegt werden.');
+    toApiError(error, "Druckjob konnte nicht angelegt werden.");
   }
 }
 
@@ -1379,7 +1413,7 @@ export async function approvePrintJob(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckanfrage konnte nicht genehmigt werden.');
+    toApiError(error, "Druckanfrage konnte nicht genehmigt werden.");
   }
 }
 
@@ -1396,7 +1430,7 @@ export async function rejectPrintJob(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckanfrage konnte nicht abgelehnt werden.');
+    toApiError(error, "Druckanfrage konnte nicht abgelehnt werden.");
   }
 }
 
@@ -1413,7 +1447,7 @@ export async function startPrintJob(printerId: string, jobId: string): Promise<P
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druck konnte nicht gestartet werden.');
+    toApiError(error, "Druck konnte nicht gestartet werden.");
   }
 }
 
@@ -1434,7 +1468,7 @@ export async function replaceJobGcode(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'G-Code konnte nicht getauscht werden.');
+    toApiError(error, "G-Code konnte nicht getauscht werden.");
   }
 }
 
@@ -1446,7 +1480,7 @@ export async function getPrintJob(printerId: string, jobId: string): Promise<Pri
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckjob konnte nicht geladen werden.');
+    toApiError(error, "Druckjob konnte nicht geladen werden.");
   }
 }
 
@@ -1463,7 +1497,7 @@ export async function updatePrintJobPriority(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Priorität konnte nicht geändert werden.');
+    toApiError(error, "Priorität konnte nicht geändert werden.");
   }
 }
 
@@ -1476,7 +1510,7 @@ export async function cancelPrintJob(printerId: string, jobId: string): Promise<
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Druckjob konnte nicht abgebrochen werden.');
+    toApiError(error, "Druckjob konnte nicht abgebrochen werden.");
   }
 }
 
@@ -1490,13 +1524,13 @@ export async function cancelPrintJob(printerId: string, jobId: string): Promise<
  * `TWITCH_CLIENT_ID` im API-.env der jeweiligen Umgebung übereinstimmen.
  */
 const TWITCH_CLIENT_IDS: Record<string, string> = {
-  Development: 'eygoi5z4tf067fztfm6wr167iebviy',
-  Staging: '2obalcga4dfzx9e5o6roosoedvhxtt',
-  Production: '2obalcga4dfzx9e5o6roosoedvhxtt'
+  Development: "eygoi5z4tf067fztfm6wr167iebviy",
+  Staging: "2obalcga4dfzx9e5o6roosoedvhxtt",
+  Production: "2obalcga4dfzx9e5o6roosoedvhxtt"
 };
 // Reicht für Login + E-Mail-Verknüpfung. Clip-Metadaten holt das Backend
 // mit seinem eigenen App-Token, dafür ist kein User-Scope nötig.
-const TwitchScope = 'user:read:email';
+const TwitchScope = "user:read:email";
 
 function getTwitchClientId(): string {
   return TWITCH_CLIENT_IDS[getApiEnvironment()] ?? TWITCH_CLIENT_IDS.Development;
@@ -1504,11 +1538,11 @@ function getTwitchClientId(): string {
 
 export async function loginToTwitch(): Promise<void> {
   const { host, protocol } = globalThis.location;
-  const state = await fetchOauthState('twitch');
+  const state = await fetchOauthState("twitch");
   const params = new URLSearchParams({
     client_id: getTwitchClientId(),
     redirect_uri: `${protocol}//${host}${Routes.Callback.Twitch}`,
-    response_type: 'code',
+    response_type: "code",
     scope: TwitchScope,
     state
   });
@@ -1530,13 +1564,19 @@ export async function authenticateTwitch(code: string, state: string): Promise<T
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Twitch-Anmeldung fehlgeschlagen.');
+    toApiError(error, "Twitch-Anmeldung fehlgeschlagen.");
   }
 }
 
-export type ClipStatus = 'pending' | 'approved' | 'rejected' | 'flagged';
+export type ClipStatus = "pending" | "approved" | "rejected" | "flagged";
 export type ClipSection =
-  | 'gaming' | 'just_chatting' | 'irl' | 'music' | 'esports' | 'creative' | 'other';
+  | "gaming"
+  | "just_chatting"
+  | "irl"
+  | "music"
+  | "esports"
+  | "creative"
+  | "other";
 
 export interface AwardCategory {
   id: string;
@@ -1630,7 +1670,7 @@ export interface ClipReportWithContext {
   clipId: string;
   reporterUserId: string;
   reason: string;
-  status: 'open' | 'resolved' | 'dismissed';
+  status: "open" | "resolved" | "dismissed";
   createdAt: string;
   resolvedAt: string | null;
   resolvedBy: string | null;
@@ -1647,20 +1687,20 @@ export async function submitClip(url: string): Promise<Clip> {
     const response = await axios.post<Clip>(`${getApiBaseUrl()}/clips`, { url }, AXIOS_OPTIONS);
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Clip konnte nicht eingereicht werden.');
+    toApiError(error, "Clip konnte nicht eingereicht werden.");
   }
 }
 
 export async function getNextClip(section?: ClipSection): Promise<ClipWithContext | null> {
   try {
-    const qs = section ? `?section=${encodeURIComponent(section)}` : '';
+    const qs = section ? `?section=${encodeURIComponent(section)}` : "";
     const response = await axios.get<{ clip: ClipWithContext | null }>(
       `${getApiBaseUrl()}/clips/feed/next${qs}`,
       AXIOS_OPTIONS
     );
     return response.data.clip;
   } catch (error: unknown) {
-    toApiError(error, 'Nächster Clip konnte nicht geladen werden.');
+    toApiError(error, "Nächster Clip konnte nicht geladen werden.");
   }
 }
 
@@ -1673,16 +1713,19 @@ export async function rateClip(clipId: string, input: RateClipInput): Promise<Cl
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Bewertung konnte nicht gespeichert werden.');
+    toApiError(error, "Bewertung konnte nicht gespeichert werden.");
   }
 }
 
 export async function getMyClips(): Promise<ClipWithContext[]> {
   try {
-    const response = await axios.get<ClipWithContext[]>(`${getApiBaseUrl()}/clips/mine`, AXIOS_OPTIONS);
+    const response = await axios.get<ClipWithContext[]>(
+      `${getApiBaseUrl()}/clips/mine`,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Eigene Clips konnten nicht geladen werden.');
+    toApiError(error, "Eigene Clips konnten nicht geladen werden.");
   }
 }
 
@@ -1694,7 +1737,7 @@ export async function getClip(id: string): Promise<ClipDetail> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Clip konnte nicht geladen werden.');
+    toApiError(error, "Clip konnte nicht geladen werden.");
   }
 }
 
@@ -1716,7 +1759,7 @@ export async function getClipByShortid(shortid: string): Promise<ClipDetail> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Clip konnte nicht geladen werden.');
+    toApiError(error, "Clip konnte nicht geladen werden.");
   }
 }
 
@@ -1761,7 +1804,7 @@ export async function getClipsByBroadcasterName(name: string): Promise<StreamerH
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Streamer-Übersicht konnte nicht geladen werden.');
+    toApiError(error, "Streamer-Übersicht konnte nicht geladen werden.");
   }
 }
 
@@ -1773,7 +1816,7 @@ export async function getClipsByCategorySlug(slug: string): Promise<CategoryHubD
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Kategorie-Übersicht konnte nicht geladen werden.');
+    toApiError(error, "Kategorie-Übersicht konnte nicht geladen werden.");
   }
 }
 
@@ -1785,55 +1828,65 @@ export async function getClipsByAwardKey(key: string): Promise<AwardHubData> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Award-Übersicht konnte nicht geladen werden.');
+    toApiError(error, "Award-Übersicht konnte nicht geladen werden.");
   }
 }
 
 export async function reportClip(id: string, reason: string): Promise<void> {
   try {
-    await axios.post(`${getApiBaseUrl()}/clips/${encodeURIComponent(id)}/report`, { reason }, AXIOS_OPTIONS);
+    await axios.post(
+      `${getApiBaseUrl()}/clips/${encodeURIComponent(id)}/report`,
+      { reason },
+      AXIOS_OPTIONS
+    );
   } catch (error: unknown) {
-    toApiError(error, 'Meldung konnte nicht gesendet werden.');
+    toApiError(error, "Meldung konnte nicht gesendet werden.");
   }
 }
 
-export type LeaderboardPeriod = 'all' | 'month' | 'week';
+export type LeaderboardPeriod = "all" | "month" | "week";
 
 export async function getLeaderboard(
   section?: ClipSection,
   limit = 20,
-  period: LeaderboardPeriod = 'all'
+  period: LeaderboardPeriod = "all"
 ): Promise<ClipWithContext[]> {
   try {
     const params = new URLSearchParams();
-    if (section) params.set('section', section);
-    if (period !== 'all') params.set('period', period);
-    params.set('limit', String(limit));
+    if (section) params.set("section", section);
+    if (period !== "all") params.set("period", period);
+    params.set("limit", String(limit));
     const response = await axios.get<ClipWithContext[]>(
       `${getApiBaseUrl()}/clips/leaderboard?${params.toString()}`,
       AXIOS_OPTIONS
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Leaderboard konnte nicht geladen werden.');
+    toApiError(error, "Leaderboard konnte nicht geladen werden.");
   }
 }
 
 export async function getAwards(): Promise<AwardCategory[]> {
   try {
-    const response = await axios.get<AwardCategory[]>(`${getApiBaseUrl()}/categories/awards`, AXIOS_OPTIONS);
+    const response = await axios.get<AwardCategory[]>(
+      `${getApiBaseUrl()}/categories/awards`,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Award-Kategorien konnten nicht geladen werden.');
+    toApiError(error, "Award-Kategorien konnten nicht geladen werden.");
   }
 }
 
 export async function getSections(): Promise<SectionOption[]> {
   try {
-    const response = await axios.get<SectionOption[]>(`${getApiBaseUrl()}/categories/sections`, AXIOS_OPTIONS);
+    const response = await axios.get<SectionOption[]>(
+      `${getApiBaseUrl()}/categories/sections`,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Sektionen konnten nicht geladen werden.');
+    toApiError(error, "Sektionen konnten nicht geladen werden.");
   }
 }
 
@@ -1850,20 +1903,20 @@ export interface AwardInput {
 }
 
 export async function adminListClips(
-  status: ClipStatus[] = ['pending'],
+  status: ClipStatus[] = ["pending"],
   limit?: number,
   offset?: number
 ): Promise<ClipWithContext[]> {
   try {
     const params = new URLSearchParams();
-    if (status.length) params.set('status', status.join(','));
+    if (status.length) params.set("status", status.join(","));
     const response = await axios.get<ClipWithContext[]>(
       `${getApiBaseUrl()}/admin/streamclips/clips${withPagingQuery(params, limit, offset)}`,
       AXIOS_OPTIONS
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Moderations-Queue konnte nicht geladen werden.');
+    toApiError(error, "Moderations-Queue konnte nicht geladen werden.");
   }
 }
 
@@ -1880,7 +1933,7 @@ export async function adminSetClipStatus(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Clip-Status konnte nicht gesetzt werden.');
+    toApiError(error, "Clip-Status konnte nicht gesetzt werden.");
   }
 }
 
@@ -1903,7 +1956,7 @@ export async function adminBulkModerateClips(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Bulk-Aktion fehlgeschlagen.');
+    toApiError(error, "Bulk-Aktion fehlgeschlagen.");
   }
 }
 
@@ -1924,16 +1977,19 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Dashboard-Statistiken konnten nicht geladen werden.');
+    toApiError(error, "Dashboard-Statistiken konnten nicht geladen werden.");
   }
 }
 
 export async function adminListAwards(): Promise<AwardCategory[]> {
   try {
-    const response = await axios.get<AwardCategory[]>(`${getApiBaseUrl()}/admin/streamclips/awards`, AXIOS_OPTIONS);
+    const response = await axios.get<AwardCategory[]>(
+      `${getApiBaseUrl()}/admin/streamclips/awards`,
+      AXIOS_OPTIONS
+    );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Award-Kategorien konnten nicht geladen werden.');
+    toApiError(error, "Award-Kategorien konnten nicht geladen werden.");
   }
 }
 
@@ -1946,7 +2002,7 @@ export async function adminCreateAward(input: AwardInput): Promise<AwardCategory
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Award-Kategorie konnte nicht angelegt werden.');
+    toApiError(error, "Award-Kategorie konnte nicht angelegt werden.");
   }
 }
 
@@ -1959,37 +2015,43 @@ export async function adminUpdateAward(id: string, input: AwardInput): Promise<A
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Award-Kategorie konnte nicht aktualisiert werden.');
+    toApiError(error, "Award-Kategorie konnte nicht aktualisiert werden.");
   }
 }
 
 export async function adminDeleteAward(id: string): Promise<void> {
   try {
-    await axios.delete(`${getApiBaseUrl()}/admin/streamclips/awards/${encodeURIComponent(id)}`, AXIOS_OPTIONS);
+    await axios.delete(
+      `${getApiBaseUrl()}/admin/streamclips/awards/${encodeURIComponent(id)}`,
+      AXIOS_OPTIONS
+    );
   } catch (error: unknown) {
-    toApiError(error, 'Award-Kategorie konnte nicht gelöscht werden.');
+    toApiError(error, "Award-Kategorie konnte nicht gelöscht werden.");
   }
 }
 
 export async function adminListReports(
-  status: 'open' | 'resolved' | 'dismissed' = 'open',
+  status: "open" | "resolved" | "dismissed" = "open",
   limit?: number,
   offset?: number
 ): Promise<ClipReportWithContext[]> {
   try {
     const params = new URLSearchParams();
-    params.set('status', status);
+    params.set("status", status);
     const response = await axios.get<ClipReportWithContext[]>(
       `${getApiBaseUrl()}/admin/streamclips/reports${withPagingQuery(params, limit, offset)}`,
       AXIOS_OPTIONS
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Meldungen konnten nicht geladen werden.');
+    toApiError(error, "Meldungen konnten nicht geladen werden.");
   }
 }
 
-export async function adminResolveReport(id: string, status: 'resolved' | 'dismissed'): Promise<void> {
+export async function adminResolveReport(
+  id: string,
+  status: "resolved" | "dismissed"
+): Promise<void> {
   try {
     await axios.patch(
       `${getApiBaseUrl()}/admin/streamclips/reports/${encodeURIComponent(id)}`,
@@ -1997,7 +2059,7 @@ export async function adminResolveReport(id: string, status: 'resolved' | 'dismi
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Meldung konnte nicht bearbeitet werden.');
+    toApiError(error, "Meldung konnte nicht bearbeitet werden.");
   }
 }
 
@@ -2038,11 +2100,11 @@ export async function browseClips(): Promise<BrowseData> {
     const response = await axios.get<BrowseData>(`${getApiBaseUrl()}/clips/browse`, AXIOS_OPTIONS);
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Übersicht konnte nicht geladen werden.');
+    toApiError(error, "Übersicht konnte nicht geladen werden.");
   }
 }
 
-export type CommentTargetType = 'clip' | 'blog_post';
+export type CommentTargetType = "clip" | "blog_post";
 
 export interface Comment {
   id: string;
@@ -2079,7 +2141,7 @@ export async function listClipComments(clipId: string): Promise<Comment[]> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Kommentare konnten nicht geladen werden.');
+    toApiError(error, "Kommentare konnten nicht geladen werden.");
   }
 }
 
@@ -2097,7 +2159,7 @@ export async function postClipComment(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Kommentar konnte nicht gespeichert werden.');
+    toApiError(error, "Kommentar konnte nicht gespeichert werden.");
   }
 }
 
@@ -2109,7 +2171,7 @@ export async function listBlogComments(slug: string): Promise<Comment[]> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Kommentare konnten nicht geladen werden.');
+    toApiError(error, "Kommentare konnten nicht geladen werden.");
   }
 }
 
@@ -2126,7 +2188,7 @@ export async function postBlogComment(
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Kommentar konnte nicht gespeichert werden.');
+    toApiError(error, "Kommentar konnte nicht gespeichert werden.");
   }
 }
 
@@ -2137,7 +2199,7 @@ export async function deleteClipComment(commentId: string): Promise<void> {
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Kommentar konnte nicht gelöscht werden.');
+    toApiError(error, "Kommentar konnte nicht gelöscht werden.");
   }
 }
 
@@ -2150,7 +2212,7 @@ export async function moderateDeleteComment(commentId: string, reason: string): 
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Moderations-Löschung fehlgeschlagen.');
+    toApiError(error, "Moderations-Löschung fehlgeschlagen.");
   }
 }
 
@@ -2162,7 +2224,7 @@ export async function restoreComment(commentId: string): Promise<void> {
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Wiederherstellen fehlgeschlagen.');
+    toApiError(error, "Wiederherstellen fehlgeschlagen.");
   }
 }
 
@@ -2186,7 +2248,7 @@ export async function listCommentMutes(): Promise<CommentMute[]> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Mute-Liste konnte nicht geladen werden.');
+    toApiError(error, "Mute-Liste konnte nicht geladen werden.");
   }
 }
 
@@ -2202,7 +2264,7 @@ export async function muteUserForComments(
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Mute fehlgeschlagen.');
+    toApiError(error, "Mute fehlgeschlagen.");
   }
 }
 
@@ -2213,7 +2275,7 @@ export async function unmuteUserForComments(userId: string): Promise<void> {
       AXIOS_OPTIONS
     );
   } catch (error: unknown) {
-    toApiError(error, 'Unmute fehlgeschlagen.');
+    toApiError(error, "Unmute fehlgeschlagen.");
   }
 }
 
@@ -2238,7 +2300,7 @@ export async function listClipContributors(limit = 25): Promise<ClipContributor[
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Top-Einreicher konnten nicht geladen werden.');
+    toApiError(error, "Top-Einreicher konnten nicht geladen werden.");
   }
 }
 
@@ -2248,16 +2310,16 @@ export async function listClipsByBroadcaster(
 ): Promise<ClipWithContext[]> {
   try {
     const params = new URLSearchParams();
-    if (opts.excludeId) params.set('excludeId', opts.excludeId);
-    if (opts.limit) params.set('limit', String(opts.limit));
+    if (opts.excludeId) params.set("excludeId", opts.excludeId);
+    if (opts.limit) params.set("limit", String(opts.limit));
     const qs = params.toString();
     const response = await axios.get<ClipWithContext[]>(
-      `${getApiBaseUrl()}/clips/by-broadcaster/${encodeURIComponent(broadcasterId)}${qs ? `?${qs}` : ''}`,
+      `${getApiBaseUrl()}/clips/by-broadcaster/${encodeURIComponent(broadcasterId)}${qs ? `?${qs}` : ""}`,
       AXIOS_OPTIONS
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Weitere Clips konnten nicht geladen werden.');
+    toApiError(error, "Weitere Clips konnten nicht geladen werden.");
   }
 }
 
@@ -2281,7 +2343,7 @@ export async function searchClips(q: string): Promise<ClipWithContext[]> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Suche fehlgeschlagen.');
+    toApiError(error, "Suche fehlgeschlagen.");
   }
 }
 
@@ -2293,11 +2355,14 @@ export async function adminListCategories(): Promise<TwitchCategory[]> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Kategorien konnten nicht geladen werden.');
+    toApiError(error, "Kategorien konnten nicht geladen werden.");
   }
 }
 
-export async function adminSetCategorySection(id: string, section: ClipSection): Promise<TwitchCategory> {
+export async function adminSetCategorySection(
+  id: string,
+  section: ClipSection
+): Promise<TwitchCategory> {
   try {
     const response = await axios.patch<TwitchCategory>(
       `${getApiBaseUrl()}/admin/streamclips/categories/${encodeURIComponent(id)}`,
@@ -2306,7 +2371,7 @@ export async function adminSetCategorySection(id: string, section: ClipSection):
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Sektion konnte nicht gesetzt werden.');
+    toApiError(error, "Sektion konnte nicht gesetzt werden.");
   }
 }
 
@@ -2324,11 +2389,13 @@ export async function getModerationSettings(): Promise<ModerationSettings> {
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Moderations-Einstellungen konnten nicht geladen werden.');
+    toApiError(error, "Moderations-Einstellungen konnten nicht geladen werden.");
   }
 }
 
-export async function updateModerationSettings(input: Partial<ModerationSettings>): Promise<ModerationSettings> {
+export async function updateModerationSettings(
+  input: Partial<ModerationSettings>
+): Promise<ModerationSettings> {
   try {
     const response = await axios.put<ModerationSettings>(
       `${getApiBaseUrl()}/admin/streamclips/moderation-settings`,
@@ -2337,7 +2404,7 @@ export async function updateModerationSettings(input: Partial<ModerationSettings
     );
     return response.data;
   } catch (error: unknown) {
-    toApiError(error, 'Moderations-Einstellungen konnten nicht gespeichert werden.');
+    toApiError(error, "Moderations-Einstellungen konnten nicht gespeichert werden.");
   }
 }
 
@@ -2362,7 +2429,9 @@ export async function getForYouSettings(): Promise<ForYouSettings> {
   }
 }
 
-export async function updateForYouSettings(input: Partial<ForYouSettings>): Promise<ForYouSettings> {
+export async function updateForYouSettings(
+  input: Partial<ForYouSettings>
+): Promise<ForYouSettings> {
   try {
     const response = await axios.put<ForYouSettings>(
       `${getApiBaseUrl()}/admin/streamclips/foryou-settings`,

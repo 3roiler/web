@@ -33,9 +33,8 @@ export function GcodePage() {
       title="G-Code-Dateien"
       description={
         <>
-          Lade fertig gesliceten G-Code hoch. Identische Dateien (gleicher
-          SHA-256) werden dedupliziert — wer zuerst lädt, bekommt den
-          Eintrag zugeschrieben.
+          Lade fertig gesliceten G-Code hoch. Identische Dateien (gleicher SHA-256) werden
+          dedupliziert — wer zuerst lädt, bekommt den Eintrag zugeschrieben.
         </>
       }
       actions={
@@ -156,7 +155,12 @@ function GcodeContent() {
         })}
 
         {files !== null && (
-          <Pagination offset={offset} pageSize={PAGE_SIZE} count={files.length} onChange={setOffset} />
+          <Pagination
+            offset={offset}
+            pageSize={PAGE_SIZE}
+            count={files.length}
+            onChange={setOffset}
+          />
         )}
       </section>
     </div>

@@ -38,11 +38,21 @@ export function DashboardClipsPage() {
       description="Eingereichte Clips freigeben oder ablehnen. Nur freigegebene Clips erscheinen im Vote-Feed."
       actions={
         <>
-          <Link to={Routes.Dashboard.ClipsAwards} className="btn-outline btn-sm">Awards</Link>
-          <Link to={Routes.Dashboard.ClipsCategories} className="btn-outline btn-sm">Kategorien</Link>
-          <Link to={Routes.Dashboard.ClipsSettings} className="btn-outline btn-sm">Einstellungen</Link>
-          <Link to={Routes.Dashboard.ClipsReports} className="btn-outline btn-sm">Meldungen</Link>
-          <Link to={Routes.Dashboard.ClipsMutes} className="btn-outline btn-sm">Mutes</Link>
+          <Link to={Routes.Dashboard.ClipsAwards} className="btn-outline btn-sm">
+            Awards
+          </Link>
+          <Link to={Routes.Dashboard.ClipsCategories} className="btn-outline btn-sm">
+            Kategorien
+          </Link>
+          <Link to={Routes.Dashboard.ClipsSettings} className="btn-outline btn-sm">
+            Einstellungen
+          </Link>
+          <Link to={Routes.Dashboard.ClipsReports} className="btn-outline btn-sm">
+            Meldungen
+          </Link>
+          <Link to={Routes.Dashboard.ClipsMutes} className="btn-outline btn-sm">
+            Mutes
+          </Link>
         </>
       }
     >
@@ -62,7 +72,7 @@ function ClipsQueue() {
   const [bulkBusy, setBulkBusy] = React.useState(false);
   const [bulkError, setBulkError] = React.useState<string | null>(null);
   const [bulkRejectOpen, setBulkRejectOpen] = React.useState(false);
-  const [bulkRejectReason, setBulkRejectReason] = React.useState('');
+  const [bulkRejectReason, setBulkRejectReason] = React.useState("");
 
   const reload = React.useCallback(() => {
     setRows(null);
@@ -82,7 +92,7 @@ function ClipsQueue() {
 
   // Beim Tab-/Statuswechsel zurück auf Seite 1 — sonst landet man ggf. auf einer
   // leeren Seite, weil der neue Filter weniger Einträge hat.
-  function changeFilter(tab: typeof FILTER_TABS[number]) {
+  function changeFilter(tab: (typeof FILTER_TABS)[number]) {
     setFilter(tab);
     setOffset(0);
   }
@@ -117,11 +127,11 @@ function ClipsQueue() {
         setBulkError(`Nur ${result.ok} von ${result.total} verarbeitet.`);
       }
       setBulkRejectOpen(false);
-      setBulkRejectReason('');
+      setBulkRejectReason("");
       reload();
     } catch (err: unknown) {
       console.error(err);
-      setBulkError(err instanceof ApiError ? err.message : 'Bulk-Aktion fehlgeschlagen.');
+      setBulkError(err instanceof ApiError ? err.message : "Bulk-Aktion fehlgeschlagen.");
       setBulkBusy(false);
     } finally {
       setBulkBusy(false);
@@ -159,9 +169,7 @@ function ClipsQueue() {
       {selected.size > 0 && (
         <div className="sticky top-20 z-10 rounded-2xl border border-cyan-400/30 bg-slate-900/95 px-4 py-3 backdrop-blur">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-semibold text-cyan-200">
-              {selected.size} ausgewählt
-            </span>
+            <span className="text-sm font-semibold text-cyan-200">{selected.size} ausgewählt</span>
             <button
               type="button"
               onClick={() => setSelected(new Set())}
@@ -173,7 +181,7 @@ function ClipsQueue() {
               <button
                 type="button"
                 disabled={bulkBusy}
-                onClick={() => doBulk('approved')}
+                onClick={() => doBulk("approved")}
                 className="btn-sm bg-emerald-500/80 hover:bg-emerald-500 disabled:opacity-60"
               >
                 Alle freigeben
@@ -202,14 +210,17 @@ function ClipsQueue() {
                 <button
                   type="button"
                   disabled={bulkBusy}
-                  onClick={() => doBulk('rejected', bulkRejectReason.trim() || undefined)}
+                  onClick={() => doBulk("rejected", bulkRejectReason.trim() || undefined)}
                   className="btn-sm bg-red-500/80 hover:bg-red-500"
                 >
-                  {bulkBusy ? 'Verarbeite…' : 'Ablehnen bestätigen'}
+                  {bulkBusy ? "Verarbeite…" : "Ablehnen bestätigen"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setBulkRejectOpen(false); setBulkRejectReason(''); }}
+                  onClick={() => {
+                    setBulkRejectOpen(false);
+                    setBulkRejectReason("");
+                  }}
                   className="btn-outline btn-sm"
                 >
                   Abbrechen
@@ -297,8 +308,8 @@ function ClipModCard({
     <div
       className={
         selected
-          ? 'rounded-2xl border border-cyan-400/40 bg-cyan-500/5 p-4'
-          : 'rounded-2xl border border-white/10 bg-white/5 p-4'
+          ? "rounded-2xl border border-cyan-400/40 bg-cyan-500/5 p-4"
+          : "rounded-2xl border border-white/10 bg-white/5 p-4"
       }
     >
       <div className="flex gap-3">
@@ -311,7 +322,12 @@ function ClipModCard({
         />
         {thumb && (
           <button type="button" onClick={() => setPreview((p) => !p)} className="shrink-0">
-            <img src={thumb} alt="" className="h-16 w-28 rounded-lg border border-white/10 object-cover" loading="lazy" />
+            <img
+              src={thumb}
+              alt=""
+              className="h-16 w-28 rounded-lg border border-white/10 object-cover"
+              loading="lazy"
+            />
           </button>
         )}
         <div className="min-w-0 flex-1">
@@ -356,7 +372,11 @@ function ClipModCard({
             >
               Ablehnen bestätigen
             </button>
-            <button type="button" onClick={() => setRejecting(false)} className="btn-outline btn-sm">
+            <button
+              type="button"
+              onClick={() => setRejecting(false)}
+              className="btn-outline btn-sm"
+            >
               Abbrechen
             </button>
           </div>
@@ -384,7 +404,12 @@ function ClipModCard({
             </button>
           )}
           {clip.status !== "rejected" && (
-            <button type="button" disabled={busy} onClick={() => setRejecting(true)} className="btn-outline btn-sm">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setRejecting(true)}
+              className="btn-outline btn-sm"
+            >
               Ablehnen
             </button>
           )}

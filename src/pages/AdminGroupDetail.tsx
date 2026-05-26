@@ -56,10 +56,7 @@ function LoadedGroupDetail({ id }: { id: string }) {
 
   const reload = React.useCallback(async () => {
     try {
-      const [detail, perms] = await Promise.all([
-        getAdminGroup(id),
-        listGrantablePermissions()
-      ]);
+      const [detail, perms] = await Promise.all([getAdminGroup(id), listGrantablePermissions()]);
       setGroup(detail);
       setPermCatalog(perms);
       setError(null);
@@ -94,9 +91,7 @@ function LoadedGroupDetail({ id }: { id: string }) {
           <button
             type="button"
             onClick={async () => {
-              const ok = globalThis.confirm(
-                `Gruppe "${group.displayName}" wirklich löschen?`
-              );
+              const ok = globalThis.confirm(`Gruppe "${group.displayName}" wirklich löschen?`);
               if (!ok) return;
               try {
                 await deleteAdminGroup(group.id);
@@ -170,6 +165,10 @@ function GroupDetailBody({ group, permCatalog, onChanged, setError }: GroupDetai
         .finally(() => setSearchingMembers(false));
     }, 300);
     return () => clearTimeout(t);
+    // `memberIds` ist absichtlich nicht in den Deps — es wird unten aus
+    // `group.members` abgeleitet, das schon in den Deps steht. Die
+    // exhaustive-deps-Regel sieht das nicht.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberQuery, group.members]);
 
   const memberIds = new Set(group.members.map((m) => m.id));
@@ -271,14 +270,14 @@ function GroupDetailBody({ group, permCatalog, onChanged, setError }: GroupDetai
   return (
     <div className="space-y-8">
       {/* Metadaten */}
-      <form
-        onSubmit={handleSaveMeta}
-        className="rounded-2xl border border-white/10 bg-white/5 p-5"
-      >
+      <form onSubmit={handleSaveMeta} className="rounded-2xl border border-white/10 bg-white/5 p-5">
         <h3 className="text-sm font-semibold text-slate-100">Stammdaten</h3>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="group-key" className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+            <label
+              htmlFor="group-key"
+              className="block text-xs font-medium uppercase tracking-wider text-slate-400"
+            >
               Key
             </label>
             <input
@@ -290,7 +289,10 @@ function GroupDetailBody({ group, permCatalog, onChanged, setError }: GroupDetai
             />
           </div>
           <div>
-            <label htmlFor="group-display-name" className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+            <label
+              htmlFor="group-display-name"
+              className="block text-xs font-medium uppercase tracking-wider text-slate-400"
+            >
               Anzeigename
             </label>
             <input
@@ -423,7 +425,10 @@ function GroupDetailBody({ group, permCatalog, onChanged, setError }: GroupDetai
           {memberResults.length > 0 && (
             <ul className="divide-y divide-white/5 rounded-lg border border-white/10">
               {memberResults.map((u) => (
-                <li key={u.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                <li
+                  key={u.id}
+                  className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
+                >
                   <div className="min-w-0">
                     <p className="truncate text-slate-100">{u.displayName || u.name}</p>
                     <p className="truncate text-xs text-slate-500">

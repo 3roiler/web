@@ -28,8 +28,8 @@ export function AdminUsersPage() {
       title="Benutzerverwaltung"
       description={
         <>
-          Direkt erteilte Berechtigungen kannst du entziehen. Gruppen-Berechtigungen
-          sind grau und werden über die Gruppenzugehörigkeit verwaltet.
+          Direkt erteilte Berechtigungen kannst du entziehen. Gruppen-Berechtigungen sind grau und
+          werden über die Gruppenzugehörigkeit verwaltet.
         </>
       }
     >
@@ -53,7 +53,9 @@ function UsersContent({ me }: { me: User }) {
 
   // Permissions-Katalog einmalig laden (ändert sich nicht pro Seite/Suche).
   React.useEffect(() => {
-    listGrantablePermissions().then(setPermissions).catch(() => setPermissions([]));
+    listGrantablePermissions()
+      .then(setPermissions)
+      .catch(() => setPermissions([]));
   }, []);
 
   // Suche entprellen; bei neuer Suche zurück auf Seite 1.
@@ -134,7 +136,6 @@ function UsersContent({ me }: { me: User }) {
     }
   }
 
-
   return (
     <div className="space-y-4">
       <input
@@ -169,7 +170,13 @@ function UsersContent({ me }: { me: User }) {
       ))}
 
       {users !== null && (
-        <Pagination offset={offset} pageSize={PAGE_SIZE} count={users.length} total={total} onChange={setOffset} />
+        <Pagination
+          offset={offset}
+          pageSize={PAGE_SIZE}
+          count={users.length}
+          total={total}
+          onChange={setOffset}
+        />
       )}
 
       {editing && (
@@ -197,7 +204,16 @@ interface UserRowProps {
   onDelete: (user: AdminUser) => Promise<void>;
 }
 
-function UserRow({ user, me, permissions, busyKey, onGrant, onRevoke, onEdit, onDelete }: UserRowProps) {
+function UserRow({
+  user,
+  me,
+  permissions,
+  busyKey,
+  onGrant,
+  onRevoke,
+  onEdit,
+  onDelete
+}: UserRowProps) {
   const [pickerValue, setPickerValue] = React.useState<string>("");
   const direct = new Set(user.directPermissions);
   const grantable = permissions.filter((p) => !user.permissions.includes(p.key));
@@ -211,34 +227,30 @@ function UserRow({ user, me, permissions, busyKey, onGrant, onRevoke, onEdit, on
           <div className="flex items-center gap-3 text-xs text-slate-400">
             <span className="truncate">{user.email ?? "— keine Email —"}</span>
             {isSelf && (
-              <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-cyan-300">
-                Du
-              </span>
+              <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-cyan-300">Du</span>
             )}
             {user.deletedAt && (
               <span
                 className="rounded-full bg-slate-500/20 px-2 py-0.5 text-slate-400"
-                title={`Anonymisiert am ${new Date(user.deletedAt).toLocaleString('de-DE')}`}
+                title={`Anonymisiert am ${new Date(user.deletedAt).toLocaleString("de-DE")}`}
               >
                 Anonymisiert
               </span>
             )}
           </div>
-          <h2 className={
-            user.deletedAt
-              ? 'mt-1 truncate text-lg font-semibold text-slate-400 italic'
-              : 'mt-1 truncate text-lg font-semibold text-slate-50'
-          }>
+          <h2
+            className={
+              user.deletedAt
+                ? "mt-1 truncate text-lg font-semibold text-slate-400 italic"
+                : "mt-1 truncate text-lg font-semibold text-slate-50"
+            }
+          >
             {user.displayName || user.name}
           </h2>
           <p className="text-xs text-slate-500">@{user.name}</p>
         </div>
         <div className="flex flex-shrink-0 flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => onEdit(user)}
-            className="btn-outline btn-sm"
-          >
+          <button type="button" onClick={() => onEdit(user)} className="btn-outline btn-sm">
             Bearbeiten
           </button>
           <button
@@ -284,7 +296,10 @@ function UserRow({ user, me, permissions, busyKey, onGrant, onRevoke, onEdit, on
                 </button>
               )}
               {isSelfAdminGuard && (
-                <span className="text-[10px] text-slate-500" title="Du kannst dir admin.manage nicht selbst entziehen.">
+                <span
+                  className="text-[10px] text-slate-500"
+                  title="Du kannst dir admin.manage nicht selbst entziehen."
+                >
                   🔒
                 </span>
               )}
@@ -358,7 +373,11 @@ function EditUserDialog({ user, onClose, onSaved }: EditUserDialogProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      role="dialog"
+      aria-modal="true"
+    >
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-xl"
@@ -368,7 +387,10 @@ function EditUserDialog({ user, onClose, onSaved }: EditUserDialogProps) {
 
         <div className="mt-5 space-y-4">
           <div>
-            <label htmlFor="edit-name" className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+            <label
+              htmlFor="edit-name"
+              className="block text-xs font-medium uppercase tracking-wider text-slate-400"
+            >
               Login-Name
             </label>
             <input
@@ -381,7 +403,10 @@ function EditUserDialog({ user, onClose, onSaved }: EditUserDialogProps) {
             />
           </div>
           <div>
-            <label htmlFor="edit-display-name" className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+            <label
+              htmlFor="edit-display-name"
+              className="block text-xs font-medium uppercase tracking-wider text-slate-400"
+            >
               Anzeigename
             </label>
             <input
@@ -393,7 +418,10 @@ function EditUserDialog({ user, onClose, onSaved }: EditUserDialogProps) {
             />
           </div>
           <div>
-            <label htmlFor="edit-email" className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+            <label
+              htmlFor="edit-email"
+              className="block text-xs font-medium uppercase tracking-wider text-slate-400"
+            >
               E-Mail
             </label>
             <input

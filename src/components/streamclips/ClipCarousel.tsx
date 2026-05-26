@@ -6,7 +6,13 @@ import type { ClipWithContext } from "../../services";
  * Horizontal scrollbares "Laufband" einer Clip-Reihe (à la Twitch-
  * Startseite). Rendert nichts, wenn die Reihe leer ist.
  */
-export function ClipCarousel({ title, clips }: { title: React.ReactNode; clips: ClipWithContext[] }) {
+export function ClipCarousel({
+  title,
+  clips
+}: {
+  title: React.ReactNode;
+  clips: ClipWithContext[];
+}) {
   if (clips.length === 0) return null;
   return (
     <section className="space-y-2">

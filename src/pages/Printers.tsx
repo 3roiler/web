@@ -39,8 +39,8 @@ export function PrintersPage() {
       title="3D-Drucker"
       description={
         <>
-          Registrierte Drucker + Agent-Verbindungsstatus. Neue Drucker bekommen einen
-          einmaligen Agent-Token, den du auf dem Drucker-Host hinterlegst.
+          Registrierte Drucker + Agent-Verbindungsstatus. Neue Drucker bekommen einen einmaligen
+          Agent-Token, den du auf dem Drucker-Host hinterlegst.
         </>
       }
       actions={
@@ -76,8 +76,8 @@ function PrintersList() {
   if (printers.length === 0) {
     return (
       <p className="text-sm text-slate-400">
-        Noch keine Drucker registriert. Klick „Neuer Drucker", um deinen ersten
-        Drucker einzurichten.
+        Noch keine Drucker registriert. Klick „Neuer Drucker", um deinen ersten Drucker
+        einzurichten.
       </p>
     );
   }
@@ -99,9 +99,7 @@ function PrintersList() {
                   <span className={`rounded-full px-2 py-0.5 ${status.className}`}>
                     {status.label}
                   </span>
-                  <span className={`rounded-full px-2 py-0.5 ${role.className}`}>
-                    {role.label}
-                  </span>
+                  <span className={`rounded-full px-2 py-0.5 ${role.className}`}>{role.label}</span>
                   {printer.canViewCamera && (
                     <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-violet-200">
                       Kamera
@@ -112,8 +110,8 @@ function PrintersList() {
                   {printer.name}
                 </h2>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  {printer.model} · Agent: {printer.agentVersion ?? "unbekannt"} ·
-                  Zuletzt: {formatLastSeen(printer.lastSeenAt)}
+                  {printer.model} · Agent: {printer.agentVersion ?? "unbekannt"} · Zuletzt:{" "}
+                  {formatLastSeen(printer.lastSeenAt)}
                 </p>
               </div>
             </div>

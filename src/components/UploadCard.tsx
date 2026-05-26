@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { formatBytes } from '../lib/asset-helpers';
+import * as React from "react";
+import { formatBytes } from "../lib/asset-helpers";
 
 export interface UploadCardProps {
   /** H3 in the card header. */
@@ -26,13 +26,20 @@ export interface UploadCardProps {
  * `accept` filter and the actual upload-mutation, so this component
  * stays generic enough to drop into any future "asset library" page.
  */
-export function UploadCard({ title, hint, accept, maxBytes, onUpload, onPreflightError }: UploadCardProps) {
+export function UploadCard({
+  title,
+  hint,
+  accept,
+  maxBytes,
+  onUpload,
+  onPreflightError
+}: UploadCardProps) {
   const [uploading, setUploading] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   async function handleFile(file: File) {
     if (file.size === 0) {
-      onPreflightError?.('Datei ist leer.');
+      onPreflightError?.("Datei ist leer.");
       return;
     }
     if (file.size > maxBytes) {
@@ -43,7 +50,7 @@ export function UploadCard({ title, hint, accept, maxBytes, onUpload, onPrefligh
     try {
       await onUpload(file);
       // Clear input so re-selecting the same filename re-fires onChange.
-      if (inputRef.current) inputRef.current.value = '';
+      if (inputRef.current) inputRef.current.value = "";
     } finally {
       setUploading(false);
     }

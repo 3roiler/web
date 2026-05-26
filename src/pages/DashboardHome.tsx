@@ -29,7 +29,8 @@ interface DashboardTile {
 const TILES: DashboardTile[] = [
   {
     title: "Blog",
-    description: "Beiträge schreiben, bearbeiten, veröffentlichen. Sichtbarkeit pro Beitrag regeln.",
+    description:
+      "Beiträge schreiben, bearbeiten, veröffentlichen. Sichtbarkeit pro Beitrag regeln.",
     to: Routes.Dashboard.Blog,
     permission: "dashboard.blog"
   },
@@ -47,7 +48,8 @@ const TILES: DashboardTile[] = [
   },
   {
     title: "Einstellungen",
-    description: "Site-Konfiguration und verschlüsselte Secrets (DigitalOcean-Token, Feature-Flags).",
+    description:
+      "Site-Konfiguration und verschlüsselte Secrets (DigitalOcean-Token, Feature-Flags).",
     to: Routes.Dashboard.Settings,
     permission: "dashboard.settings"
   },
@@ -85,91 +87,89 @@ interface StatCardSpec {
   /** Zielroute für den Click — wird die Karte zum Link. */
   to?: string;
   /** Akzent-Farbe für den großen Wert (cyan = Standard). */
-  tone?: 'cyan' | 'amber' | 'emerald' | 'red' | 'purple';
+  tone?: "cyan" | "amber" | "emerald" | "red" | "purple";
 }
 
 const STAT_CARDS: StatCardSpec[] = [
   {
-    key: 'clips-pending',
-    label: 'Clips in Prüfung',
-    permission: 'dashboard.clips',
+    key: "clips-pending",
+    label: "Clips in Prüfung",
+    permission: "dashboard.clips",
     value: (s) => s.clips.pending,
     hint: (s) => (s.clips.flagged > 0 ? `${s.clips.flagged} gemeldet` : null),
     to: Routes.Dashboard.Clips,
-    tone: 'amber'
+    tone: "amber"
   },
   {
-    key: 'reports-open',
-    label: 'Offene Meldungen',
-    permission: 'dashboard.clips',
+    key: "reports-open",
+    label: "Offene Meldungen",
+    permission: "dashboard.clips",
     value: (s) => s.reports.open,
     to: Routes.Dashboard.ClipsReports,
-    tone: 'red'
+    tone: "red"
   },
   {
-    key: 'blog-drafts',
-    label: 'Blog-Drafts',
-    permission: 'dashboard.blog',
+    key: "blog-drafts",
+    label: "Blog-Drafts",
+    permission: "dashboard.blog",
     value: (s) => s.blog.drafts,
     hint: (s) => `${s.blog.published} veröffentlicht`,
     to: Routes.Dashboard.Blog,
-    tone: 'cyan'
+    tone: "cyan"
   },
   {
-    key: 'print-requests',
-    label: 'Offene Druckanfragen',
-    permission: 'dashboard.printers',
+    key: "print-requests",
+    label: "Offene Druckanfragen",
+    permission: "dashboard.printers",
     value: (s) => s.printRequests.open,
     to: Routes.Dashboard.PrintRequests,
-    tone: 'purple'
+    tone: "purple"
   },
   {
-    key: 'users-new',
-    label: 'Neue User (30 T.)',
-    permission: 'dashboard.users',
+    key: "users-new",
+    label: "Neue User (30 T.)",
+    permission: "dashboard.users",
     value: (s) => s.users.new30d,
     hint: (s) => `${s.users.total} insgesamt`,
     to: Routes.Dashboard.Users,
-    tone: 'emerald'
+    tone: "emerald"
   },
   {
-    key: 'ratings',
-    label: 'Bewertungen (7 T.)',
-    permission: 'dashboard.clips',
+    key: "ratings",
+    label: "Bewertungen (7 T.)",
+    permission: "dashboard.clips",
     value: (s) => s.ratings.last7d,
     hint: (s) => `${s.clips.approved} Clips freigegeben`,
     to: Routes.Dashboard.Clips,
-    tone: 'cyan'
+    tone: "cyan"
   }
 ];
 
-const TONE_CLASS: Record<NonNullable<StatCardSpec['tone']>, string> = {
-  cyan: 'text-cyan-300',
-  amber: 'text-amber-300',
-  emerald: 'text-emerald-300',
-  red: 'text-red-300',
-  purple: 'text-[#bf94ff]'
+const TONE_CLASS: Record<NonNullable<StatCardSpec["tone"]>, string> = {
+  cyan: "text-cyan-300",
+  amber: "text-amber-300",
+  emerald: "text-emerald-300",
+  red: "text-red-300",
+  purple: "text-[#bf94ff]"
 };
 
 function StatCard({ spec, stats }: { spec: StatCardSpec; stats: DashboardStats }) {
   const value = spec.value(stats);
   const hint = spec.hint?.(stats) ?? null;
-  const valueClass = TONE_CLASS[spec.tone ?? 'cyan'];
+  const valueClass = TONE_CLASS[spec.tone ?? "cyan"];
 
   const body = (
     <>
       <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-500">
         {spec.label}
       </p>
-      <p className={`mt-2 text-3xl font-semibold tabular-nums ${valueClass}`}>
-        {value ?? '—'}
-      </p>
+      <p className={`mt-2 text-3xl font-semibold tabular-nums ${valueClass}`}>{value ?? "—"}</p>
       {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
     </>
   );
 
   const className =
-    'group rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/30';
+    "group rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:border-cyan-400/30";
 
   if (spec.to) {
     return (

@@ -10,7 +10,7 @@ export const ApiEnvironments = {
   // daher MUSS die Dev-Basis-URL das Präfix enthalten — sonst 404 auf
   // jeden Call. (Prod/Staging routen /prod bzw. /staging über den
   // Reverse-Proxy und brauchen das /api hier nicht.)
-  Development: "http://localhost:3000/api",
+  Development: "http://localhost:3000/api"
 } as const;
 
 export type ApiEnvironment = keyof typeof ApiEnvironments;
@@ -79,7 +79,6 @@ interface ApiDebugHelper {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __api: ApiDebugHelper | undefined;
 }
 
@@ -96,11 +95,11 @@ if (import.meta.env.DEV) {
     reset: () => {
       resetApiEnvironment();
       console.log("API reset to default.");
-    },
+    }
   };
 
   console.log(
     `[API Config] Environment: ${getApiEnvironment()} | URL: ${getApiBaseUrl()}\n` +
-    `Use window.__api.switch("Production"|"Staging"|"Development") to change.`
+      `Use window.__api.switch("Production"|"Staging"|"Development") to change.`
   );
 }

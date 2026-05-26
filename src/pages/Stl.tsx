@@ -5,13 +5,7 @@ import { Pagination } from "../components/Pagination";
 import { UploadCard } from "../components/UploadCard";
 import { Routes } from "../config/routes";
 import { formatBytes, formatDate, readMaxBytes } from "../lib/asset-helpers";
-import {
-  listStlFiles,
-  uploadStlFile,
-  deleteStlFile,
-  ApiError,
-  type StlFile
-} from "../services";
+import { listStlFiles, uploadStlFile, deleteStlFile, ApiError, type StlFile } from "../services";
 
 function metadataPreview(file: StlFile): string {
   const parts: string[] = [];
@@ -32,9 +26,9 @@ export function StlPage() {
       title="STL-Dateien"
       description={
         <>
-          Lade Slicer-Eingabedateien hoch. STLs werden im Browser visualisiert
-          (3D-Viewer); Slicing nach G-Code passiert vorerst lokal beim Spieler.
-          Identische Dateien (gleicher SHA-256) werden dedupliziert.
+          Lade Slicer-Eingabedateien hoch. STLs werden im Browser visualisiert (3D-Viewer); Slicing
+          nach G-Code passiert vorerst lokal beim Spieler. Identische Dateien (gleicher SHA-256)
+          werden dedupliziert.
         </>
       }
     >
@@ -150,7 +144,12 @@ function StlContent() {
         })}
 
         {files !== null && (
-          <Pagination offset={offset} pageSize={PAGE_SIZE} count={files.length} onChange={setOffset} />
+          <Pagination
+            offset={offset}
+            pageSize={PAGE_SIZE}
+            count={files.length}
+            onChange={setOffset}
+          />
         )}
       </section>
     </div>

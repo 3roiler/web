@@ -1,6 +1,4 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
-import { Routes } from "../../config/routes";
 import { safeHttpUrl } from "../../lib/url";
 import {
   listClipComments,
@@ -41,21 +39,25 @@ function formatTimestamp(seconds: number): string {
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function formatRelative(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
   const sec = Math.round(ms / 1000);
-  if (sec < 60) return 'gerade eben';
+  if (sec < 60) return "gerade eben";
   const min = Math.round(sec / 60);
   if (min < 60) return `vor ${min} min`;
   const h = Math.round(min / 60);
   if (h < 24) return `vor ${h} h`;
   const days = Math.round(h / 24);
-  if (days < 30) return `vor ${days} Tag${days === 1 ? '' : 'en'}`;
-  return new Date(iso).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
+  if (days < 30) return `vor ${days} Tag${days === 1 ? "" : "en"}`;
+  return new Date(iso).toLocaleDateString("de-DE", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
 }
 
 function extractFirstTimestamp(body: string): number | null {
@@ -143,21 +145,25 @@ export function Comments({ targetType, targetKey, onSeek }: CommentsProps) {
   const [comments, setComments] = React.useState<Comment[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [me, setMe] = React.useState<User | null>(null);
-  const [body, setBody] = React.useState('');
+  const [body, setBody] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
   const [postError, setPostError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    getMe().then(setMe).catch(() => setMe(null));
+    getMe()
+      .then(setMe)
+      .catch(() => setMe(null));
   }, []);
 
   const reload = React.useCallback(() => {
-    const fetcher = targetType === 'clip' ? listClipComments : listBlogComments;
+    const fetcher = targetType === "clip" ? listClipComments : listBlogComments;
     fetcher(targetKey)
       .then(setComments)
       .catch((err: unknown) => {
         console.error(err);
-        setError(err instanceof ApiError ? err.message : 'Kommentare konnten nicht geladen werden.');
+        setError(
+          err instanceof ApiError ? err.message : "Kommentare konnten nicht geladen werden."
+        );
       });
   }, [targetType, targetKey]);
 
@@ -172,24 +178,26 @@ export function Comments({ targetType, targetKey, onSeek }: CommentsProps) {
     setSubmitting(true);
     setPostError(null);
     try {
-      if (targetType === 'clip') {
+      if (targetType === "clip") {
         const ts = extractFirstTimestamp(trimmed);
         await postClipComment(targetKey, trimmed, ts, null);
       } else {
         await postBlogComment(targetKey, trimmed, null);
       }
-      setBody('');
+      setBody("");
       reload();
     } catch (err: unknown) {
       console.error(err);
-      setPostError(err instanceof ApiError ? err.message : 'Kommentar konnte nicht gepostet werden.');
+      setPostError(
+        err instanceof ApiError ? err.message : "Kommentar konnte nicht gepostet werden."
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
   const isMod = Boolean(
-    me?.permissions?.some((p) => p === 'clips.moderate' || p === 'admin.manage')
+    me?.permissions?.some((p) => p === "clips.moderate" || p === "admin.manage")
   );
 
   const tree = React.useMemo(() => (comments ? buildTree(comments) : []), [comments]);
@@ -202,7 +210,7 @@ export function Comments({ targetType, targetKey, onSeek }: CommentsProps) {
           Kommentare
         </h2>
         <span className="text-xs text-slate-500">
-          {visibleCount} {visibleCount === 1 ? 'Kommentar' : 'Kommentare'}
+          {visibleCount} {visibleCount === 1 ? "Kommentar" : "Kommentare"}
         </span>
       </div>
 
@@ -213,7 +221,9 @@ export function Comments({ targetType, targetKey, onSeek }: CommentsProps) {
           onSubmit={submitTop}
           className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4"
         >
-          <label htmlFor="comment-body" className="sr-only">Kommentar</label>
+          <label htmlFor="comment-body" className="sr-only">
+            Kommentar
+          </label>
           <textarea
             id="comment-body"
             value={body}
@@ -221,9 +231,9 @@ export function Comments({ targetType, targetKey, onSeek }: CommentsProps) {
             rows={3}
             maxLength={2000}
             placeholder={
-              targetType === 'clip'
-                ? 'Was möchtest du dazu sagen? `1:23` im Text wird automatisch zum Sprung-Link.'
-                : 'Was möchtest du dazu sagen?'
+              targetType === "clip"
+                ? "Was möchtest du dazu sagen? `1:23` im Text wird automatisch zum Sprung-Link."
+                : "Was möchtest du dazu sagen?"
             }
             className="block w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-cyan-400/40 focus:outline-none"
           />
@@ -233,7 +243,7 @@ export function Comments({ targetType, targetKey, onSeek }: CommentsProps) {
               disabled={submitting || body.trim().length === 0}
               className="btn-sm disabled:opacity-50"
             >
-              {submitting ? 'Sende…' : 'Kommentieren'}
+              {submitting ? "Sende…" : "Kommentieren"}
             </button>
           </div>
           {postError && <p className="text-xs text-red-300">{postError}</p>}
@@ -288,7 +298,16 @@ interface CommentItemProps {
  */
 const MAX_VISUAL_INDENT_DEPTH = 5;
 
-function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged, depth }: CommentItemProps) {
+function CommentItem({
+  node,
+  me,
+  isMod,
+  targetType,
+  targetKey,
+  onSeek,
+  onChanged,
+  depth
+}: CommentItemProps) {
   const { comment, replies } = node;
   const isAuthor = me?.id === comment.userId;
   const isModeratedDelete = comment.deletedAt !== null && comment.deletionReason !== null;
@@ -310,22 +329,22 @@ function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged
   const [muteOpen, setMuteOpen] = React.useState(false);
 
   const displayName = isDeletedAuthor
-    ? 'Gelöschter Nutzer'
+    ? "Gelöschter Nutzer"
     : (comment.authorDisplayName ?? comment.authorName);
   const avatarUrl = isDeletedAuthor ? undefined : safeHttpUrl(comment.authorAvatarUrl);
 
   // Visuelles Indent nur bis MAX_VISUAL_INDENT_DEPTH. Darunter behält
   // jeder Reply die Border-Left-Linie, hat aber kein zusätzliches
   // Padding mehr.
-  const indentClass = depth > 0 ? 'border-l-2 border-white/10 pl-4 sm:pl-6' : '';
+  const indentClass = depth > 0 ? "border-l-2 border-white/10 pl-4 sm:pl-6" : "";
 
   return (
     <li className={indentClass}>
       <div
         className={
           isModeratedDelete || isSelfDelete
-            ? 'rounded-2xl border border-white/5 bg-white/[0.02] p-4 italic'
-            : 'rounded-2xl border border-white/10 bg-white/5 p-4'
+            ? "rounded-2xl border border-white/5 bg-white/[0.02] p-4 italic"
+            : "rounded-2xl border border-white/10 bg-white/5 p-4"
         }
       >
         <div className="flex items-center gap-3">
@@ -339,19 +358,21 @@ function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged
             <span
               className={
                 isDeletedAuthor
-                  ? 'flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-slate-900/60 text-xs text-slate-500'
-                  : 'flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-slate-900 text-xs text-slate-300'
+                  ? "flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-slate-900/60 text-xs text-slate-500"
+                  : "flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-slate-900 text-xs text-slate-300"
               }
             >
-              {isDeletedAuthor ? '×' : displayName.slice(0, 1).toUpperCase()}
+              {isDeletedAuthor ? "×" : displayName.slice(0, 1).toUpperCase()}
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <p className={
-              isDeletedAuthor
-                ? 'truncate text-sm font-semibold text-slate-500'
-                : 'truncate text-sm font-semibold text-slate-100'
-            }>
+            <p
+              className={
+                isDeletedAuthor
+                  ? "truncate text-sm font-semibold text-slate-500"
+                  : "truncate text-sm font-semibold text-slate-100"
+              }
+            >
               {displayName}
             </p>
             <p className="text-[0.7rem] text-slate-500">{formatRelative(comment.createdAt)}</p>
@@ -379,9 +400,8 @@ function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged
 
         {isModeratedDelete ? (
           <p className="mt-3 text-sm leading-relaxed text-slate-400">
-            <span className="font-semibold text-red-300">Gelöscht durch Moderator.</span>{' '}
-            <span className="text-slate-500">Grund:</span>{' '}
-            <span>{comment.deletionReason}</span>
+            <span className="font-semibold text-red-300">Gelöscht durch Moderator.</span>{" "}
+            <span className="text-slate-500">Grund:</span> <span>{comment.deletionReason}</span>
           </p>
         ) : isSelfDelete ? (
           <p className="mt-3 text-sm text-slate-500">Kommentar vom Autor gelöscht.</p>
@@ -400,7 +420,7 @@ function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged
               onClick={() => setReplyOpen((o) => !o)}
               className="text-slate-500 transition hover:text-cyan-300"
             >
-              {replyOpen ? 'Abbrechen' : 'Antworten'}
+              {replyOpen ? "Abbrechen" : "Antworten"}
             </button>
           )}
           {!isModeratedDelete && isAuthor && !isSelfDelete && (
@@ -459,7 +479,10 @@ function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged
           <ModerateDeleteForm
             commentId={comment.id}
             onClose={() => setModOpen(false)}
-            onDone={() => { setModOpen(false); onChanged(); }}
+            onDone={() => {
+              setModOpen(false);
+              onChanged();
+            }}
           />
         )}
 
@@ -477,7 +500,10 @@ function CommentItem({ node, me, isMod, targetType, targetKey, onSeek, onChanged
             targetKey={targetKey}
             parentCommentId={comment.id}
             onCancel={() => setReplyOpen(false)}
-            onPosted={() => { setReplyOpen(false); onChanged(); }}
+            onPosted={() => {
+              setReplyOpen(false);
+              onChanged();
+            }}
           />
         )}
       </div>
@@ -522,7 +548,7 @@ function ReplyForm({
   onCancel: () => void;
   onPosted: () => void;
 }) {
-  const [body, setBody] = React.useState('');
+  const [body, setBody] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
 
@@ -533,24 +559,27 @@ function ReplyForm({
     setSubmitting(true);
     setErr(null);
     try {
-      if (targetType === 'clip') {
+      if (targetType === "clip") {
         const ts = extractFirstTimestamp(trimmed);
         await postClipComment(targetKey, trimmed, ts, parentCommentId);
       } else {
         await postBlogComment(targetKey, trimmed, parentCommentId);
       }
-      setBody('');
+      setBody("");
       onPosted();
     } catch (e: unknown) {
       console.error(e);
-      setErr(e instanceof ApiError ? e.message : 'Antwort fehlgeschlagen.');
+      setErr(e instanceof ApiError ? e.message : "Antwort fehlgeschlagen.");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={submit} className="mt-3 space-y-2 rounded-xl border border-white/10 bg-slate-950/40 p-3">
+    <form
+      onSubmit={submit}
+      className="mt-3 space-y-2 rounded-xl border border-white/10 bg-slate-950/40 p-3"
+    >
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
@@ -561,7 +590,11 @@ function ReplyForm({
       />
       {err && <p className="text-xs text-red-300">{err}</p>}
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="text-xs text-slate-400 hover:text-slate-200">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-xs text-slate-400 hover:text-slate-200"
+        >
           Abbrechen
         </button>
         <button
@@ -569,7 +602,7 @@ function ReplyForm({
           disabled={submitting || body.trim().length === 0}
           className="btn-sm disabled:opacity-50"
         >
-          {submitting ? 'Sende…' : 'Antwort'}
+          {submitting ? "Sende…" : "Antwort"}
         </button>
       </div>
     </form>
@@ -587,14 +620,14 @@ function ModerateDeleteForm({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const [reason, setReason] = React.useState('');
+  const [reason, setReason] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (reason.trim().length === 0) {
-      setErr('Begründung erforderlich.');
+      setErr("Begründung erforderlich.");
       return;
     }
     setBusy(true);
@@ -604,36 +637,43 @@ function ModerateDeleteForm({
       onDone();
     } catch (e: unknown) {
       console.error(e);
-      setErr(e instanceof ApiError ? e.message : 'Löschen fehlgeschlagen.');
+      setErr(e instanceof ApiError ? e.message : "Löschen fehlgeschlagen.");
       setBusy(false);
     }
   }
 
   return (
-    <form onSubmit={submit} className="mt-3 space-y-2 rounded-xl border border-red-400/30 bg-red-500/5 p-3">
+    <form
+      onSubmit={submit}
+      className="mt-3 space-y-2 rounded-xl border border-red-400/30 bg-red-500/5 p-3"
+    >
       <p className="text-xs font-semibold uppercase tracking-wider text-red-300">
         Moderator-Löschung
       </p>
       <p className="text-[0.7rem] text-slate-400">
-        Grund wird Lesern transparent angezeigt. Bitte <strong className="text-slate-200">keine
-        personenbezogenen Daten</strong> (Mails, IPs, Klarnamen) im Text — der Eintrag
-        ist öffentlich.
+        Grund wird Lesern transparent angezeigt. Bitte{" "}
+        <strong className="text-slate-200">keine personenbezogenen Daten</strong> (Mails, IPs,
+        Klarnamen) im Text — der Eintrag ist öffentlich.
       </p>
       <textarea
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         rows={2}
         maxLength={500}
-        placeholder='z. B. „Off-Topic / Spam / Persönliche Angriffe“.'
+        placeholder="z. B. „Off-Topic / Spam / Persönliche Angriffe“."
         className="block w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500"
       />
       {err && <p className="text-xs text-red-300">{err}</p>}
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onClose} className="text-xs text-slate-400 hover:text-slate-200">
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-xs text-slate-400 hover:text-slate-200"
+        >
           Abbrechen
         </button>
         <button type="submit" disabled={busy} className="btn-sm bg-red-500/80 hover:bg-red-500">
-          {busy ? 'Lösche…' : 'Löschen'}
+          {busy ? "Lösche…" : "Löschen"}
         </button>
       </div>
     </form>
@@ -651,8 +691,8 @@ function MuteUserForm({
   userName: string;
   onClose: () => void;
 }) {
-  const [reason, setReason] = React.useState('');
-  const [duration, setDuration] = React.useState<'1d' | '7d' | '30d' | 'forever'>('7d');
+  const [reason, setReason] = React.useState("");
+  const [duration, setDuration] = React.useState<"1d" | "7d" | "30d" | "forever">("7d");
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
   const [done, setDone] = React.useState(false);
@@ -660,36 +700,45 @@ function MuteUserForm({
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (reason.trim().length === 0) {
-      setErr('Begründung erforderlich.');
+      setErr("Begründung erforderlich.");
       return;
     }
     setBusy(true);
     setErr(null);
     try {
       let until: string | null = null;
-      if (duration !== 'forever') {
-        const days = duration === '1d' ? 1 : duration === '7d' ? 7 : 30;
+      if (duration !== "forever") {
+        const days = duration === "1d" ? 1 : duration === "7d" ? 7 : 30;
         until = new Date(Date.now() + days * 86400_000).toISOString();
       }
       await muteUserForComments(userId, reason.trim(), until);
       setDone(true);
     } catch (e: unknown) {
       console.error(e);
-      setErr(e instanceof ApiError ? e.message : 'Mute fehlgeschlagen.');
+      setErr(e instanceof ApiError ? e.message : "Mute fehlgeschlagen.");
       setBusy(false);
     }
   }
 
   return (
-    <form onSubmit={submit} className="mt-3 space-y-3 rounded-xl border border-orange-400/30 bg-orange-500/5 p-3">
+    <form
+      onSubmit={submit}
+      className="mt-3 space-y-3 rounded-xl border border-orange-400/30 bg-orange-500/5 p-3"
+    >
       <p className="text-xs font-semibold uppercase tracking-wider text-orange-300">
         {userName} muten
       </p>
       {done ? (
         <>
-          <p className="text-xs text-emerald-300">Erledigt — User kann keine Kommentare mehr posten.</p>
+          <p className="text-xs text-emerald-300">
+            Erledigt — User kann keine Kommentare mehr posten.
+          </p>
           <div className="flex justify-end">
-            <button type="button" onClick={onClose} className="text-xs text-slate-400 hover:text-slate-200">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-xs text-slate-400 hover:text-slate-200"
+            >
               Schließen
             </button>
           </div>
@@ -708,7 +757,7 @@ function MuteUserForm({
             <label className="text-xs text-slate-400">Dauer:</label>
             <select
               value={duration}
-              onChange={(e) => setDuration(e.target.value as '1d' | '7d' | '30d' | 'forever')}
+              onChange={(e) => setDuration(e.target.value as "1d" | "7d" | "30d" | "forever")}
               className="rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1 text-xs text-slate-100"
             >
               <option value="1d">1 Tag</option>
@@ -719,7 +768,11 @@ function MuteUserForm({
           </div>
           {err && <p className="text-xs text-red-300">{err}</p>}
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="text-xs text-slate-400 hover:text-slate-200">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-xs text-slate-400 hover:text-slate-200"
+            >
               Abbrechen
             </button>
             <button
@@ -727,7 +780,7 @@ function MuteUserForm({
               disabled={busy}
               className="btn-sm bg-orange-500/80 hover:bg-orange-500"
             >
-              {busy ? 'Mute…' : 'User muten'}
+              {busy ? "Mute…" : "User muten"}
             </button>
           </div>
         </>

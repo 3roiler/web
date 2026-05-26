@@ -116,8 +116,18 @@ export function HubLayout({
           "@type": "BreadcrumbList",
           itemListElement: [
             { "@type": "ListItem", position: 1, name: "Start", item: `${SITE_URL}/` },
-            { "@type": "ListItem", position: 2, name: "Streamclips Germany", item: `${SITE_URL}/streamclips` },
-            { "@type": "ListItem", position: 3, name: breadcrumbName, item: `${SITE_URL}${canonicalPath}` }
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Streamclips Germany",
+              item: `${SITE_URL}/streamclips`
+            },
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: breadcrumbName,
+              item: `${SITE_URL}${canonicalPath}`
+            }
           ]
         }}
       />
@@ -150,7 +160,11 @@ export function HubLayout({
             {eyebrow}
           </p>
           <h1 className="text-2xl font-semibold text-slate-50 sm:text-4xl">
-            {emoji && <span className="mr-2" aria-hidden="true">{emoji}</span>}
+            {emoji && (
+              <span className="mr-2" aria-hidden="true">
+                {emoji}
+              </span>
+            )}
             {displayName}
           </h1>
           <p className="text-sm text-slate-400">{description}</p>

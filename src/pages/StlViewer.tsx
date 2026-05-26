@@ -6,12 +6,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import { DashboardLayout } from "../components/DashboardLayout";
 import { Routes } from "../config/routes";
-import {
-  listStlFiles,
-  getStlContent,
-  ApiError,
-  type StlFile
-} from "../services";
+import { listStlFiles, getStlContent, ApiError, type StlFile } from "../services";
 
 export function StlViewerPage() {
   const { id } = useParams<{ id: string }>();
@@ -245,7 +240,11 @@ function ViewerContent({ fileId }: ViewerContentProps) {
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-slate-50">{meta.originalFilename}</p>
           <p className="mt-1 text-xs text-slate-500">
-            {meta.metadata.format === "binary" ? "Binär" : meta.metadata.format === "ascii" ? "ASCII" : "?"}
+            {meta.metadata.format === "binary"
+              ? "Binär"
+              : meta.metadata.format === "ascii"
+                ? "ASCII"
+                : "?"}
             {stats && (
               <>
                 {" "}

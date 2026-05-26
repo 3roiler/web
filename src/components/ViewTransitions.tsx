@@ -31,9 +31,9 @@ export function ViewTransitions() {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    if (typeof document === 'undefined') return;
-    if (!('startViewTransition' in document)) return;
-    if (globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (typeof document === "undefined") return;
+    if (!("startViewTransition" in document)) return;
+    if (globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     function handleClick(event: MouseEvent) {
       // Browser-Default-Aktionen mit Modifier respektieren
@@ -46,14 +46,16 @@ export function ViewTransitions() {
       // (z. B. ein Formular oder eigene Aktion), nicht rein-grätschen.
       if (event.defaultPrevented) return;
 
-      const anchor = (event.target as HTMLElement | null)?.closest('a[href]') as HTMLAnchorElement | null;
+      const anchor = (event.target as HTMLElement | null)?.closest(
+        "a[href]"
+      ) as HTMLAnchorElement | null;
       if (!anchor) return;
       // Externe Tabs, Downloads, Hash-internal-jumps — überlassen wir
       // dem Browser/React-Router-Default.
-      if (anchor.target && anchor.target !== '_self') return;
-      if (anchor.hasAttribute('download')) return;
+      if (anchor.target && anchor.target !== "_self") return;
+      if (anchor.hasAttribute("download")) return;
       // `rel="external"` ist die explizite Opt-out-Markierung.
-      if (anchor.relList?.contains('external')) return;
+      if (anchor.relList?.contains("external")) return;
 
       let url: URL;
       try {
@@ -79,8 +81,8 @@ export function ViewTransitions() {
       navigate(path, { viewTransition: true });
     }
 
-    document.addEventListener('click', handleClick, true);
-    return () => document.removeEventListener('click', handleClick, true);
+    document.addEventListener("click", handleClick, true);
+    return () => document.removeEventListener("click", handleClick, true);
   }, [navigate]);
 
   return null;

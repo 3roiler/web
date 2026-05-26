@@ -9,12 +9,7 @@ import { tags as t } from "@lezer/highlight";
 
 import { DashboardLayout } from "../components/DashboardLayout";
 import { Routes } from "../config/routes";
-import {
-  getGcodeContent,
-  uploadGcodeFile,
-  replaceJobGcode,
-  ApiError
-} from "../services";
+import { getGcodeContent, uploadGcodeFile, replaceJobGcode, ApiError } from "../services";
 import type { GcodeFile } from "../services";
 
 import { listGcodeFiles } from "../services";
@@ -83,7 +78,10 @@ const editorTheme = EditorView.theme(
       color: "#e2e8f0",
       fontSize: "13px"
     },
-    ".cm-content": { fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", caretColor: "#22d3ee" },
+    ".cm-content": {
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+      caretColor: "#22d3ee"
+    },
     ".cm-cursor": { borderLeftColor: "#22d3ee" },
     ".cm-gutters": {
       backgroundColor: "rgba(15, 23, 42, 0.6)",
@@ -133,8 +131,8 @@ export function GcodeEditorPage() {
         isNew
           ? "Schreibe G-Code von Hand oder füge ihn ein. Beim Speichern landet er als neue Datei in deiner G-Code-Liste."
           : jobId
-          ? "Änderungen werden als neue Version gespeichert und am verknüpften Druckjob hinterlegt."
-          : "Änderungen werden als neue Version gespeichert. Der Original-G-Code bleibt unverändert."
+            ? "Änderungen werden als neue Version gespeichert und am verknüpften Druckjob hinterlegt."
+            : "Änderungen werden als neue Version gespeichert. Der Original-G-Code bleibt unverändert."
       }
       actions={
         <Link to={Routes.Dashboard.Gcode} className="btn-outline btn-sm">
@@ -162,9 +160,7 @@ function EditorContent({ fileId, jobId, printerId }: EditorContentProps) {
   // In "new" mode we skip the metadata fetch entirely; meta starts as
   // `null` to signal "no file behind this editor yet". In "existing"
   // mode it starts undefined so the loading guard kicks in below.
-  const [meta, setMeta] = React.useState<GcodeFile | null | undefined>(
-    isNew ? null : undefined
-  );
+  const [meta, setMeta] = React.useState<GcodeFile | null | undefined>(isNew ? null : undefined);
   const [original, setOriginal] = React.useState<string>("");
   const [content, setContent] = React.useState<string>("");
   const [filename, setFilename] = React.useState<string>(isNew ? "untitled.gcode" : "");
@@ -282,7 +278,10 @@ function EditorContent({ fileId, jobId, printerId }: EditorContentProps) {
       {/* Header strip with filename + meta + save bar */}
       <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1">
-          <label htmlFor="gcode-filename" className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <label
+            htmlFor="gcode-filename"
+            className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+          >
             Dateiname
           </label>
           <input
@@ -315,10 +314,10 @@ function EditorContent({ fileId, jobId, printerId }: EditorContentProps) {
             {saving
               ? "Speichere…"
               : isNew
-              ? "Anlegen"
-              : jobId
-              ? "Speichern + im Job ersetzen"
-              : "Als neue Version speichern"}
+                ? "Anlegen"
+                : jobId
+                  ? "Speichern + im Job ersetzen"
+                  : "Als neue Version speichern"}
           </button>
         </div>
       </div>
@@ -350,8 +349,7 @@ function EditorContent({ fileId, jobId, printerId }: EditorContentProps) {
       {/* Tiny help footer — saves a confused user from hunting through
           docs to figure out why their G/M-codes are coloured. */}
       <p className="text-xs text-slate-500">
-        Highlighting:{" "}
-        <span className="font-mono text-cyan-300">G/M</span>-Befehle ·{" "}
+        Highlighting: <span className="font-mono text-cyan-300">G/M</span>-Befehle ·{" "}
         <span className="font-mono text-amber-300">X/Y/Z/E/F</span>-Achsen ·{" "}
         <span className="font-mono text-slate-500 italic">; Kommentare</span>
       </p>

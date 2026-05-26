@@ -263,7 +263,10 @@ export function BlogEditPage() {
 
         <form onSubmit={onSubmit} className="mt-10 space-y-6">
           <div>
-            <label htmlFor="title" className="block text-xs font-semibold uppercase tracking-widest text-slate-400">
+            <label
+              htmlFor="title"
+              className="block text-xs font-semibold uppercase tracking-widest text-slate-400"
+            >
               Titel
             </label>
             <input
@@ -277,7 +280,10 @@ export function BlogEditPage() {
           </div>
 
           <div>
-            <label htmlFor="slug" className="block text-xs font-semibold uppercase tracking-widest text-slate-400">
+            <label
+              htmlFor="slug"
+              className="block text-xs font-semibold uppercase tracking-widest text-slate-400"
+            >
               Slug
             </label>
             <input
@@ -291,13 +297,14 @@ export function BlogEditPage() {
               className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 font-mono text-sm text-slate-50 outline-none focus:border-cyan-400/60"
               required
             />
-            <p className="mt-1 text-xs text-slate-500">
-              URL: /blog/{form.slug || "…"}
-            </p>
+            <p className="mt-1 text-xs text-slate-500">URL: /blog/{form.slug || "…"}</p>
           </div>
 
           <div>
-            <label htmlFor="excerpt" className="block text-xs font-semibold uppercase tracking-widest text-slate-400">
+            <label
+              htmlFor="excerpt"
+              className="block text-xs font-semibold uppercase tracking-widest text-slate-400"
+            >
               Teaser (optional)
             </label>
             <textarea
@@ -352,7 +359,10 @@ export function BlogEditPage() {
                 ) : groups.length === 0 ? (
                   <p className="mt-2 text-xs text-slate-400">
                     Es gibt noch keine Gruppen.{" "}
-                    <Link to={Routes.Dashboard.Groups} className="text-cyan-300 hover:text-cyan-200">
+                    <Link
+                      to={Routes.Dashboard.Groups}
+                      className="text-cyan-300 hover:text-cyan-200"
+                    >
                       Jetzt anlegen →
                     </Link>
                   </p>
@@ -405,7 +415,10 @@ export function BlogEditPage() {
               Toolbar für Formatierung, Listen, Überschriften, Links, Bilder und Code-Blöcke.
               Live-Vorschau lässt sich rechts umschalten.
             </p>
-            <div className="mt-2 overflow-hidden rounded-xl border border-white/10" data-color-mode="dark">
+            <div
+              className="mt-2 overflow-hidden rounded-xl border border-white/10"
+              data-color-mode="dark"
+            >
               <MDEditor
                 value={form.content}
                 onChange={(value) => update("content", value ?? "")}
@@ -426,9 +439,7 @@ export function BlogEditPage() {
               onChange={(e) => update("publish", e.target.checked)}
               className="h-4 w-4 rounded border-white/20 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
             />
-            {isEdit && initial?.publishedAt
-              ? "Veröffentlicht lassen"
-              : "Jetzt veröffentlichen"}
+            {isEdit && initial?.publishedAt ? "Veröffentlicht lassen" : "Jetzt veröffentlichen"}
           </label>
 
           {saveError && <p className="text-sm text-red-300">{saveError}</p>}

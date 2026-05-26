@@ -74,7 +74,9 @@ interface ProfileFormProps {
 }
 
 function ProfileForm({ initial, error, setError }: ProfileFormProps) {
-  const [displayName, setDisplayName] = React.useState(initial.displayName ?? initial.display_name ?? "");
+  const [displayName, setDisplayName] = React.useState(
+    initial.displayName ?? initial.display_name ?? ""
+  );
   const [avatarUrl, setAvatarUrl] = React.useState(initial.avatarUrl ?? "");
   const [links, setLinks] = React.useState<SocialLinkInput[]>(
     (initial.socialLinks ?? []).map((l: SocialLink) => ({ label: l.label, url: l.url }))
@@ -148,16 +150,12 @@ function ProfileForm({ initial, error, setError }: ProfileFormProps) {
   return (
     <main className="min-h-screen bg-slate-950 py-24" id="top">
       <div className="mx-auto max-w-3xl px-6 sm:px-10 lg:px-16 pt-16">
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-400">
-          Profil
-        </p>
-        <h1 className="mt-4 text-4xl font-semibold text-slate-50 sm:text-5xl">
-          Dein Profil
-        </h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-400">Profil</p>
+        <h1 className="mt-4 text-4xl font-semibold text-slate-50 sm:text-5xl">Dein Profil</h1>
         <p className="mt-3 max-w-xl text-sm text-slate-400">
-          Anzeigename und Social-Links kannst du hier selbst ändern. Das Profilbild
-          wird bei jedem Login von deinem OAuth-Provider (GitHub) übernommen —
-          du kannst es aber manuell überschreiben.
+          Anzeigename und Social-Links kannst du hier selbst ändern. Das Profilbild wird bei jedem
+          Login von deinem OAuth-Provider (GitHub) übernommen — du kannst es aber manuell
+          überschreiben.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-10 space-y-8">
@@ -166,7 +164,10 @@ function ProfileForm({ initial, error, setError }: ProfileFormProps) {
               <AvatarPreview url={avatarUrl || null} name={initial.name} />
               <div className="flex-1 space-y-4">
                 <div>
-                  <label htmlFor="display-name" className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <label
+                    htmlFor="display-name"
+                    className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+                  >
                     Anzeigename
                   </label>
                   <input
@@ -182,7 +183,10 @@ function ProfileForm({ initial, error, setError }: ProfileFormProps) {
                   </p>
                 </div>
                 <div>
-                  <label htmlFor="avatar-url" className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <label
+                    htmlFor="avatar-url"
+                    className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+                  >
                     Avatar-URL
                   </label>
                   <input
@@ -194,9 +198,8 @@ function ProfileForm({ initial, error, setError }: ProfileFormProps) {
                     className="mt-1 block w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
                   />
                   <p className="mt-1 text-xs text-slate-500">
-                    Leer lassen, um das GitHub-Avatar zu nutzen. Bei jedem Login
-                    wird das OAuth-Avatar nachgezogen, außer du hast hier eine
-                    eigene URL hinterlegt.
+                    Leer lassen, um das GitHub-Avatar zu nutzen. Bei jedem Login wird das
+                    OAuth-Avatar nachgezogen, außer du hast hier eine eigene URL hinterlegt.
                   </p>
                 </div>
               </div>
@@ -229,10 +232,7 @@ function ProfileForm({ initial, error, setError }: ProfileFormProps) {
 
             <ul className="mt-4 space-y-3">
               {links.map((link, index) => (
-                <li
-                  key={index}
-                  className="rounded-xl border border-white/10 bg-slate-950/40 p-3"
-                >
+                <li key={index} className="rounded-xl border border-white/10 bg-slate-950/40 p-3">
                   <div className="grid gap-3 sm:grid-cols-[1fr_2fr_auto] sm:items-center">
                     <input
                       type="text"
@@ -284,9 +284,7 @@ function ProfileForm({ initial, error, setError }: ProfileFormProps) {
           </section>
 
           {error && <p className="text-sm text-red-300">{error}</p>}
-          {success && (
-            <p className="text-sm text-cyan-300">Profil gespeichert.</p>
-          )}
+          {success && <p className="text-sm text-cyan-300">Profil gespeichert.</p>}
 
           <div className="flex items-center gap-3">
             <button type="submit" className="btn" disabled={saving}>

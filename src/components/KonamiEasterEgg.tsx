@@ -18,18 +18,23 @@ import * as React from "react";
  * Egg-Trail. Wer ihn findet, hat ihn verdient.
  */
 const SEQUENCE = [
-  'ArrowUp', 'ArrowUp',
-  'ArrowDown', 'ArrowDown',
-  'ArrowLeft', 'ArrowRight',
-  'ArrowLeft', 'ArrowRight',
-  'b', 'a'
+  "ArrowUp",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowLeft",
+  "ArrowRight",
+  "b",
+  "a"
 ];
 
 function isEditable(el: EventTarget | null): boolean {
   if (!(el instanceof HTMLElement)) return false;
   if (el.isContentEditable) return true;
   const tag = el.tagName;
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
 }
 
 export function KonamiEasterEgg() {
@@ -60,21 +65,21 @@ export function KonamiEasterEgg() {
         indexRef.current = event.key === SEQUENCE[0] ? 1 : 0;
       }
     };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, []);
 
   React.useEffect(() => {
     if (!active) return;
-    const prefersReduced = globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReduced = globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const root = document.documentElement;
     if (!prefersReduced) {
-      root.style.transition = 'filter 600ms ease';
-      root.style.filter = 'hue-rotate(60deg) saturate(1.2)';
+      root.style.transition = "filter 600ms ease";
+      root.style.filter = "hue-rotate(60deg) saturate(1.2)";
     }
     const t = globalThis.setTimeout(() => {
       if (!prefersReduced) {
-        root.style.filter = '';
+        root.style.filter = "";
         // Transition behalten — wenn jemand 1× das Egg triggert, ist
         // das auch sein einmaliger Übergang. Beim Reset darf der
         // Filter wieder sanft rausfaden.

@@ -51,7 +51,10 @@ function AwardsManager() {
 
       <ul className="space-y-2">
         {awards?.map((award) => (
-          <li key={award.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+          <li
+            key={award.id}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-3"
+          >
             <div className="flex items-center gap-3">
               <AwardChip emoji={award.emoji} label={award.displayName} color={award.color} />
               <code className="text-xs text-slate-500">{award.key}</code>
@@ -61,7 +64,9 @@ function AwardsManager() {
               <button
                 type="button"
                 onClick={() =>
-                  adminUpdateAward(award.id, { isActive: !award.isActive }).then(reload).catch(console.error)
+                  adminUpdateAward(award.id, { isActive: !award.isActive })
+                    .then(reload)
+                    .catch(console.error)
                 }
                 className="btn-outline btn-sm"
               >
@@ -119,7 +124,9 @@ function CreateAwardForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <form onSubmit={submit} className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Neue Award-Kategorie</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+        Neue Award-Kategorie
+      </p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <input
           value={displayName}
@@ -147,7 +154,9 @@ function CreateAwardForm({ onCreated }: { onCreated: () => void }) {
           className="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
         >
           {COLORS.map((c) => (
-            <option key={c} value={c}>{c}</option>
+            <option key={c} value={c}>
+              {c}
+            </option>
           ))}
         </select>
       </div>

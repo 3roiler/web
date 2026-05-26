@@ -15,15 +15,12 @@ import { Routes } from "../config/routes";
  */
 export function NotFoundPage() {
   const prefersReduced =
-    typeof globalThis !== 'undefined' &&
-    typeof globalThis.matchMedia === 'function' &&
-    globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    typeof globalThis !== "undefined" &&
+    typeof globalThis.matchMedia === "function" &&
+    globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   return (
-    <main
-      className="relative isolate min-h-screen overflow-hidden bg-slate-950"
-      id="top"
-    >
+    <main className="relative isolate min-h-screen overflow-hidden bg-slate-950" id="top">
       <Seo title="Seite nicht gefunden" noindex />
 
       <ParticleField className="pointer-events-none absolute inset-0 -z-20" />
@@ -44,14 +41,20 @@ export function NotFoundPage() {
           Diese Seite gibt es nicht (mehr).
         </h2>
         <p className="mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
-          Vielleicht hat sich der Link verschoben, oder die Seite war nie hier.
-          Geh zurück zur Startseite oder versuch direkt deinen Bereich.
+          Vielleicht hat sich der Link verschoben, oder die Seite war nie hier. Geh zurück zur
+          Startseite oder versuch direkt deinen Bereich.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link to={Routes.Home} className="btn">Zur Startseite</Link>
-          <Link to={Routes.Blog} className="btn-outline">Blog lesen</Link>
-          <Link to={Routes.Streamclips.Home} className="btn-outline">Streamclips</Link>
+          <Link to={Routes.Home} className="btn">
+            Zur Startseite
+          </Link>
+          <Link to={Routes.Blog} className="btn-outline">
+            Blog lesen
+          </Link>
+          <Link to={Routes.Streamclips.Home} className="btn-outline">
+            Streamclips
+          </Link>
         </div>
       </div>
     </main>
@@ -82,14 +85,14 @@ function Glitch404({ prefersReduced }: { prefersReduced: boolean }) {
           <span
             aria-hidden="true"
             className="glitch-layer absolute inset-0 text-[6rem] font-bold tracking-tighter text-red-400/40 sm:text-[9rem]"
-            style={{ animation: 'glitch-red 6s infinite steps(1)' }}
+            style={{ animation: "glitch-red 6s infinite steps(1)" }}
           >
             404
           </span>
           <span
             aria-hidden="true"
             className="glitch-layer absolute inset-0 text-[6rem] font-bold tracking-tighter text-cyan-300/40 sm:text-[9rem]"
-            style={{ animation: 'glitch-cyan 6s infinite steps(1)' }}
+            style={{ animation: "glitch-cyan 6s infinite steps(1)" }}
           >
             404
           </span>

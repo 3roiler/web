@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { Routes } from "../../config/routes";
 import { Seo } from "../../components/Seo";
 import { clipDetailPath } from "../../lib/clip-path";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
@@ -23,7 +22,9 @@ export function StreamclipsContributorsPage() {
       .then(setRows)
       .catch((e: unknown) => {
         console.error(e);
-        setError(e instanceof ApiError ? e.message : 'Top-Einreicher konnten nicht geladen werden.');
+        setError(
+          e instanceof ApiError ? e.message : "Top-Einreicher konnten nicht geladen werden."
+        );
       });
   }, []);
 
@@ -38,12 +39,10 @@ export function StreamclipsContributorsPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#bf94ff] sm:tracking-[0.3em]">
             Streamclips Germany · Hall of Fame
           </p>
-          <h1 className="text-2xl font-semibold text-slate-50 sm:text-4xl">
-            Top-Einreicher
-          </h1>
+          <h1 className="text-2xl font-semibold text-slate-50 sm:text-4xl">Top-Einreicher</h1>
           <p className="max-w-2xl text-sm text-slate-400">
-            Wer hat die besten Clips eingereicht? Ranking aus Anzahl
-            freigegebener Clips und durchschnittlichem Score.
+            Wer hat die besten Clips eingereicht? Ranking aus Anzahl freigegebener Clips und
+            durchschnittlichem Score.
           </p>
         </header>
 
@@ -69,21 +68,21 @@ function ContributorRow({ row, rank }: { row: ClipContributor; rank: number }) {
   // Top 3 bekommen Akzent-Borders und einen Glanz auf der Rang-Zahl.
   const rankTone =
     rank === 1
-      ? 'border-amber-300/40 bg-amber-500/[0.04]'
+      ? "border-amber-300/40 bg-amber-500/[0.04]"
       : rank === 2
-        ? 'border-slate-300/30 bg-slate-100/[0.03]'
+        ? "border-slate-300/30 bg-slate-100/[0.03]"
         : rank === 3
-          ? 'border-orange-400/30 bg-orange-500/[0.03]'
-          : 'border-white/10 bg-white/5';
+          ? "border-orange-400/30 bg-orange-500/[0.03]"
+          : "border-white/10 bg-white/5";
 
   const rankColor =
     rank === 1
-      ? 'text-amber-300'
+      ? "text-amber-300"
       : rank === 2
-        ? 'text-slate-200'
+        ? "text-slate-200"
         : rank === 3
-          ? 'text-orange-300'
-          : 'text-slate-500';
+          ? "text-orange-300"
+          : "text-slate-500";
 
   const displayName = row.displayName ?? row.name;
   const avatar = safeHttpUrl(row.avatarUrl);
@@ -110,7 +109,7 @@ function ContributorRow({ row, rank }: { row: ClipContributor; rank: number }) {
         <p className="truncate text-sm font-semibold text-slate-100">{displayName}</p>
         {row.topClipId && row.topClipTitle && (
           <p className="mt-0.5 truncate text-xs text-slate-500">
-            Top-Clip:{' '}
+            Top-Clip:{" "}
             <Link
               to={clipDetailPath({ id: row.topClipId, slug: row.topClipSlug })}
               className="text-cyan-300 hover:text-cyan-200"
@@ -122,7 +121,7 @@ function ContributorRow({ row, rank }: { row: ClipContributor; rank: number }) {
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
         <span className="rounded-full border border-white/10 bg-slate-950/60 px-2 py-0.5 text-[0.7rem] font-mono text-slate-300">
-          {row.clipCount} {row.clipCount === 1 ? 'Clip' : 'Clips'}
+          {row.clipCount} {row.clipCount === 1 ? "Clip" : "Clips"}
         </span>
         {row.avgScore !== null && (
           <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-[0.7rem] font-mono text-cyan-200">

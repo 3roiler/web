@@ -28,12 +28,12 @@ import { Routes } from "../config/routes";
  */
 
 const SHORTCUTS: { keys: string[]; description: string }[] = [
-  { keys: ['g', 'h'], description: 'Zur Startseite' },
-  { keys: ['g', 'b'], description: 'Zum Blog' },
-  { keys: ['g', 's'], description: 'Zu Streamclips' },
-  { keys: ['g', 'd'], description: 'Zum Dashboard' },
-  { keys: ['?'], description: 'Diesen Dialog öffnen' },
-  { keys: ['Esc'], description: 'Dialog schließen' }
+  { keys: ["g", "h"], description: "Zur Startseite" },
+  { keys: ["g", "b"], description: "Zum Blog" },
+  { keys: ["g", "s"], description: "Zu Streamclips" },
+  { keys: ["g", "d"], description: "Zum Dashboard" },
+  { keys: ["?"], description: "Diesen Dialog öffnen" },
+  { keys: ["Esc"], description: "Dialog schließen" }
 ];
 
 const G_TIMEOUT_MS = 1200;
@@ -42,7 +42,7 @@ function isEditable(el: EventTarget | null): boolean {
   if (!(el instanceof HTMLElement)) return false;
   if (el.isContentEditable) return true;
   const tag = el.tagName;
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
 }
 
 export function KeyboardShortcuts() {
@@ -59,7 +59,7 @@ export function KeyboardShortcuts() {
 
       const key = event.key;
 
-      if (key === 'Escape') {
+      if (key === "Escape") {
         if (cheatOpen) {
           event.preventDefault();
           setCheatOpen(false);
@@ -70,7 +70,7 @@ export function KeyboardShortcuts() {
       // Cheat-Sheet kann durch `?` jederzeit geöffnet werden (Shift+/ auf
       // de-Keyboards). Wir lesen `event.key` direkt, damit das Mapping
       // sprachunabhängig funktioniert.
-      if (key === '?') {
+      if (key === "?") {
         event.preventDefault();
         setCheatOpen((open) => !open);
         return;
@@ -82,7 +82,7 @@ export function KeyboardShortcuts() {
       if (cheatOpen) return;
 
       const now = Date.now();
-      if (key === 'g' || key === 'G') {
+      if (key === "g" || key === "G") {
         gExpiresAt = now + G_TIMEOUT_MS;
         return;
       }
@@ -90,10 +90,10 @@ export function KeyboardShortcuts() {
       if (now <= gExpiresAt) {
         const lower = key.toLowerCase();
         let target: string | null = null;
-        if (lower === 'h') target = Routes.Home;
-        else if (lower === 'b') target = Routes.Blog;
-        else if (lower === 's') target = Routes.Streamclips.Home;
-        else if (lower === 'd') target = Routes.Dashboard.Home;
+        if (lower === "h") target = Routes.Home;
+        else if (lower === "b") target = Routes.Blog;
+        else if (lower === "s") target = Routes.Streamclips.Home;
+        else if (lower === "d") target = Routes.Dashboard.Home;
 
         if (target !== null) {
           event.preventDefault();
@@ -103,8 +103,8 @@ export function KeyboardShortcuts() {
       }
     };
 
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
   }, [navigate, cheatOpen]);
 
   // Fokus beim Öffnen auf den Close-Button setzen — Screenreader und
@@ -129,8 +129,8 @@ export function KeyboardShortcuts() {
     const onPointerDown = (event: PointerEvent) => {
       if (event.target === node) setCheatOpen(false);
     };
-    node.addEventListener('pointerdown', onPointerDown);
-    return () => node.removeEventListener('pointerdown', onPointerDown);
+    node.addEventListener("pointerdown", onPointerDown);
+    return () => node.removeEventListener("pointerdown", onPointerDown);
   }, [cheatOpen]);
 
   if (!cheatOpen) return null;
@@ -160,7 +160,7 @@ export function KeyboardShortcuts() {
         </div>
         <ul className="mt-5 space-y-3 text-sm">
           {SHORTCUTS.map((shortcut) => (
-            <li key={shortcut.keys.join(' ')} className="flex items-center justify-between gap-4">
+            <li key={shortcut.keys.join(" ")} className="flex items-center justify-between gap-4">
               <span className="text-slate-300">{shortcut.description}</span>
               <span className="flex items-center gap-1">
                 {shortcut.keys.map((k) => (
@@ -176,7 +176,9 @@ export function KeyboardShortcuts() {
           ))}
         </ul>
         <p className="mt-5 text-[0.7rem] text-slate-500">
-          Funktioniert nicht in Eingabefeldern. Drücke <kbd className="rounded border border-white/10 bg-slate-950 px-1">?</kbd> jederzeit zum Öffnen.
+          Funktioniert nicht in Eingabefeldern. Drücke{" "}
+          <kbd className="rounded border border-white/10 bg-slate-950 px-1">?</kbd> jederzeit zum
+          Öffnen.
         </p>
       </div>
     </div>

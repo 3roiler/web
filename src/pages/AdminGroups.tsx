@@ -27,8 +27,8 @@ export function AdminGroupsPage() {
       title="Gruppenverwaltung"
       description={
         <>
-          Gruppen bündeln Berechtigungen und Mitglieder. Änderungen an Gruppen-Berechtigungen
-          wirken sofort auf alle Mitglieder.
+          Gruppen bündeln Berechtigungen und Mitglieder. Änderungen an Gruppen-Berechtigungen wirken
+          sofort auf alle Mitglieder.
         </>
       }
     >
@@ -78,11 +78,7 @@ function GroupsContent() {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <button
-          type="button"
-          className="btn btn-sm"
-          onClick={() => setShowForm((v) => !v)}
-        >
+        <button type="button" className="btn btn-sm" onClick={() => setShowForm((v) => !v)}>
           {showForm ? "Abbrechen" : "Neue Gruppe"}
         </button>
       </div>
@@ -107,11 +103,10 @@ function GroupsContent() {
           <div key={g.id} className="rounded-2xl border border-white/10 bg-white/5 p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <h2 className="truncate text-lg font-semibold text-slate-50">
-                  {g.displayName}
-                </h2>
+                <h2 className="truncate text-lg font-semibold text-slate-50">{g.displayName}</h2>
                 <p className="text-xs text-slate-500">
-                  <code className="font-mono">{g.key}</code> · {g.memberCount} {g.memberCount === 1 ? "Mitglied" : "Mitglieder"}
+                  <code className="font-mono">{g.key}</code> · {g.memberCount}{" "}
+                  {g.memberCount === 1 ? "Mitglied" : "Mitglieder"}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -189,14 +184,14 @@ function CreateGroupForm({ onCreated }: CreateGroupFormProps) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-2xl border border-white/10 bg-white/5 p-5"
-    >
+    <form onSubmit={handleSubmit} className="rounded-2xl border border-white/10 bg-white/5 p-5">
       <h3 className="text-sm font-semibold text-slate-100">Neue Gruppe</h3>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="new-group-key" className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+          <label
+            htmlFor="new-group-key"
+            className="block text-xs font-medium uppercase tracking-wider text-slate-400"
+          >
             Key (URL-sicher)
           </label>
           <input
@@ -210,7 +205,10 @@ function CreateGroupForm({ onCreated }: CreateGroupFormProps) {
           />
         </div>
         <div>
-          <label htmlFor="new-group-display-name" className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+          <label
+            htmlFor="new-group-display-name"
+            className="block text-xs font-medium uppercase tracking-wider text-slate-400"
+          >
             Anzeigename
           </label>
           <input

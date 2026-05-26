@@ -44,10 +44,7 @@ export function PrinterDetailPage() {
       actions={
         <>
           {id && (
-            <Link
-              to={Routes.Dashboard.PrinterJobs.replace(":id", id)}
-              className="btn-outline"
-            >
+            <Link to={Routes.Dashboard.PrinterJobs.replace(":id", id)} className="btn-outline">
               Druckqueue
             </Link>
           )}
@@ -57,7 +54,13 @@ export function PrinterDetailPage() {
         </>
       }
     >
-      {() => (id ? <PrinterDetailContent id={id} /> : <p className="text-sm text-red-300">Keine Drucker-ID.</p>)}
+      {() =>
+        id ? (
+          <PrinterDetailContent id={id} />
+        ) : (
+          <p className="text-sm text-red-300">Keine Drucker-ID.</p>
+        )
+      }
     </DashboardLayout>
   );
 }
@@ -160,9 +163,7 @@ function PrinterDetailContent({ id }: { id: string }) {
     <div className="space-y-6 max-w-2xl">
       <section className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3 sm:p-6">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className={`rounded-full px-2 py-0.5 ${status.className}`}>
-            {status.label}
-          </span>
+          <span className={`rounded-full px-2 py-0.5 ${status.className}`}>{status.label}</span>
           <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-cyan-200">
             {printer.role}
           </span>
@@ -189,7 +190,10 @@ function PrinterDetailContent({ id }: { id: string }) {
         <section className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4 sm:p-6">
           <h3 className="text-sm font-semibold text-slate-100">Einstellungen</h3>
           <form onSubmit={handleRename} className="space-y-3">
-            <label htmlFor="printer-detail-name" className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <label
+              htmlFor="printer-detail-name"
+              className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+            >
               Name
             </label>
             <input
@@ -213,8 +217,8 @@ function PrinterDetailContent({ id }: { id: string }) {
         <section className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4 sm:p-6">
           <h3 className="text-sm font-semibold text-slate-100">Agent-Token</h3>
           <p className="text-xs text-slate-400">
-            Rotiere den Token, wenn er kompromittiert sein könnte oder der
-            Drucker-Host wechselt. Der alte Token wird sofort ungültig.
+            Rotiere den Token, wenn er kompromittiert sein könnte oder der Drucker-Host wechselt.
+            Der alte Token wird sofort ungültig.
           </p>
           {rotated ? (
             <div className="space-y-2">
@@ -227,7 +231,11 @@ function PrinterDetailContent({ id }: { id: string }) {
               <button
                 type="button"
                 onClick={async () => {
-                  try { await navigator.clipboard.writeText(rotated); } catch { /* noop */ }
+                  try {
+                    await navigator.clipboard.writeText(rotated);
+                  } catch {
+                    /* noop */
+                  }
                 }}
                 className="btn-outline btn-sm"
               >
@@ -235,7 +243,12 @@ function PrinterDetailContent({ id }: { id: string }) {
               </button>
             </div>
           ) : (
-            <button type="button" onClick={handleRotate} className="btn-outline btn-sm" disabled={busy}>
+            <button
+              type="button"
+              onClick={handleRotate}
+              className="btn-outline btn-sm"
+              disabled={busy}
+            >
               Token rotieren
             </button>
           )}
@@ -273,7 +286,7 @@ const ROLE_LABELS: Record<PrinterRole, string> = {
   viewer: "Viewer"
 };
 
-const ROLE_HINTS: Record<Exclude<PrinterRole, 'owner'>, string> = {
+const ROLE_HINTS: Record<Exclude<PrinterRole, "owner">, string> = {
   operator: "Kann genehmigen, starten, Queue verwalten.",
   contributor: "Kann eigene Druckanfragen stellen und editieren.",
   viewer: "Sieht nur den aktuell laufenden Job."
@@ -301,7 +314,9 @@ function PrinterAccessSection({ printerId }: AccessSectionProps) {
       .then(setRows)
       .catch((err: unknown) => {
         console.error(err);
-        setError(err instanceof ApiError ? err.message : "Zugriffsliste konnte nicht geladen werden.");
+        setError(
+          err instanceof ApiError ? err.message : "Zugriffsliste konnte nicht geladen werden."
+        );
       });
   }, [printerId]);
 
@@ -309,7 +324,10 @@ function PrinterAccessSection({ printerId }: AccessSectionProps) {
     reload();
   }, [reload]);
 
-  async function handleRoleChange(row: PrinterAccessWithUser, newRole: Exclude<PrinterRole, 'owner'>) {
+  async function handleRoleChange(
+    row: PrinterAccessWithUser,
+    newRole: Exclude<PrinterRole, "owner">
+  ) {
     setBusy(row.id);
     setError(null);
     try {
@@ -328,16 +346,20 @@ function PrinterAccessSection({ printerId }: AccessSectionProps) {
     }
   }
 
-  async function handleFlagToggle(row: PrinterAccessWithUser, flag: 'canViewCamera' | 'canViewQueue', value: boolean) {
-    if (row.role === 'owner') return; // never touch owner row
+  async function handleFlagToggle(
+    row: PrinterAccessWithUser,
+    flag: "canViewCamera" | "canViewQueue",
+    value: boolean
+  ) {
+    if (row.role === "owner") return; // never touch owner row
     setBusy(row.id);
     setError(null);
     try {
       await grantPrinterAccess(printerId, {
         userId: row.userId,
-        role: row.role as Exclude<PrinterRole, 'owner'>,
-        canViewCamera: flag === 'canViewCamera' ? value : row.canViewCamera,
-        canViewQueue: flag === 'canViewQueue' ? value : row.canViewQueue
+        role: row.role as Exclude<PrinterRole, "owner">,
+        canViewCamera: flag === "canViewCamera" ? value : row.canViewCamera,
+        canViewQueue: flag === "canViewQueue" ? value : row.canViewQueue
       });
       reload();
     } catch (err: unknown) {
@@ -406,13 +428,13 @@ function PrinterAccessSection({ printerId }: AccessSectionProps) {
 interface AccessRowProps {
   row: PrinterAccessWithUser;
   busy: boolean;
-  onRoleChange: (role: Exclude<PrinterRole, 'owner'>) => void;
-  onFlagToggle: (flag: 'canViewCamera' | 'canViewQueue', value: boolean) => void;
+  onRoleChange: (role: Exclude<PrinterRole, "owner">) => void;
+  onFlagToggle: (flag: "canViewCamera" | "canViewQueue", value: boolean) => void;
   onRevoke: () => void;
 }
 
 function AccessRow({ row, busy, onRoleChange, onFlagToggle, onRevoke }: AccessRowProps) {
-  const isOwner = row.role === 'owner';
+  const isOwner = row.role === "owner";
   const label = row.userDisplayName || row.userName;
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-white/5 bg-slate-950/40 p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -444,29 +466,35 @@ function AccessRow({ row, busy, onRoleChange, onFlagToggle, onRevoke }: AccessRo
           <>
             <select
               value={row.role}
-              onChange={(e) => onRoleChange(e.target.value as Exclude<PrinterRole, 'owner'>)}
+              onChange={(e) => onRoleChange(e.target.value as Exclude<PrinterRole, "owner">)}
               disabled={busy}
               className="rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1 text-xs text-slate-100"
-              title={ROLE_HINTS[row.role as Exclude<PrinterRole, 'owner'>]}
+              title={ROLE_HINTS[row.role as Exclude<PrinterRole, "owner">]}
             >
               <option value="operator">Operator</option>
               <option value="contributor">Contributor</option>
               <option value="viewer">Viewer</option>
             </select>
-            <label className="flex items-center gap-1 text-xs text-slate-400" title="Queue + Anfragen sichtbar">
+            <label
+              className="flex items-center gap-1 text-xs text-slate-400"
+              title="Queue + Anfragen sichtbar"
+            >
               <input
                 type="checkbox"
                 checked={row.canViewQueue}
-                onChange={(e) => onFlagToggle('canViewQueue', e.target.checked)}
+                onChange={(e) => onFlagToggle("canViewQueue", e.target.checked)}
                 disabled={busy}
               />
               Queue
             </label>
-            <label className="flex items-center gap-1 text-xs text-slate-400" title="Kamera-Stream sichtbar">
+            <label
+              className="flex items-center gap-1 text-xs text-slate-400"
+              title="Kamera-Stream sichtbar"
+            >
               <input
                 type="checkbox"
                 checked={row.canViewCamera}
-                onChange={(e) => onFlagToggle('canViewCamera', e.target.checked)}
+                onChange={(e) => onFlagToggle("canViewCamera", e.target.checked)}
                 disabled={busy}
               />
               Kamera
@@ -498,7 +526,7 @@ function AccessInvite({ printerId, existingUserIds, onGranted, onError }: Access
   const [results, setResults] = React.useState<UserSummary[]>([]);
   const [searching, setSearching] = React.useState(false);
   const [selected, setSelected] = React.useState<UserSummary | null>(null);
-  const [role, setRole] = React.useState<Exclude<PrinterRole, 'owner'>>("contributor");
+  const [role, setRole] = React.useState<Exclude<PrinterRole, "owner">>("contributor");
   const [canViewQueue, setCanViewQueue] = React.useState(false);
   const [canViewCamera, setCanViewCamera] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
@@ -542,7 +570,7 @@ function AccessInvite({ printerId, existingUserIds, onGranted, onError }: Access
   // operators usually want it on, contributors/viewers usually off.
   // The owner can still override manually.
   React.useEffect(() => {
-    setCanViewQueue(role === 'operator');
+    setCanViewQueue(role === "operator");
   }, [role]);
 
   function clearSelection() {
@@ -581,7 +609,12 @@ function AccessInvite({ printerId, existingUserIds, onGranted, onError }: Access
       {selected ? (
         <div className="flex items-center gap-3 rounded-xl border border-cyan-400/30 bg-cyan-500/5 p-3">
           {selected.avatarUrl ? (
-            <img src={selected.avatarUrl} alt="" className="h-8 w-8 rounded-full" referrerPolicy="no-referrer" />
+            <img
+              src={selected.avatarUrl}
+              alt=""
+              className="h-8 w-8 rounded-full"
+              referrerPolicy="no-referrer"
+            />
           ) : (
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-xs font-semibold text-slate-300">
               {(selected.displayName || selected.name).slice(0, 2).toUpperCase()}
@@ -593,7 +626,11 @@ function AccessInvite({ printerId, existingUserIds, onGranted, onError }: Access
             </p>
             <p className="truncate text-xs text-slate-500">@{selected.name}</p>
           </div>
-          <button type="button" onClick={clearSelection} className="text-xs text-slate-400 hover:text-slate-200">
+          <button
+            type="button"
+            onClick={clearSelection}
+            className="text-xs text-slate-400 hover:text-slate-200"
+          >
             ändern
           </button>
         </div>
@@ -625,7 +662,12 @@ function AccessInvite({ printerId, existingUserIds, onGranted, onError }: Access
                   className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-white/5"
                 >
                   {u.avatarUrl ? (
-                    <img src={u.avatarUrl} alt="" className="h-6 w-6 rounded-full" referrerPolicy="no-referrer" />
+                    <img
+                      src={u.avatarUrl}
+                      alt=""
+                      className="h-6 w-6 rounded-full"
+                      referrerPolicy="no-referrer"
+                    />
                   ) : (
                     <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-700 text-[10px] font-semibold text-slate-300">
                       {(u.displayName || u.name).slice(0, 2).toUpperCase()}
@@ -645,13 +687,16 @@ function AccessInvite({ printerId, existingUserIds, onGranted, onError }: Access
       {selected && (
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400" htmlFor="invite-role">
+            <label
+              className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+              htmlFor="invite-role"
+            >
               Rolle
             </label>
             <select
               id="invite-role"
               value={role}
-              onChange={(e) => setRole(e.target.value as Exclude<PrinterRole, 'owner'>)}
+              onChange={(e) => setRole(e.target.value as Exclude<PrinterRole, "owner">)}
               className="mt-1 block rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1 text-sm text-slate-100"
             >
               <option value="operator">{ROLE_LABELS.operator}</option>

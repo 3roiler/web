@@ -44,14 +44,18 @@ export function StreamclipsHomePage() {
         // bei einem leeren Feed fallen wir auf die anderen Carousels
         // zurück und zeigen einfach kein „Für dich"-Band.
         if (user) {
-          getPersonalClipFeed(12).then(setForYou).catch(() => undefined);
+          getPersonalClipFeed(12)
+            .then(setForYou)
+            .catch(() => undefined);
         }
       })
       .catch(() => setMe(null));
     browseClips()
       .then(setBrowse)
       .catch(() => setBrowseError("Übersicht konnte nicht geladen werden."));
-    getLeaderboard(undefined, 12, "month").then(setTop30).catch(() => undefined);
+    getLeaderboard(undefined, 12, "month")
+      .then(setTop30)
+      .catch(() => undefined);
   }, []);
 
   // Debounced Volltextsuche.
@@ -76,7 +80,10 @@ export function StreamclipsHomePage() {
 
   return (
     <main className="min-h-screen bg-slate-950 pt-20 pb-16 sm:pt-24" id="top">
-      <Seo title="Streamclips Germany — deutsche Twitch-Clips" description="Die besten deutschen Twitch-Clips, von der Community gewählt. Entdecken, bewerten und einreichen." />
+      <Seo
+        title="Streamclips Germany — deutsche Twitch-Clips"
+        description="Die besten deutschen Twitch-Clips, von der Community gewählt. Entdecken, bewerten und einreichen."
+      />
       {/* CollectionPage — explizites Signal an Google, dass diese Seite
           eine Sammlung weiterer Inhalte ist (kein einzelner Artikel/Video).
           Hilft bei der korrekten Klassifizierung als „Hub" der Plattform.
@@ -99,7 +106,12 @@ export function StreamclipsHomePage() {
           "@type": "BreadcrumbList",
           itemListElement: [
             { "@type": "ListItem", position: 1, name: "Start", item: `${SITE_URL}/` },
-            { "@type": "ListItem", position: 2, name: "Streamclips Germany", item: `${SITE_URL}/streamclips` }
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Streamclips Germany",
+              item: `${SITE_URL}/streamclips`
+            }
           ]
         }}
       />
@@ -134,8 +146,12 @@ export function StreamclipsHomePage() {
             Die besten deutschen Twitch-Clips — von der Community gewählt.
           </h1>
           <div className="flex flex-wrap gap-3 pt-1">
-            <Link to={Routes.Streamclips.Vote} className={TWITCH_BTN}>Clips bewerten</Link>
-            <Link to={Routes.Streamclips.Submit} className="btn-outline">Clip einreichen</Link>
+            <Link to={Routes.Streamclips.Vote} className={TWITCH_BTN}>
+              Clips bewerten
+            </Link>
+            <Link to={Routes.Streamclips.Submit} className="btn-outline">
+              Clip einreichen
+            </Link>
             {me === null && (
               <button type="button" onClick={() => loginToTwitch()} className="btn-outline">
                 Mit Twitch anmelden
@@ -213,7 +229,9 @@ function BrowseSections({
     return (
       <p className="text-sm text-slate-500">
         Noch keine freigegebenen Clips.{" "}
-        <Link to={Routes.Streamclips.Submit} className="text-[#bf94ff] hover:underline">Reiche den ersten ein →</Link>
+        <Link to={Routes.Streamclips.Submit} className="text-[#bf94ff] hover:underline">
+          Reiche den ersten ein →
+        </Link>
       </p>
     );
   }
@@ -240,7 +258,9 @@ function BrowseSections({
       />
       {browse.byCategory.length > 0 && (
         <div className="space-y-6">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Nach Kategorie</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Nach Kategorie
+          </h2>
           {browse.byCategory.map((row) => (
             <ClipCarousel key={row.gameId} title={row.name} clips={row.clips} />
           ))}
@@ -248,7 +268,9 @@ function BrowseSections({
       )}
       {browse.byAward.length > 0 && (
         <div className="space-y-6">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Nach Bewertung</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Nach Bewertung
+          </h2>
           {browse.byAward.map((row) => (
             <ClipCarousel
               key={row.key}

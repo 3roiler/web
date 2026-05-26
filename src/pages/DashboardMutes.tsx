@@ -1,12 +1,7 @@
 import * as React from "react";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { safeHttpUrl } from "../lib/url";
-import {
-  listCommentMutes,
-  unmuteUserForComments,
-  ApiError,
-  type CommentMute
-} from "../services";
+import { listCommentMutes, unmuteUserForComments, ApiError, type CommentMute } from "../services";
 
 /**
  * Übersicht aller aktiven Comment-Mutes. Moderatoren können Einträge
@@ -29,14 +24,14 @@ export function DashboardMutesPage() {
 }
 
 function formatRelativeOrAbsolute(iso: string | null): string {
-  if (!iso) return 'unbefristet';
+  if (!iso) return "unbefristet";
   const date = new Date(iso);
-  return date.toLocaleString('de-DE', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  return date.toLocaleString("de-DE", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
   });
 }
 
@@ -50,7 +45,7 @@ function MutesList() {
       .then(setMutes)
       .catch((err: unknown) => {
         console.error(err);
-        setError(err instanceof ApiError ? err.message : 'Mutes konnten nicht geladen werden.');
+        setError(err instanceof ApiError ? err.message : "Mutes konnten nicht geladen werden.");
       });
   }, []);
 
@@ -65,7 +60,7 @@ function MutesList() {
       reload();
     } catch (err) {
       console.error(err);
-      setError(err instanceof ApiError ? err.message : 'Unmute fehlgeschlagen.');
+      setError(err instanceof ApiError ? err.message : "Unmute fehlgeschlagen.");
     } finally {
       setBusyId(null);
     }
@@ -75,9 +70,7 @@ function MutesList() {
   if (!mutes) return <p className="text-sm text-slate-400">Lade…</p>;
   if (mutes.length === 0) {
     return (
-      <p className="text-sm text-slate-500">
-        Niemand ist aktuell vom Kommentieren ausgeschlossen.
-      </p>
+      <p className="text-sm text-slate-500">Niemand ist aktuell vom Kommentieren ausgeschlossen.</p>
     );
   }
 
@@ -87,9 +80,7 @@ function MutesList() {
       <ul className="space-y-3">
         {mutes.map((m) => {
           const isAnonymized = m.userDeletedAt !== null;
-          const name = isAnonymized
-            ? 'Gelöschter Nutzer'
-            : (m.userDisplayName ?? m.userName);
+          const name = isAnonymized ? "Gelöschter Nutzer" : (m.userDisplayName ?? m.userName);
           const avatar = isAnonymized ? undefined : safeHttpUrl(m.userAvatarUrl);
           return (
             <li key={m.userId} className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -102,14 +93,14 @@ function MutesList() {
                   />
                 ) : (
                   <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-900 text-sm text-slate-300">
-                    {isAnonymized ? '×' : name.slice(0, 1).toUpperCase()}
+                    {isAnonymized ? "×" : name.slice(0, 1).toUpperCase()}
                   </span>
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-100">{name}</p>
                   <p className="text-[0.7rem] text-slate-500">
-                    bis: {formatRelativeOrAbsolute(m.mutedUntil)} ·{' '}
-                    seit: {formatRelativeOrAbsolute(m.createdAt)}
+                    bis: {formatRelativeOrAbsolute(m.mutedUntil)} · seit:{" "}
+                    {formatRelativeOrAbsolute(m.createdAt)}
                   </p>
                 </div>
                 <button
@@ -118,7 +109,7 @@ function MutesList() {
                   onClick={() => unmute(m.userId)}
                   className="btn-outline btn-sm disabled:opacity-50"
                 >
-                  {busyId === m.userId ? 'Unmute…' : 'Unmute'}
+                  {busyId === m.userId ? "Unmute…" : "Unmute"}
                 </button>
               </div>
               <p className="mt-3 text-sm leading-relaxed text-slate-300">

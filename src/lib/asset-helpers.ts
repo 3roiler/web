@@ -24,7 +24,7 @@ export const DEFAULT_ASSET_MAX_BYTES = 52428800;
  */
 export function readMaxBytes(globalKey: string): number {
   const override = (globalThis as unknown as Record<string, unknown>)[globalKey];
-  return typeof override === 'number' && Number.isFinite(override) && override > 0
+  return typeof override === "number" && Number.isFinite(override) && override > 0
     ? override
     : DEFAULT_ASSET_MAX_BYTES;
 }
@@ -40,9 +40,9 @@ export function formatBytes(bytes: number): string {
  * file-list rows next to the size badge.
  */
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString('de-DE', {
-    dateStyle: 'short',
-    timeStyle: 'short'
+  return new Date(iso).toLocaleString("de-DE", {
+    dateStyle: "short",
+    timeStyle: "short"
   });
 }
 

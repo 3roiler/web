@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { Routes } from "../../config/routes";
 import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
@@ -31,7 +30,9 @@ export function LeaderboardPage() {
   const [period, setPeriod] = React.useState<LeaderboardPeriod>("all");
 
   React.useEffect(() => {
-    getSections().then(setSections).catch(() => undefined);
+    getSections()
+      .then(setSections)
+      .catch(() => undefined);
   }, []);
 
   React.useEffect(() => {
@@ -46,7 +47,10 @@ export function LeaderboardPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 pt-20 pb-16 sm:pt-24" id="top">
-      <Seo title="Top-Clips — Streamclips Germany" description="Die bestbewerteten deutschen Twitch-Clips, von der Community gewählt — Leaderboard für Allzeit, 30 und 7 Tage." />
+      <Seo
+        title="Top-Clips — Streamclips Germany"
+        description="Die bestbewerteten deutschen Twitch-Clips, von der Community gewählt — Leaderboard für Allzeit, 30 und 7 Tage."
+      />
       {/* Breadcrumb — Home > Streamclips > Leaderboard. Sichtbar als
           Pfad in Googles SERPs statt der nackten URL. */}
       <JsonLd
@@ -55,8 +59,18 @@ export function LeaderboardPage() {
           "@type": "BreadcrumbList",
           itemListElement: [
             { "@type": "ListItem", position: 1, name: "Start", item: `${SITE_URL}/` },
-            { "@type": "ListItem", position: 2, name: "Streamclips Germany", item: `${SITE_URL}/streamclips` },
-            { "@type": "ListItem", position: 3, name: "Top-Clips", item: `${SITE_URL}/streamclips/leaderboard` }
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Streamclips Germany",
+              item: `${SITE_URL}/streamclips`
+            },
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: "Top-Clips",
+              item: `${SITE_URL}/streamclips/leaderboard`
+            }
           ]
         }}
       />
@@ -97,7 +111,9 @@ export function LeaderboardPage() {
             >
               <option value="">Alle Sektionen</option>
               {sections.map((s) => (
-                <option key={s.key} value={s.key}>{s.label}</option>
+                <option key={s.key} value={s.key}>
+                  {s.label}
+                </option>
               ))}
             </select>
           )}
@@ -178,7 +194,13 @@ function LeaderboardRow({ clip, rank }: { clip: ClipWithContext; rank: number })
         {clip.awards.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {clip.awards.slice(0, 4).map((a) => (
-              <AwardChip key={a.key} emoji={a.emoji} label={a.displayName} color={a.color} count={a.count} />
+              <AwardChip
+                key={a.key}
+                emoji={a.emoji}
+                label={a.displayName}
+                color={a.color}
+                count={a.count}
+              />
             ))}
           </div>
         )}

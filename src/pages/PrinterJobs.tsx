@@ -35,15 +35,15 @@ const STATE_META: Record<PrintJobState, { label: string; className: string }> = 
   cancelled: { label: "Abgebrochen", className: "bg-slate-600/20 text-slate-400" }
 };
 
-const NON_TERMINAL: PrintJobState[] = ['requested', 'queued', 'transferring', 'printing', 'paused'];
+const NON_TERMINAL: PrintJobState[] = ["requested", "queued", "transferring", "printing", "paused"];
 const HISTORY_LIMIT = 50;
 
 function canModerate(role: PrinterRole): boolean {
-  return role === 'owner' || role === 'operator';
+  return role === "owner" || role === "operator";
 }
 
 function canSubmit(role: PrinterRole): boolean {
-  return role !== 'viewer';
+  return role !== "viewer";
 }
 
 function formatDate(iso: string | null | undefined): string {
@@ -65,7 +65,9 @@ function gcodeLabel(file: GcodeFile | undefined): string {
     metaParts.push(h > 0 ? `${h}h ${m}m` : `${m}m`);
   }
   if (file.metadata.filamentGrams) metaParts.push(`${file.metadata.filamentGrams.toFixed(0)}g`);
-  return metaParts.length > 0 ? `${file.originalFilename} — ${metaParts.join(" · ")}` : file.originalFilename;
+  return metaParts.length > 0
+    ? `${file.originalFilename} — ${metaParts.join(" · ")}`
+    : file.originalFilename;
 }
 
 export function PrinterJobsPage() {
@@ -84,7 +86,13 @@ export function PrinterJobsPage() {
         ) : null
       }
     >
-      {({ me }) => (id ? <JobsContent printerId={id} me={me} /> : <p className="text-sm text-red-300">Keine Drucker-ID.</p>)}
+      {({ me }) =>
+        id ? (
+          <JobsContent printerId={id} me={me} />
+        ) : (
+          <p className="text-sm text-red-300">Keine Drucker-ID.</p>
+        )
+      }
     </DashboardLayout>
   );
 }
@@ -122,7 +130,9 @@ function JobsContent({ printerId, me }: { printerId: string; me: User }) {
 
   React.useEffect(() => {
     reload();
-    listGcodeFiles().then(setGcodes).catch((e: unknown) => console.error(e));
+    listGcodeFiles()
+      .then(setGcodes)
+      .catch((e: unknown) => console.error(e));
   }, [reload]);
 
   // Poll while anything is non-terminal. Idle tabs stop pinging.
@@ -143,8 +153,8 @@ function JobsContent({ printerId, me }: { printerId: string; me: User }) {
 
   // Split the list by semantic buckets. `currentJob` is pulled in
   // separately (it always reflects the single in-flight one).
-  const requested = (jobs ?? []).filter((j) => j.state === 'requested');
-  const queued = (jobs ?? []).filter((j) => j.state === 'queued');
+  const requested = (jobs ?? []).filter((j) => j.state === "requested");
+  const queued = (jobs ?? []).filter((j) => j.state === "queued");
   const history = (jobs ?? []).filter((j) => !NON_TERMINAL.includes(j.state));
   const gcodeById = new Map((gcodes ?? []).map((f) => [f.id, f]));
 
@@ -197,7 +207,9 @@ function JobsContent({ printerId, me }: { printerId: string; me: User }) {
   }
 
   async function handleStart(job: PrintJob) {
-    const ok = globalThis.confirm(`Job "${gcodeById.get(job.gcodeFileId)?.originalFilename ?? job.id}" jetzt starten?`);
+    const ok = globalThis.confirm(
+      `Job "${gcodeById.get(job.gcodeFileId)?.originalFilename ?? job.id}" jetzt starten?`
+    );
     if (!ok) return;
     setBusyJob(job.id);
     try {
@@ -248,12 +260,11 @@ function JobsContent({ printerId, me }: { printerId: string; me: User }) {
    * tease the user with a control that 403s.
    */
   function editUrlFor(job: PrintJob): string | null {
-    if (job.state !== 'requested' && job.state !== 'queued') return null;
-    const ok =
-      isModerator || (job.state === 'requested' && job.userId === me.id);
+    if (job.state !== "requested" && job.state !== "queued") return null;
+    const ok = isModerator || (job.state === "requested" && job.userId === me.id);
     if (!ok) return null;
     return (
-      Routes.Dashboard.GcodeEdit.replace(':id', job.gcodeFileId) +
+      Routes.Dashboard.GcodeEdit.replace(":id", job.gcodeFileId) +
       `?jobId=${encodeURIComponent(job.id)}&printerId=${encodeURIComponent(printerId)}`
     );
   }
@@ -278,7 +289,8 @@ function JobsContent({ printerId, me }: { printerId: string; me: User }) {
         <div className="flex items-baseline justify-between">
           <h3 className="text-sm font-semibold text-slate-100">{printer.name}</h3>
           <span className="text-xs text-slate-500">
-            {printer.model} · Rolle: <span className="font-mono text-slate-300">{printer.role}</span>
+            {printer.model} · Rolle:{" "}
+            <span className="font-mono text-slate-300">{printer.role}</span>
           </span>
         </div>
       </header>
@@ -320,7 +332,10 @@ function JobsContent({ printerId, me }: { printerId: string; me: User }) {
           </p>
           <form onSubmit={handleCreate} className="mt-4 space-y-3">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400" htmlFor="job-gcode">
+              <label
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+                htmlFor="job-gcode"
+              >
                 G-Code
               </label>
               <select
@@ -417,7 +432,7 @@ function JobsContent({ printerId, me }: { printerId: string; me: User }) {
           <p className="text-xs text-slate-500">
             {isModerator
               ? 'Wähle explizit den nächsten Job mit "Starten".'
-              : 'Dein approved Job wartet, bis der Owner ihn startet.'}
+              : "Dein approved Job wartet, bis der Owner ihn startet."}
           </p>
           {queued.map((job) => (
             <JobCard
@@ -482,7 +497,19 @@ interface JobCardProps {
 }
 
 function JobCard(props: JobCardProps) {
-  const { job, file, busy, expanded, editGcodeUrl, onApprove, onReject, onStart, onCancel, onPriorityBump, onToggleExpand } = props;
+  const {
+    job,
+    file,
+    busy,
+    expanded,
+    editGcodeUrl,
+    onApprove,
+    onReject,
+    onStart,
+    onCancel,
+    onPriorityBump,
+    onToggleExpand
+  } = props;
   const meta = STATE_META[job.state];
 
   return (
@@ -491,11 +518,19 @@ function JobCard(props: JobCardProps) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className={`rounded-full px-2 py-0.5 ${meta.className}`}>{meta.label}</span>
-            {job.progress !== null && <span className="text-slate-400">{formatProgress(job.progress)}</span>}
-            {job.state === 'queued' && <span className="text-slate-500">Priorität {job.priority}</span>}
+            {job.progress !== null && (
+              <span className="text-slate-400">{formatProgress(job.progress)}</span>
+            )}
+            {job.state === "queued" && (
+              <span className="text-slate-500">Priorität {job.priority}</span>
+            )}
           </div>
           <p className="mt-2 truncate text-sm font-semibold text-slate-50">
-            {file ? file.originalFilename : <span className="text-slate-500 italic">G-Code gelöscht</span>}
+            {file ? (
+              file.originalFilename
+            ) : (
+              <span className="text-slate-500 italic">G-Code gelöscht</span>
+            )}
           </p>
           <p className="mt-0.5 text-xs text-slate-500">
             Eingereiht {formatDate(job.queuedAt)}
@@ -510,9 +545,7 @@ function JobCard(props: JobCardProps) {
               />
             </div>
           )}
-          {job.errorMessage && (
-            <p className="mt-2 text-xs text-red-300">{job.errorMessage}</p>
-          )}
+          {job.errorMessage && <p className="mt-2 text-xs text-red-300">{job.errorMessage}</p>}
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <button type="button" onClick={onToggleExpand} className="btn-outline btn-sm">
