@@ -9,7 +9,17 @@
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\""
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,json,md}": [
+      "prettier --write"
+    ]
   },
   "repository": {
     "type": "git",
@@ -29,6 +39,8 @@
     "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^10.4.0",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
     "prettier": "^3.8.3",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
