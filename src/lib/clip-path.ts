@@ -53,19 +53,26 @@ export type ParsedClipPathId =
  */
 export function slugifyTitle(title: string | null | undefined): string {
   let s = (title ?? '').toLowerCase();
-  s = s.replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+  // Single-char Substitutionen via `replaceAll` (Sonar S7781) — kein Regex
+  // nötig und liest sich klarer als `/ä/g`.
+  s = s.replaceAll('ä', 'ae').replaceAll('ö', 'oe').replaceAll('ü', 'ue').replaceAll('ß', 'ss');
+  s = s.replaceAll('ç', 'c').replaceAll('ñ', 'n');
+  // Diakritika gleicher Grundvokale in einem Schritt — hier muss Regex sein
+  // (Character Class).
   s = s.replace(/[éèêë]/g, 'e');
   s = s.replace(/[áàâãå]/g, 'a');
   s = s.replace(/[óòôõø]/g, 'o');
   s = s.replace(/[úùûü]/g, 'u');
   s = s.replace(/[íìîï]/g, 'i');
-  s = s.replace(/ç/g, 'c').replace(/ñ/g, 'n');
   s = s.replace(/[^a-z0-9]+/g, '-');
-  // Leading/trailing dashes ohne Regex trimmen (Sonar S5852).
+  // Leading/trailing dashes ohne Regex trimmen (Sonar S5852). `codePointAt`
+  // statt `charCodeAt` (Sonar S7758) — für ASCII identisch, aber Unicode-
+  // korrekt; `'-'` ist Code Point 0x2D = 45.
+  const dashCp = 0x2D;
   let start = 0;
-  while (start < s.length && s.charCodeAt(start) === 45) start++;
+  while (start < s.length && s.codePointAt(start) === dashCp) start++;
   let end = s.length;
-  while (end > start && s.charCodeAt(end - 1) === 45) end--;
+  while (end > start && s.codePointAt(end - 1) === dashCp) end--;
   s = s.slice(start, end).slice(0, 100);
   return s || 'clip';
 }
