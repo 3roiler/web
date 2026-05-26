@@ -31,7 +31,7 @@
 		# Endpoint lebt in der api unter `/csp-report`; CSP-Reports
 		# loggen wir log-only (kein Persistieren — meist Extension-Noise).
 		Reporting-Endpoints "csp-endpoint=\"https://api.broiler.dev/prod/csp-report\""
-		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; frame-src https://clips.twitch.tv https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net; connect-src 'self' https://api.broiler.dev; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; report-uri https://api.broiler.dev/prod/csp-report; report-to csp-endpoint"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; frame-src https://clips.twitch.tv https://*.googlesyndication.com https://*.google.com https://*.doubleclick.net; connect-src 'self' https://api.broiler.dev https://*.ingest.de.sentry.io; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; report-uri https://api.broiler.dev/prod/csp-report; report-to csp-endpoint"
 	}
 
 	# Long-term cache for hashed/static assets (set before the handlers so
