@@ -1,6 +1,10 @@
 /**
  * API Konfiguration
  * Ermöglicht das Wechseln zwischen verschiedenen API-Umgebungen.
+ *
+ * Build-Runtime: Node 26 (Dockerfile + devcontainer + Lighthouse-CI
+ * sind in IDEA-02 harmonisiert). Vite 8 läuft offiziell ab Node 22;
+ * 26 ist die aktive Major-Linie, matched die Produktions-Container.
  */
 
 export const ApiEnvironments = {
