@@ -1,14 +1,17 @@
-name: Lighthouse
+name: Lighthouse + Axe
 
-# Lighthouse-CI gegen den lokal gebauten Production-Build. Läuft auf
-# jeden PR, der Frontend-Dateien anfasst, und auf jeden Push auf main.
-# Wir vergleichen NICHT gegen frühere Runs (keine LHCI-Server-DB) —
-# stattdessen fail-on-thresholds: Performance & A11y müssen ≥ 0.9
-# bleiben, SEO ≥ 0.95, Best Practices ≥ 0.9. Werte sind konservativ
-# kalibriert auf den ist-Stand.
+# Lighthouse-CI + axe-core gegen den lokal gebauten Production-Build.
+# Läuft auf jeden PR, der Frontend-Dateien anfasst, und auf jeden Push
+# auf main.
+#
+# Lighthouse: fail-on-thresholds (warn-only, kein hartes Gate) für
+#   Performance, A11y, SEO, Best Practices.
+# Axe (IDEA-20): tiefergehende Accessibility-Audits als Lighthouse-
+#   intern. Lighthouse nutzt nur den WCAG-A/AA-Core-Subset; `@axe-core/cli`
+#   deckt zusätzlich Experimental + Best-Practice-Rules ab.
 #
 # Bewusst NUR `/`, `/blog`, `/streamclips` als Routen — Dashboard ist
-# auth-gated und Lighthouse loggt sich nicht ein.
+# auth-gated und kein Crawler/Audit loggt sich ein.
 
 on:
   pull_request:
@@ -52,3 +55,14 @@ jobs:
         run: lhci autorun --config=lighthouserc.json
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      # axe-core Deep-A11y-Scan gegen den gleichen Build (IDEA-20).
+      # `start-server-and-test` startet `npm run preview` (vite preview
+      # auf Port 4173), wartet bis er HTTP 200 liefert, ruft dann
+      # `npm run a11y` (axe-cli) auf und tötet den Server nach Abschluss.
+      # `continue-on-error: true` macht den Step informational solange
+      # wir noch a11y-Backlog haben — das Ziel ist Sichtbarkeit, nicht
+      # ein hartes Gate (analog Lighthouse-Schwellen oben).
+      - name: Run axe-core a11y scan
+        run: npm run a11y:ci
+        continue-on-error: true
