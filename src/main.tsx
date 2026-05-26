@@ -1,6 +1,11 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes as RouterRoutes, Route } from "react-router-dom";
+// Sentry-Init MUSS vor dem ersten React-Render passieren — sonst
+// fängt der ErrorBoundary keine Initial-Render-Errors mit. No-op
+// wenn `VITE_SENTRY_DSN` leer ist (siehe lib/sentry.ts).
+import { initSentry, Sentry } from "./lib/sentry";
+initSentry();
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { KeyboardShortcuts } from "./components/KeyboardShortcuts";
@@ -166,4 +171,27 @@ const rootEl = document.getElementById("root");
 if (!rootEl) {
   throw new Error("Missing #root element in index.html");
 }
-createRoot(rootEl).render(<AppRoot />);
+// `Sentry.ErrorBoundary` fängt jeden Render-Error in der Komponenten-
+// Tree, schickt ihn an Sentry und zeigt einen schlanken Fallback. Bei
+// fehlendem DSN ist das ein normaler React-ErrorBoundary ohne Side-
+// Effects — wir wrappen unbedingt, damit kein Whitescreen entsteht.
+createRoot(rootEl).render(
+  <Sentry.ErrorBoundary
+    fallback={
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 p-6">
+        <div className="max-w-md text-center">
+          <h1 className="text-2xl font-semibold text-slate-100">Etwas ist schiefgelaufen</h1>
+          <p className="mt-3 text-sm text-slate-400">
+            Die Seite konnte nicht geladen werden. Wir haben den Fehler erhalten und schauen ihn uns
+            an.
+          </p>
+          <a href="/" className="btn-outline mt-6 inline-block">
+            Zur Startseite
+          </a>
+        </div>
+      </div>
+    }
+  >
+    <AppRoot />
+  </Sentry.ErrorBoundary>
+);
