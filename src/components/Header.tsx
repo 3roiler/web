@@ -154,6 +154,30 @@ export function Header() {
   const location = useLocation();
   const accountMenuRef = React.useRef<HTMLDivElement | null>(null);
   const navMenuRef = React.useRef<HTMLUListElement | null>(null);
+  /**
+   * Verzögerter Schließ-Timer für Hover-Dropdowns. Beim Wechsel
+   * zwischen Top-Level-Link und Panel quert die Maus den 4–8 px Gap;
+   * sonst würde `onMouseLeave` der `<ul>` sofort schließen, bevor sie
+   * das Panel erreicht. Jeder erneute `mouseenter` cancelt den Timer.
+   */
+  const closeTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleClose = React.useCallback(() => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(() => {
+      setOpenGroup(null);
+      closeTimerRef.current = null;
+    }, 180);
+  }, []);
+
+  const cancelClose = React.useCallback(() => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
+
+  React.useEffect(() => () => cancelClose(), [cancelClose]);
 
   const canSeeDashboard = Boolean(
     user?.permissions?.some((p) => p === 'dashboard.view' || p === 'admin.manage')
@@ -278,11 +302,14 @@ export function Header() {
         </Link>
 
         {/* Desktop nav — drei Bereichs-Dropdowns. Hover/Focus öffnet, Click
-            auf dem Top-Level navigiert direkt zur Bereichs-Übersicht. */}
+            auf dem Top-Level navigiert direkt zur Bereichs-Übersicht.
+            `mouseLeave` schließt mit kleinem Delay, damit der Wechsel
+            vom Top-Level-Link zum Panel den Gap überbrücken kann. */}
         <ul
           ref={navMenuRef}
           className="hidden md:flex items-center gap-1 lg:gap-2"
-          onMouseLeave={() => setOpenGroup(null)}
+          onMouseLeave={scheduleClose}
+          onMouseEnter={cancelClose}
         >
           {NAV_GROUPS.map((group) => (
             <DesktopGroup
@@ -293,9 +320,15 @@ export function Header() {
               hash={location.hash}
               activeAnchor={activeAnchor}
               open={openGroup === group.label}
-              onOpen={() => setOpenGroup(group.label)}
+              onOpen={() => {
+                cancelClose();
+                setOpenGroup(group.label);
+              }}
               onClose={() => setOpenGroup(null)}
-              onToggle={() => setOpenGroup((g) => (g === group.label ? null : group.label))}
+              onToggle={() => {
+                cancelClose();
+                setOpenGroup((g) => (g === group.label ? null : group.label));
+              }}
             />
           ))}
         </ul>
@@ -433,18 +466,24 @@ function DesktopGroup(props: DesktopGroupProps) {
       </div>
 
       {hasItems && open && (
-        <div
-          role="menu"
-          className="absolute left-0 top-full mt-1 w-56 origin-top-left overflow-hidden rounded-xl border border-white/10 bg-slate-900/95 shadow-xl shadow-black/40 backdrop-blur-md"
-        >
-          <div className="py-1">
-            {items.map((item) => (
-              <NavItemLink
-                key={item.label}
-                item={item}
-                active={isItemActive(item, pathname, hash, activeAnchor)}
-              />
-            ))}
+        // Outer Wrapper: `pt-2` ist unsichtbarer Hit-Bereich, der den
+        // Gap zwischen Top-Level-Link und Panel überdeckt. Bewegt der
+        // User die Maus vom Top-Level zum Panel, bleibt sie damit über
+        // einem DOM-Kind der `<ul>` — kein vorzeitiges `mouseLeave`.
+        <div className="absolute left-0 top-full pt-2 z-10">
+          <div
+            role="menu"
+            className="w-56 origin-top-left overflow-hidden rounded-xl border border-white/10 bg-slate-900/95 shadow-xl shadow-black/40 backdrop-blur-md"
+          >
+            <div className="py-1">
+              {items.map((item) => (
+                <NavItemLink
+                  key={item.label}
+                  item={item}
+                  active={isItemActive(item, pathname, hash, activeAnchor)}
+                />
+              ))}
+            </div>
           </div>
         </div>
       )}
