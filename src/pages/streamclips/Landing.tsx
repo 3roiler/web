@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
 import { Seo, JsonLd, SITE_URL } from "../../components/Seo";
+import { clipDetailPath } from "../../lib/clip-path";
 import { ClipCarousel } from "../../components/streamclips/ClipCarousel";
 import { ClipCard } from "../../components/streamclips/ClipCard";
 import {
@@ -118,7 +119,7 @@ export function StreamclipsHomePage() {
             itemListElement: top30.map((c, i) => ({
               "@type": "ListItem",
               position: i + 1,
-              url: `${SITE_URL}/streamclips/clip/${c.id}`,
+              url: `${SITE_URL}${clipDetailPath(c)}`,
               name: c.title
             }))
           }}

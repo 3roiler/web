@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
 import { ClipEmbed } from "../../components/streamclips/ClipEmbed";
 import { ClipCarousel } from "../../components/streamclips/ClipCarousel";
@@ -7,8 +7,10 @@ import { Comments } from "../../components/comments/Comments";
 import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { Seo, JsonLd, SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "../../components/Seo";
+import { clipDetailPath, parseClipPathId } from "../../lib/clip-path";
 import {
   getClip,
+  getClipByShortid,
   reportClip,
   getMe,
   loginToTwitch,
@@ -55,6 +57,7 @@ function twitchEmbedUrl(twitchClipId: string): string {
 
 export function ClipDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [clip, setClip] = React.useState<ClipDetailType | null | undefined>(undefined);
   const [error, setError] = React.useState<string | null>(null);
   const [loggedIn, setLoggedIn] = React.useState(false);
@@ -74,17 +77,40 @@ export function ClipDetailPage() {
     getMe().then(() => setLoggedIn(true)).catch(() => setLoggedIn(false));
   }, []);
 
+  // URL-Param klassifizieren: kanonisch ist `/clip/<slug>-<shortid>`, die
+  // alte UUID-Form bleibt aber gültig (vor allem für bereits indexierte
+  // oder geteilte Links). `parseClipPathId` erkennt beides.
+  const parsed = React.useMemo(() => parseClipPathId(id), [id]);
+
   React.useEffect(() => {
-    if (!id) return;
+    if (!parsed) {
+      setClip(null);
+      return;
+    }
     setRelated([]); // Vorherige related-Liste verwerfen, wenn der Clip wechselt.
-    getClip(id)
+    const lookup =
+      parsed.kind === 'uuid' ? getClip(parsed.uuid) : getClipByShortid(parsed.shortid);
+    lookup
       .then(setClip)
       .catch((e: unknown) => {
         console.error(e);
         setError(e instanceof ApiError ? e.message : "Clip konnte nicht geladen werden.");
         setClip(null);
       });
-  }, [id]);
+  }, [parsed]);
+
+  // Canonical-URL erzwingen: wenn die aktuelle URL nicht der kanonischen
+  // Slug-Form entspricht (UUID-Form, falscher Slug, fehlender Slug),
+  // navigieren wir via `replace` zur korrekten URL. So konvergieren alle
+  // Varianten auf eine Adresse — und Google sieht über das `<Seo>` /
+  // `<link rel="canonical">` ebenfalls die korrekte Variante.
+  React.useEffect(() => {
+    if (!clip) return;
+    const canonical = clipDetailPath(clip);
+    if (id && `/streamclips/clip/${id}` !== canonical) {
+      navigate(canonical, { replace: true });
+    }
+  }, [clip, id, navigate]);
 
   // Lädt „Mehr von diesem Streamer", sobald der Clip da ist und einen
   // broadcasterId trägt. Fehler still verschlucken — das Karussell ist
@@ -112,6 +138,11 @@ export function ClipDetailPage() {
               title={clip.title}
               description={`Clip${clip.broadcasterName ? ` von ${clip.broadcasterName}` : ""}${clip.categoryName ? ` · ${clip.categoryName}` : ""} — bewertet auf Streamclips Germany.`}
               type="article"
+              // Kanonischer Pfad ist immer die Slug-Form, auch wenn die
+              // aktuelle URL noch die UUID-Variante ist (während des
+              // Replace-Navigationszyklus). So sehen Crawler nie eine
+              // duplikatte Canonical während des Übergangs.
+              canonicalPath={clipDetailPath(clip)}
               // Nur freigegebene Clips sollen in den Index — pending/
               // rejected/flagged sind entweder noch in Moderation oder
               // bewusst ausgeschlossen. Sie tauchen ohnehin nicht in der
@@ -130,7 +161,7 @@ export function ClipDetailPage() {
                 itemListElement: [
                   { "@type": "ListItem", position: 1, name: "Start", item: `${SITE_URL}/` },
                   { "@type": "ListItem", position: 2, name: "Streamclips Germany", item: `${SITE_URL}/streamclips` },
-                  { "@type": "ListItem", position: 3, name: clip.title, item: `${SITE_URL}/streamclips/clip/${clip.id}` }
+                  { "@type": "ListItem", position: 3, name: clip.title, item: `${SITE_URL}${clipDetailPath(clip)}` }
                 ]
               }}
             />
@@ -174,7 +205,7 @@ export function ClipDetailPage() {
                     url: SITE_URL
                   },
                   inLanguage: clip.language ?? "de",
-                  url: `${SITE_URL}/streamclips/clip/${clip.id}`,
+                  url: `${SITE_URL}${clipDetailPath(clip)}`,
                   // Aggregate-Rating nur wenn echte Stimmen da sind.
                   // Google schluckt aggregateRating mit 0 Bewertungen
                   // sonst als „inkorrekt".

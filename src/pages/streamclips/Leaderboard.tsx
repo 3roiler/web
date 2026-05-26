@@ -5,6 +5,7 @@ import { AwardChip } from "../../components/streamclips/AwardChip";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
 import { Seo, JsonLd, SITE_URL } from "../../components/Seo";
+import { clipDetailPath } from "../../lib/clip-path";
 import { safeHttpUrl } from "../../lib/url";
 import {
   getLeaderboard,
@@ -73,7 +74,7 @@ export function LeaderboardPage() {
             itemListElement: clips.map((c, i) => ({
               "@type": "ListItem",
               position: i + 1,
-              url: `${SITE_URL}/streamclips/clip/${c.id}`,
+              url: `${SITE_URL}${clipDetailPath(c)}`,
               name: c.title
             }))
           }}
@@ -148,7 +149,7 @@ function LeaderboardRow({ clip, rank }: { clip: ClipWithContext; rank: number })
   const thumb = safeHttpUrl(clip.thumbnailUrl);
   return (
     <Link
-      to={Routes.Streamclips.ClipDetail.replace(":id", clip.id)}
+      to={clipDetailPath(clip)}
       className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 transition hover:border-[#9146FF]/40 hover:bg-[#9146FF]/5"
     >
       <div className="flex w-8 shrink-0 items-center justify-center text-lg font-bold tabular-nums text-slate-400">

@@ -1569,6 +1569,14 @@ export interface Clip {
   twitchClipId: string;
   submittedByUserId: string;
   title: string;
+  /**
+   * URL-Slug aus dem Titel (siehe Backend `slugifyTitle` /
+   * Migration `040_clip_slugs.js`). Teil der kanonischen Clip-URL
+   * `/streamclips/clip/<slug>-<shortid>`; eigentlicher Lookup-Key
+   * ist die shortid (erste 8 UUID-Hex-Zeichen). Wird vom Helper
+   * `clipDetailPath` in `lib/clip-path.ts` zusammengebaut.
+   */
+  slug: string;
   broadcasterId: string | null;
   broadcasterName: string | null;
   creatorName: string | null;
@@ -1682,6 +1690,28 @@ export async function getClip(id: string): Promise<ClipDetail> {
   try {
     const response = await axios.get<ClipDetail>(
       `${getApiBaseUrl()}/clips/${encodeURIComponent(id)}`,
+      AXIOS_OPTIONS
+    );
+    return response.data;
+  } catch (error: unknown) {
+    toApiError(error, 'Clip konnte nicht geladen werden.');
+  }
+}
+
+/**
+ * Clip-Lookup über die URL-shortid (= erste 8 Hex-Zeichen der UUID,
+ * Bindestriche entfernt). Treibt die kanonische Slug-URL
+ * `/streamclips/clip/<slug>-<shortid>` — das Slug-Stück ist rein
+ * dekorativ und wird vom Backend nicht zur Disambiguation genutzt.
+ *
+ * Im Konfliktfall (zwei UUIDs mit gleichem 8-Hex-Prefix — Birthday-
+ * Paradoxon-Kollision wäre bei ~65k Einträgen erst nennenswert)
+ * gewinnt der älteste Clip; Eindeutigkeit ist deterministisch.
+ */
+export async function getClipByShortid(shortid: string): Promise<ClipDetail> {
+  try {
+    const response = await axios.get<ClipDetail>(
+      `${getApiBaseUrl()}/clips/by-shortid/${encodeURIComponent(shortid)}`,
       AXIOS_OPTIONS
     );
     return response.data;
@@ -2126,6 +2156,8 @@ export interface ClipContributor {
   clipCount: number;
   avgScore: number | null;
   topClipId: string | null;
+  /** URL-Slug für die kanonische Clip-Detail-URL — siehe `lib/clip-path.ts`. */
+  topClipSlug: string | null;
   topClipTitle: string | null;
 }
 

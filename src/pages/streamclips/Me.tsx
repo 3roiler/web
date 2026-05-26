@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
 import { formatDate } from "../../lib/asset-helpers";
 import { safeHttpUrl } from "../../lib/url";
+import { clipDetailPath } from "../../lib/clip-path";
 import { StarRating } from "../../components/streamclips/StarRating";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
 import {
@@ -87,7 +88,7 @@ export function MyClipsPage() {
                 return (
                   <li key={clip.id}>
                     <Link
-                      to={Routes.Streamclips.ClipDetail.replace(":id", clip.id)}
+                      to={clipDetailPath(clip)}
                       className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 transition hover:border-[#9146FF]/40"
                     >
                       {thumb && (
