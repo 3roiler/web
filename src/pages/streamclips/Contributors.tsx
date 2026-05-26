@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { Routes } from "../../config/routes";
 import { Seo } from "../../components/Seo";
 import { clipDetailPath } from "../../lib/clip-path";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";

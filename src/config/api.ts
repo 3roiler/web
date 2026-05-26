@@ -79,7 +79,7 @@ interface ApiDebugHelper {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __api: ApiDebugHelper | undefined;
 }
 

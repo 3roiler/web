@@ -170,6 +170,10 @@ function GroupDetailBody({ group, permCatalog, onChanged, setError }: GroupDetai
         .finally(() => setSearchingMembers(false));
     }, 300);
     return () => clearTimeout(t);
+    // `memberIds` ist absichtlich nicht in den Deps — es wird unten aus
+    // `group.members` abgeleitet, das schon in den Deps steht. Die
+    // exhaustive-deps-Regel sieht das nicht.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memberQuery, group.members]);
 
   const memberIds = new Set(group.members.map((m) => m.id));

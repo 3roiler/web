@@ -1,0 +1,11 @@
+dist
+node_modules
+package-lock.json
+# Statische Easter-Egg-HTMLs — Hand-getuned und sollen bleiben wie sind.
+alex.html
+huh.html
+sasu.html
+# CodeMirror-Theme-CSS-Imports per highlight.js — Prettier verhebt sich
+# manchmal an minimierten Style-Sheets.
+*.min.css
+*.min.js

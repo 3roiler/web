@@ -22,16 +22,8 @@ import {
   listClipsByBroadcaster,
   ApiError,
   type ClipDetail as ClipDetailType,
-  type ClipStatus,
   type ClipWithContext
 } from "../../services";
-
-const STATUS_BADGE: Record<ClipStatus, { label: string; className: string }> = {
-  pending: { label: "In Prüfung", className: "bg-amber-500/20 text-amber-200" },
-  approved: { label: "Freigegeben", className: "bg-emerald-500/20 text-emerald-200" },
-  rejected: { label: "Abgelehnt", className: "bg-red-500/20 text-red-200" },
-  flagged: { label: "Gemeldet", className: "bg-orange-500/20 text-orange-200" }
-};
 
 /**
  * ISO-8601-Duration aus Sekunden — `VideoObject.duration` erwartet das

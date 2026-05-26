@@ -84,7 +84,7 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
     const motionQuery = globalThis.matchMedia('(prefers-reduced-motion: reduce)');
     let prefersReduced = motionQuery.matches;
 
-    let particles: Particle[] = [];
+    const particles: Particle[] = [];
     // Mauspos in CSS-Pixeln relativ zum Canvas. Außerhalb des Sichtfelds
     // initialisiert, damit der Effekt erst greift wenn der User wirklich
     // über den Hero fährt.

@@ -107,7 +107,7 @@ function useTableOfContents(
     headings.forEach((h) => {
       const text = (h.textContent ?? '').trim();
       if (!text) return;
-      let base = slugify(text) || 'section';
+      const base = slugify(text) || 'section';
       const count = seen.get(base) ?? 0;
       seen.set(base, count + 1);
       const id = count === 0 ? base : `${base}-${count + 1}`;
