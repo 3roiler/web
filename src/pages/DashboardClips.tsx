@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { Pagination } from "../components/Pagination";
+import { SkeletonList } from "../components/Skeleton";
 import { Routes } from "../config/routes";
 import { formatDate } from "../lib/asset-helpers";
 import { safeHttpUrl } from "../lib/url";
@@ -233,7 +234,7 @@ function ClipsQueue() {
       )}
 
       {error && <p className="text-sm text-red-300">{error}</p>}
-      {rows === null && !error && <p className="text-sm text-slate-400">Lade…</p>}
+      {rows === null && !error && <SkeletonList rows={6} avatar={true} linesPerRow={2} />}
       {rows !== null && rows.length === 0 && (
         <p className="text-sm text-slate-500">Keine Clips im aktuellen Filter.</p>
       )}
