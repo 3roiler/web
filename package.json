@@ -10,6 +10,9 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
+    "preview": "vite preview --port 4173 --strictPort",
+    "a11y": "axe http://localhost:4173 --exit",
+    "a11y:ci": "start-server-and-test preview http://localhost:4173 a11y",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -32,6 +35,7 @@
   },
   "homepage": "https://broiler.dev/",
   "devDependencies": {
+    "@axe-core/cli": "^4.11.3",
     "@eslint/js": "^10.0.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -42,6 +46,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
     "prettier": "^3.8.3",
+    "start-server-and-test": "^3.0.5",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.60.0",
