@@ -71,11 +71,15 @@ function twitchEmbedUrl(twitchClipId: string): string {
  * Pflicht-Felder laut Google: name, description, thumbnailUrl, uploadDate.
  */
 function buildVideoObjectJsonLd(clip: ClipDetailType): Record<string, unknown> {
-  const description =
-    `Clip${clip.broadcasterName ? ` von ${clip.broadcasterName}` : ""}` +
-    `${clip.categoryName ? ` aus der Twitch-Kategorie ${clip.categoryName}` : ""}` +
-    `${clip.creatorName ? ` — geclippt von ${clip.creatorName}` : ""}` +
-    ` auf Streamclips Germany.`;
+  // Beschreibungsteile als Array zusammenbauen — vermeidet verschachtelte
+  // Template-Literals (Sonar S4624), die mit `${ ... ? \`x ${y}\` : "" }`
+  // schwer zu lesen sind.
+  const parts: string[] = ["Clip"];
+  if (clip.broadcasterName) parts.push(" von ", clip.broadcasterName);
+  if (clip.categoryName) parts.push(" aus der Twitch-Kategorie ", clip.categoryName);
+  if (clip.creatorName) parts.push(" — geclippt von ", clip.creatorName);
+  parts.push(" auf Streamclips Germany.");
+  const description = parts.join("");
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "VideoObject",
