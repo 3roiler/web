@@ -2,13 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { Routes } from "../../config/routes";
 import { StreamclipsNav } from "../../components/streamclips/StreamclipsNav";
-import {
-  getMe,
-  submitClip,
-  loginToTwitch,
-  ApiError,
-  type User
-} from "../../services";
+import { getMe, submitClip, loginToTwitch, ApiError, type User } from "../../services";
 
 const TWITCH_BTN =
   "inline-flex items-center justify-center gap-2 rounded-full bg-[#9146FF] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#772ce8] disabled:opacity-50";
@@ -21,10 +15,17 @@ export function SubmitClipPage() {
   const [me, setMe] = React.useState<User | null | undefined>(undefined);
 
   React.useEffect(() => {
-    getMe().then(setMe).catch(() => setMe(null));
+    getMe()
+      .then(setMe)
+      .catch(() => setMe(null));
   }, []);
 
-  if (me === undefined) return <Shell><p className="text-sm text-slate-400">Lade…</p></Shell>;
+  if (me === undefined)
+    return (
+      <Shell>
+        <p className="text-sm text-slate-400">Lade…</p>
+      </Shell>
+    );
 
   if (!me) {
     return (
@@ -48,7 +49,10 @@ export function SubmitClipPage() {
       <Shell>
         <p className="text-sm text-slate-400">
           Das Einreichen von Clips ist für freigeschaltete Nutzer reserviert. Bewerten kannst du{" "}
-          <Link to={Routes.Streamclips.Vote} className="text-[#bf94ff] hover:underline">jederzeit</Link>.
+          <Link to={Routes.Streamclips.Vote} className="text-[#bf94ff] hover:underline">
+            jederzeit
+          </Link>
+          .
         </p>
       </Shell>
     );
@@ -89,9 +93,15 @@ function SubmitForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-5 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6"
+    >
       <div>
-        <label htmlFor="clip-url" className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <label
+          htmlFor="clip-url"
+          className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+        >
           Twitch-Clip-Link
         </label>
         <input

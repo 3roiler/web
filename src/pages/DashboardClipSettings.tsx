@@ -50,7 +50,9 @@ function SettingsForm() {
       .then(setSettings)
       .catch((err: unknown) => {
         console.error(err);
-        setError(err instanceof ApiError ? err.message : "Einstellungen konnten nicht geladen werden.");
+        setError(
+          err instanceof ApiError ? err.message : "Einstellungen konnten nicht geladen werden."
+        );
       });
   }, []);
 
@@ -92,7 +94,9 @@ function SettingsForm() {
   return (
     <section className="space-y-6">
       <header>
-        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">Eingangsprüfung</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
+          Eingangsprüfung
+        </h2>
         <p className="mt-1 text-xs text-slate-500">
           Wann läuft ein Clip durch die Prüfung, wann geht er direkt online?
         </p>
@@ -103,8 +107,9 @@ function SettingsForm() {
           Auto-Freigabe pro Tag und Nutzer
         </label>
         <p className="mt-1 text-xs text-slate-400">
-          Die ersten <span className="text-slate-200">N</span> Clips pro Tag gehen ohne Prüfung rein, alle
-          weiteren landen zur Prüfung. <span className="text-slate-200">0</span> = jeder Clip wird geprüft.
+          Die ersten <span className="text-slate-200">N</span> Clips pro Tag gehen ohne Prüfung
+          rein, alle weiteren landen zur Prüfung. <span className="text-slate-200">0</span> = jeder
+          Clip wird geprüft.
         </p>
         <input
           id="daily-limit"
@@ -112,7 +117,9 @@ function SettingsForm() {
           min={0}
           max={1000}
           value={settings.autoApproveDailyLimit}
-          onChange={(e) => patch({ autoApproveDailyLimit: Math.max(0, Number.parseInt(e.target.value, 10) || 0) })}
+          onChange={(e) =>
+            patch({ autoApproveDailyLimit: Math.max(0, Number.parseInt(e.target.value, 10) || 0) })
+          }
           className="mt-3 w-28 rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
         />
       </div>
@@ -127,7 +134,9 @@ function SettingsForm() {
             className="mt-0.5 h-4 w-4"
           />
           <span>
-            <span className="block text-sm font-semibold text-slate-50">Alle Clips müssen geprüft werden</span>
+            <span className="block text-sm font-semibold text-slate-50">
+              Alle Clips müssen geprüft werden
+            </span>
             <span className="mt-0.5 block text-xs text-slate-400">
               Übersteuert Tageslimit und Sektionen — nichts wird automatisch freigegeben.
             </span>
@@ -193,7 +202,11 @@ function ForYouSettingsForm() {
       .then(setSettings)
       .catch((err: unknown) => {
         console.error(err);
-        setError(err instanceof ApiError ? err.message : '„Für dich"-Einstellungen konnten nicht geladen werden.');
+        setError(
+          err instanceof ApiError
+            ? err.message
+            : '„Für dich"-Einstellungen konnten nicht geladen werden.'
+        );
       });
   }, []);
 
@@ -215,7 +228,7 @@ function ForYouSettingsForm() {
       setSaved(true);
     } catch (err: unknown) {
       console.error(err);
-      setError(err instanceof ApiError ? err.message : 'Speichern fehlgeschlagen.');
+      setError(err instanceof ApiError ? err.message : "Speichern fehlgeschlagen.");
     } finally {
       setBusy(false);
     }
@@ -227,7 +240,9 @@ function ForYouSettingsForm() {
   return (
     <section className="space-y-6">
       <header>
-        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">„Für dich"-Algorithmus</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
+          „Für dich"-Algorithmus
+        </h2>
         <p className="mt-1 text-xs text-slate-500">
           Gewichtung der Signale im Personal-Feed. Anteile werden serverseitig normalisiert.
         </p>
@@ -289,7 +304,7 @@ function ForYouSettingsForm() {
           max={5}
           value={settings.minPositiveScore}
           onChange={(v) => patch({ minPositiveScore: v })}
-          hint='Ab welcher Bewertung gilt eine Kategorie als „mag der User“.'
+          hint="Ab welcher Bewertung gilt eine Kategorie als „mag der User“."
         />
       </div>
 
@@ -297,7 +312,7 @@ function ForYouSettingsForm() {
 
       <div className="flex items-center gap-3">
         <button type="button" onClick={save} disabled={busy} className="btn btn-sm">
-          {busy ? 'Speichere…' : 'Speichern'}
+          {busy ? "Speichere…" : "Speichern"}
         </button>
         {saved && <span className="text-sm text-emerald-300">Gespeichert ✓</span>}
       </div>
@@ -306,7 +321,12 @@ function ForYouSettingsForm() {
 }
 
 function WeightSlider({
-  id, label, hint, value, percent, onChange
+  id,
+  label,
+  hint,
+  value,
+  percent,
+  onChange
 }: {
   id: string;
   label: string;
@@ -318,7 +338,9 @@ function WeightSlider({
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3">
-        <label htmlFor={id} className="text-sm font-medium text-slate-200">{label}</label>
+        <label htmlFor={id} className="text-sm font-medium text-slate-200">
+          {label}
+        </label>
         <span className="font-mono text-xs text-cyan-300 tabular-nums">
           {value.toFixed(2)} · {percent}%
         </span>
@@ -339,7 +361,14 @@ function WeightSlider({
 }
 
 function NumberField({
-  id, label, suffix, value, min, max, onChange, hint
+  id,
+  label,
+  suffix,
+  value,
+  min,
+  max,
+  onChange,
+  hint
 }: {
   id: string;
   label: string;
@@ -352,7 +381,9 @@ function NumberField({
 }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-      <label htmlFor={id} className="text-sm font-medium text-slate-200">{label}</label>
+      <label htmlFor={id} className="text-sm font-medium text-slate-200">
+        {label}
+      </label>
       <div className="mt-2 flex items-center gap-2">
         <input
           id={id}

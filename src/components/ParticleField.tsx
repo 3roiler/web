@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 /**
  * Schlichtes „Knoten-Netz" als Hero-Hintergrund.
@@ -47,10 +47,10 @@ interface Particle {
   r: number;
 }
 
-const LINK_DISTANCE = 160;        // Maximaler Abstand für Linien zw. Punkten (px)
-const MOUSE_DISTANCE = 180;       // Einflussradius der Maus (px)
+const LINK_DISTANCE = 160; // Maximaler Abstand für Linien zw. Punkten (px)
+const MOUSE_DISTANCE = 180; // Einflussradius der Maus (px)
 const BASE_PARTICLE_OPACITY = 0.55; // Cyan auf slate-950 braucht etwas Druck, um zu lesen
-const LINK_ALPHA_PEAK = 0.5;      // Alpha einer Linie zwischen zwei sehr nahen Punkten
+const LINK_ALPHA_PEAK = 0.5; // Alpha einer Linie zwischen zwei sehr nahen Punkten
 const PARTICLE_AREA_DIVISOR = 14000; // 1 Partikel pro N px² Hero-Fläche
 const PARTICLE_MIN = 24;
 const PARTICLE_MAX = 140;
@@ -76,12 +76,12 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // Reduced motion respektieren — komplett kein Render. Wir tracken auch
     // Änderungen zur Laufzeit (User toggelt OS-Setting im offenen Tab).
-    const motionQuery = globalThis.matchMedia('(prefers-reduced-motion: reduce)');
+    const motionQuery = globalThis.matchMedia("(prefers-reduced-motion: reduce)");
     let prefersReduced = motionQuery.matches;
 
     const particles: Particle[] = [];
@@ -294,23 +294,23 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
     // Effekt auslöst, wenn sie über einen Vordergrund-Button (mit eigenem
     // pointer-events: auto) zieht. Distanz wird gegen das Canvas-Rect
     // umgerechnet, daher bleibt es lokal.
-    globalThis.addEventListener('mousemove', onMove, { passive: true });
-    globalThis.addEventListener('blur', clearMouse);
-    document.addEventListener('visibilitychange', onVisibility);
+    globalThis.addEventListener("mousemove", onMove, { passive: true });
+    globalThis.addEventListener("blur", clearMouse);
+    document.addEventListener("visibilitychange", onVisibility);
     // Safari < 14 unterstützt `addEventListener` nicht auf MediaQueryList,
     // dort fällt es lautlos aus — das ist OK, weil reduced-motion dann
     // nur beim Mount geprüft wird.
-    motionQuery.addEventListener?.('change', onMotionChange);
+    motionQuery.addEventListener?.("change", onMotionChange);
 
     start();
 
     return () => {
       stop();
       ro.disconnect();
-      globalThis.removeEventListener('mousemove', onMove);
-      globalThis.removeEventListener('blur', clearMouse);
-      document.removeEventListener('visibilitychange', onVisibility);
-      motionQuery.removeEventListener?.('change', onMotionChange);
+      globalThis.removeEventListener("mousemove", onMove);
+      globalThis.removeEventListener("blur", clearMouse);
+      document.removeEventListener("visibilitychange", onVisibility);
+      motionQuery.removeEventListener?.("change", onMotionChange);
     };
   }, [density]);
 
@@ -323,13 +323,7 @@ export function ParticleField({ density = 1, className }: ParticleFieldProps) {
   // kollabiert in einigen Browsern auf die HTML-Default-Größe (300×150),
   // was zu „Effekt deployed, aber unsichtbar" führt.
   return (
-    <div
-      aria-hidden="true"
-      className={
-        className ??
-        'pointer-events-none absolute inset-0 -z-10'
-      }
-    >
+    <div aria-hidden="true" className={className ?? "pointer-events-none absolute inset-0 -z-10"}>
       <canvas
         ref={canvasRef}
         className="pointer-events-none absolute inset-0 block h-full w-full"

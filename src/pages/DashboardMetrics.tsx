@@ -121,7 +121,8 @@ function MetricsContent() {
 
   // Show the config gate only when nothing is workable. Partial setups still
   // render what they can — a missing DB shouldn't hide the apps block.
-  const anythingUsable = status.tokenConfigured && (status.appsConfigured > 0 || status.databaseIdConfigured);
+  const anythingUsable =
+    status.tokenConfigured && (status.appsConfigured > 0 || status.databaseIdConfigured);
   if (!anythingUsable) {
     return <ConfigurationMissing status={status} />;
   }
@@ -164,11 +165,25 @@ function MetricsContent() {
 
       {status.databaseIdConfigured && (
         <section>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-cyan-300">Managed Postgres</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-cyan-300">
+            Managed Postgres
+          </h2>
           <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
             <ChartCard title="CPU" unit="%" window={window} tick={tick} fetcher={getDatabaseCpu} />
-            <ChartCard title="Memory" unit="%" window={window} tick={tick} fetcher={getDatabaseMemory} />
-            <ChartCard title="Disk" unit="%" window={window} tick={tick} fetcher={getDatabaseDisk} />
+            <ChartCard
+              title="Memory"
+              unit="%"
+              window={window}
+              tick={tick}
+              fetcher={getDatabaseMemory}
+            />
+            <ChartCard
+              title="Disk"
+              unit="%"
+              window={window}
+              tick={tick}
+              fetcher={getDatabaseDisk}
+            />
           </div>
         </section>
       )}
@@ -181,7 +196,10 @@ function MetricsContent() {
 function ConfigurationMissing({ status }: { status: MetricsStatus }) {
   const rows: { label: string; ok: boolean }[] = [
     { label: "digitalocean.token (Secret)", ok: status.tokenConfigured },
-    { label: `digitalocean.apps (${status.appsConfigured} konfiguriert)`, ok: status.appsConfigured > 0 },
+    {
+      label: `digitalocean.apps (${status.appsConfigured} konfiguriert)`,
+      ok: status.appsConfigured > 0
+    },
     { label: "digitalocean.database_id", ok: status.databaseIdConfigured }
   ];
   return (
@@ -227,7 +245,13 @@ interface ToolbarProps {
   onManualRefresh: () => void;
 }
 
-function Toolbar({ window, onWindow, refreshSeconds, onRefreshSeconds, onManualRefresh }: ToolbarProps) {
+function Toolbar({
+  window,
+  onWindow,
+  refreshSeconds,
+  onRefreshSeconds,
+  onManualRefresh
+}: ToolbarProps) {
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
       <div className="flex items-center gap-2">
@@ -432,7 +456,15 @@ function DatabaseSummaryCard({ tick }: { tick: number }) {
   );
 }
 
-function Field({ label, value, fullWidth }: { label: string; value: React.ReactNode; fullWidth?: boolean }) {
+function Field({
+  label,
+  value,
+  fullWidth
+}: {
+  label: string;
+  value: React.ReactNode;
+  fullWidth?: boolean;
+}) {
   return (
     <div className={fullWidth ? "col-span-2" : undefined}>
       <dt className="text-[10px] uppercase tracking-wider text-slate-500">{label}</dt>
@@ -490,7 +522,9 @@ function ChartCard({ title, unit, window, tick, fetcher }: ChartCardProps) {
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-100">{title}</h3>
-        {loading && <span className="text-[10px] uppercase tracking-wider text-slate-500">lädt…</span>}
+        {loading && (
+          <span className="text-[10px] uppercase tracking-wider text-slate-500">lädt…</span>
+        )}
       </div>
       {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
       {!error && series.length === 0 && !loading && (
@@ -499,7 +533,9 @@ function ChartCard({ title, unit, window, tick, fetcher }: ChartCardProps) {
       {series.length > 0 && (
         <>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-semibold text-cyan-200">{formatCurrent(series, unit)}</span>
+            <span className="text-2xl font-semibold text-cyan-200">
+              {formatCurrent(series, unit)}
+            </span>
             <span className="text-xs text-slate-500">aktuell</span>
           </div>
           <LineChart series={series} unit={unit} />

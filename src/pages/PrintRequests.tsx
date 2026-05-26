@@ -32,9 +32,7 @@ const FILTER_TABS: { label: string; value: PrintRequestStatus[] | null }[] = [
 ];
 
 function isModerator(me: User): boolean {
-  return Boolean(
-    me.permissions?.some((p) => p === "print.moderate" || p === "admin.manage")
-  );
+  return Boolean(me.permissions?.some((p) => p === "print.moderate" || p === "admin.manage"));
 }
 
 export function PrintRequestsPage() {
@@ -45,9 +43,8 @@ export function PrintRequestsPage() {
       title="Druckanfragen"
       description={
         <>
-          Anfragen-Tickets von Freunden plus deine eigenen Einreichungen.
-          Statuswechsel und Drucker-Zuweisung sind Moderatoren vorbehalten;
-          jeder kann im Thread mitschreiben.
+          Anfragen-Tickets von Freunden plus deine eigenen Einreichungen. Statuswechsel und
+          Drucker-Zuweisung sind Moderatoren vorbehalten; jeder kann im Thread mitschreiben.
         </>
       }
       actions={
@@ -66,7 +63,7 @@ const PAGE_SIZE = 20;
 function RequestsContent({ me }: { me: User }) {
   const [rows, setRows] = React.useState<PrintRequestWithContext[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const [filter, setFilter] = React.useState<typeof FILTER_TABS[number]>(FILTER_TABS[1]);
+  const [filter, setFilter] = React.useState<(typeof FILTER_TABS)[number]>(FILTER_TABS[1]);
   const [showOnlyMine, setShowOnlyMine] = React.useState(false);
   const [offset, setOffset] = React.useState(0);
 
@@ -92,7 +89,7 @@ function RequestsContent({ me }: { me: User }) {
 
   // Filterwechsel (Status-Tab oder „Nur meine") setzt die Seite zurück, damit
   // man nicht auf einer leeren Seite landet.
-  function changeFilter(tab: typeof FILTER_TABS[number]) {
+  function changeFilter(tab: (typeof FILTER_TABS)[number]) {
     setFilter(tab);
     setOffset(0);
   }
@@ -168,7 +165,10 @@ function RequestsContent({ me }: { me: User }) {
               </div>
               <p className="mt-2 truncate text-sm font-semibold text-slate-50">{row.title}</p>
               <p className="mt-0.5 truncate text-xs text-slate-500">
-                {requesterLabel} · {row.sourceType === "stl_upload" ? `STL: ${row.stlFilename ?? "Datei gelöscht"}` : `Link: ${row.externalUrl}`}
+                {requesterLabel} ·{" "}
+                {row.sourceType === "stl_upload"
+                  ? `STL: ${row.stlFilename ?? "Datei gelöscht"}`
+                  : `Link: ${row.externalUrl}`}
               </p>
             </Link>
           );

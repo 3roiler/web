@@ -27,13 +27,16 @@ const STATUS_META: Record<PrintRequestStatus, { label: string; className: string
 };
 
 const ALL_STATUSES: PrintRequestStatus[] = [
-  "new", "accepted", "printing", "done", "rejected", "cancelled"
+  "new",
+  "accepted",
+  "printing",
+  "done",
+  "rejected",
+  "cancelled"
 ];
 
 function isModerator(me: User): boolean {
-  return Boolean(
-    me.permissions?.some((p) => p === "print.moderate" || p === "admin.manage")
-  );
+  return Boolean(me.permissions?.some((p) => p === "print.moderate" || p === "admin.manage"));
 }
 
 export function PrintRequestDetailPage() {
@@ -51,7 +54,11 @@ export function PrintRequestDetailPage() {
       }
     >
       {({ me }) =>
-        id ? <DetailContent id={id} me={me} /> : <p className="text-sm text-red-300">Keine Anfrage-ID.</p>
+        id ? (
+          <DetailContent id={id} me={me} />
+        ) : (
+          <p className="text-sm text-red-300">Keine Anfrage-ID.</p>
+        )
       }
     </DashboardLayout>
   );
@@ -81,7 +88,9 @@ function DetailContent({ id, me }: { id: string; me: User }) {
   React.useEffect(() => {
     reload();
     if (moderator) {
-      listPrinters().then(setPrinters).catch((e: unknown) => console.error(e));
+      listPrinters()
+        .then(setPrinters)
+        .catch((e: unknown) => console.error(e));
     }
   }, [reload, moderator]);
 
@@ -89,7 +98,8 @@ function DetailContent({ id, me }: { id: string; me: User }) {
   if (data === null) return <p className="text-sm text-slate-400">Anfrage nicht gefunden.</p>;
 
   const isOwnRequest = data.requesterUserId === me.id;
-  const isTerminal = data.status === "done" || data.status === "rejected" || data.status === "cancelled";
+  const isTerminal =
+    data.status === "done" || data.status === "rejected" || data.status === "cancelled";
 
   async function handleStatus(newStatus: PrintRequestStatus) {
     setBusy(true);
@@ -142,7 +152,9 @@ function DetailContent({ id, me }: { id: string; me: User }) {
       {/* Header card */}
       <section className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3 sm:p-6">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className={`rounded-full px-2 py-0.5 ${statusMeta.className}`}>{statusMeta.label}</span>
+          <span className={`rounded-full px-2 py-0.5 ${statusMeta.className}`}>
+            {statusMeta.label}
+          </span>
           <span className="text-slate-500">Eingereicht {formatDate(data.createdAt)}</span>
           {data.updatedAt && data.updatedAt !== data.createdAt && (
             <span className="text-slate-500">· geändert {formatDate(data.updatedAt)}</span>
@@ -172,25 +184,27 @@ function DetailContent({ id, me }: { id: string; me: User }) {
               ) : (
                 <span className="text-slate-500 italic">STL gelöscht</span>
               )
-            ) : (() => {
-              // `externalUrl` ist Backend-stammend und User-Controlled —
-              // `javascript:`-Schemata würden den XSS-Hotspot triggern,
-              // sobald jemand draufklickt. Vor dem Render durch
-              // `safeHttpUrl()` rauschen lassen.
-              const safeExternal = safeHttpUrl(data.externalUrl);
-              return safeExternal ? (
-                <a
-                  href={safeExternal}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-cyan-300 hover:underline"
-                >
-                  {safeExternal}
-                </a>
-              ) : (
-                <span className="text-slate-500 italic">Ungültiger Link</span>
-              );
-            })()}
+            ) : (
+              (() => {
+                // `externalUrl` ist Backend-stammend und User-Controlled —
+                // `javascript:`-Schemata würden den XSS-Hotspot triggern,
+                // sobald jemand draufklickt. Vor dem Render durch
+                // `safeHttpUrl()` rauschen lassen.
+                const safeExternal = safeHttpUrl(data.externalUrl);
+                return safeExternal ? (
+                  <a
+                    href={safeExternal}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-300 hover:underline"
+                  >
+                    {safeExternal}
+                  </a>
+                ) : (
+                  <span className="text-slate-500 italic">Ungültiger Link</span>
+                );
+              })()
+            )}
           </dd>
 
           {data.printerName && (
@@ -330,7 +344,12 @@ function CommentThread({ requestId, comments, onPosted }: CommentThreadProps) {
             <li key={c.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
               <div className="flex items-center gap-3">
                 {avatar ? (
-                  <img src={avatar} alt="" className="h-7 w-7 rounded-full" referrerPolicy="no-referrer" />
+                  <img
+                    src={avatar}
+                    alt=""
+                    className="h-7 w-7 rounded-full"
+                    referrerPolicy="no-referrer"
+                  />
                 ) : (
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-700 text-[10px] font-semibold text-slate-300">
                     {author.slice(0, 2).toUpperCase()}

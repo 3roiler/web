@@ -69,7 +69,7 @@ export const Routes = {
   Callback: {
     Github: "/callback/github",
     Twitch: "/callback/twitch",
-    Error: "/callback/error",
+    Error: "/callback/error"
   },
   External: {
     PaulEmail: "paul@broiler.dev",
@@ -82,7 +82,8 @@ export const Routes = {
     GithubOauth: "https://github.com/login/oauth/authorize",
     TwitchOauth: "https://id.twitch.tv/oauth2/authorize",
     Sonarcloud: "https://sonarcloud.io/dashboard?id=3roiler_web",
-    DigitalOcean: "https://www.digitalocean.com/?refcode=203d563657de&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge",
+    DigitalOcean:
+      "https://www.digitalocean.com/?refcode=203d563657de&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge",
     PayPal: "https://paypal.me/bleikind"
   }
 } as const;

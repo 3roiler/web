@@ -1,11 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import {
-  listBlogPosts,
-  deleteBlogPost,
-  type BlogPost,
-  type BlogPostVisibility
-} from "../services";
+import { listBlogPosts, deleteBlogPost, type BlogPost, type BlogPostVisibility } from "../services";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { Pagination } from "../components/Pagination";
 import { Routes } from "../config/routes";
@@ -133,20 +128,13 @@ function BlogAdminContent() {
                     Live
                   </span>
                 )}
-                <span
-                  className={`rounded-full px-2 py-0.5 ${badge.className}`}
-                  title={badge.title}
-                >
+                <span className={`rounded-full px-2 py-0.5 ${badge.className}`} title={badge.title}>
                   {badge.label}
-                  {post.visibility === "group" && groupCount > 0 && (
-                    <> · {groupCount}</>
-                  )}
+                  {post.visibility === "group" && groupCount > 0 && <> · {groupCount}</>}
                 </span>
                 <span className="truncate text-slate-500">/{post.slug}</span>
               </div>
-              <h2 className="mt-1 truncate text-lg font-semibold text-slate-50">
-                {post.title}
-              </h2>
+              <h2 className="mt-1 truncate text-lg font-semibold text-slate-50">{post.title}</h2>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <Link
@@ -175,7 +163,12 @@ function BlogAdminContent() {
       })}
 
       {posts !== null && (
-        <Pagination offset={offset} pageSize={PAGE_SIZE} count={posts.length} onChange={setOffset} />
+        <Pagination
+          offset={offset}
+          pageSize={PAGE_SIZE}
+          count={posts.length}
+          onChange={setOffset}
+        />
       )}
     </div>
   );

@@ -123,16 +123,17 @@ function SettingsContent() {
 
   const reload = React.useCallback(async () => {
     try {
-      const [settingList, secretList] = await Promise.all([
-        listAppSettings(),
-        listAppSecrets()
-      ]);
+      const [settingList, secretList] = await Promise.all([listAppSettings(), listAppSecrets()]);
       setSettings(settingList);
       setSecrets(secretList);
       setError(null);
     } catch (e: unknown) {
       console.error(e);
-      setError(e instanceof ApiError ? e.message : "Beim Laden der Einstellungen ist ein Fehler aufgetreten.");
+      setError(
+        e instanceof ApiError
+          ? e.message
+          : "Beim Laden der Einstellungen ist ein Fehler aufgetreten."
+      );
     }
   }, []);
 
@@ -411,8 +412,7 @@ function DigitalOceanAppsEditor({
         </label>
         <p className="mt-1 text-xs text-slate-500">
           Alle App-Platform-Apps, die im Metrics-Dashboard angezeigt werden sollen. Label ist nur
-          zur Anzeige — die UUID findest du in der DO-Console unter „Apps → Settings → App
-          Info".
+          zur Anzeige — die UUID findest du in der DO-Console unter „Apps → Settings → App Info".
         </p>
       </div>
 
@@ -563,7 +563,13 @@ interface CuratedSettingRowProps {
   onInfo: (msg: string) => void;
 }
 
-function CuratedSettingRow({ curated, current, onReload, onError, onInfo }: CuratedSettingRowProps) {
+function CuratedSettingRow({
+  curated,
+  current,
+  onReload,
+  onError,
+  onInfo
+}: CuratedSettingRowProps) {
   const currentValue = stringifyValueForInput(current?.value);
   const [value, setValue] = React.useState(currentValue);
   const [saving, setSaving] = React.useState(false);
@@ -612,7 +618,10 @@ function CuratedSettingRow({ curated, current, onReload, onError, onInfo }: Cura
 
   return (
     <form onSubmit={handleSave} className="space-y-2">
-      <label htmlFor={`curated-${curated.key}`} className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+      <label
+        htmlFor={`curated-${curated.key}`}
+        className="block text-xs font-medium uppercase tracking-wider text-slate-400"
+      >
         {curated.label}
       </label>
       <p className="text-xs text-slate-500">{curated.description}</p>
@@ -703,7 +712,10 @@ function CuratedSecretRow({ curated, current, onReload, onError, onInfo }: Curat
 
   return (
     <form onSubmit={handleSave} className="space-y-2">
-      <label htmlFor={`secret-${curated.key}`} className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+      <label
+        htmlFor={`secret-${curated.key}`}
+        className="block text-xs font-medium uppercase tracking-wider text-slate-400"
+      >
         {curated.label}{" "}
         <span className="ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200">
           verschlüsselt
@@ -832,11 +844,7 @@ function AdvancedSettingsList({ rows, onReload, onError, onInfo }: AdvancedSetti
         ))}
       </div>
 
-      <AdvancedSettingCreate
-        onReload={onReload}
-        onError={onError}
-        onInfo={onInfo}
-      />
+      <AdvancedSettingCreate onReload={onReload} onError={onError} onInfo={onInfo} />
     </div>
   );
 }
@@ -908,7 +916,9 @@ function AdvancedSettingRow({ row, onReload, onError, onInfo }: AdvancedSettingR
           />
         </div>
         <div>
-          <label className="text-[11px] uppercase tracking-wider text-slate-500">Beschreibung</label>
+          <label className="text-[11px] uppercase tracking-wider text-slate-500">
+            Beschreibung
+          </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -969,8 +979,13 @@ function AdvancedSettingCreate({ onReload, onError, onInfo }: AdvancedCreateProp
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 rounded-xl border border-dashed border-white/10 bg-slate-950/30 p-4">
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Neue Einstellung</p>
+    <form
+      onSubmit={handleSubmit}
+      className="mt-4 rounded-xl border border-dashed border-white/10 bg-slate-950/30 p-4"
+    >
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+        Neue Einstellung
+      </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <input
           type="text"
@@ -1035,11 +1050,7 @@ function AdvancedSecretsList({ rows, onReload, onError, onInfo }: AdvancedSecret
         ))}
       </div>
 
-      <AdvancedSecretCreate
-        onReload={onReload}
-        onError={onError}
-        onInfo={onInfo}
-      />
+      <AdvancedSecretCreate onReload={onReload} onError={onError} onInfo={onInfo} />
     </div>
   );
 }
@@ -1117,7 +1128,9 @@ function AdvancedSecretRow({ row, onReload, onError, onInfo }: AdvancedSecretRow
           />
         </div>
         <div>
-          <label className="text-[11px] uppercase tracking-wider text-slate-500">Beschreibung</label>
+          <label className="text-[11px] uppercase tracking-wider text-slate-500">
+            Beschreibung
+          </label>
           <input
             type="text"
             value={description}
@@ -1171,7 +1184,10 @@ function AdvancedSecretCreate({ onReload, onError, onInfo }: AdvancedCreateProps
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 rounded-xl border border-dashed border-white/10 bg-slate-950/30 p-4">
+    <form
+      onSubmit={handleSubmit}
+      className="mt-4 rounded-xl border border-dashed border-white/10 bg-slate-950/30 p-4"
+    >
       <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Neues Secret</p>
       <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <input

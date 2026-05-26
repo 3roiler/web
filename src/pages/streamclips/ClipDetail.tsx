@@ -131,11 +131,13 @@ export function ClipDetailPage() {
     setSeekNonce((n) => n + 1);
     // Sanftes Scroll-to-Player, damit der Sprung sichtbar ist auch wenn
     // der User gerade in den Kommentaren weiter unten gelesen hat.
-    globalThis.scrollTo({ top: 0, behavior: 'smooth' });
+    globalThis.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   React.useEffect(() => {
-    getMe().then(() => setLoggedIn(true)).catch(() => setLoggedIn(false));
+    getMe()
+      .then(() => setLoggedIn(true))
+      .catch(() => setLoggedIn(false));
   }, []);
 
   // URL-Param klassifizieren: kanonisch ist `/clip/<slug>-<shortid>`, die
@@ -149,15 +151,12 @@ export function ClipDetailPage() {
       return;
     }
     setRelated([]); // Vorherige related-Liste verwerfen, wenn der Clip wechselt.
-    const lookup =
-      parsed.kind === 'uuid' ? getClip(parsed.uuid) : getClipByShortid(parsed.shortid);
-    lookup
-      .then(setClip)
-      .catch((e: unknown) => {
-        console.error(e);
-        setError(e instanceof ApiError ? e.message : "Clip konnte nicht geladen werden.");
-        setClip(null);
-      });
+    const lookup = parsed.kind === "uuid" ? getClip(parsed.uuid) : getClipByShortid(parsed.shortid);
+    lookup.then(setClip).catch((e: unknown) => {
+      console.error(e);
+      setError(e instanceof ApiError ? e.message : "Clip konnte nicht geladen werden.");
+      setClip(null);
+    });
   }, [parsed]);
 
   // Canonical-URL erzwingen: wenn die aktuelle URL nicht der kanonischen
@@ -186,7 +185,10 @@ export function ClipDetailPage() {
   return (
     <main className="min-h-screen bg-slate-950 pt-20 pb-16 sm:pt-24" id="top">
       <div className="mx-auto max-w-4xl px-4 pt-6 sm:px-6 sm:pt-12 lg:pt-16">
-        <Link to={Routes.Streamclips.Leaderboard} className="text-xs text-slate-400 hover:text-slate-200">
+        <Link
+          to={Routes.Streamclips.Leaderboard}
+          className="text-xs text-slate-400 hover:text-slate-200"
+        >
           ← Zurück zum Leaderboard
         </Link>
 
@@ -221,8 +223,18 @@ export function ClipDetailPage() {
                 "@type": "BreadcrumbList",
                 itemListElement: [
                   { "@type": "ListItem", position: 1, name: "Start", item: `${SITE_URL}/` },
-                  { "@type": "ListItem", position: 2, name: "Streamclips Germany", item: `${SITE_URL}/streamclips` },
-                  { "@type": "ListItem", position: 3, name: clip.title, item: `${SITE_URL}${clipDetailPath(clip)}` }
+                  {
+                    "@type": "ListItem",
+                    position: 2,
+                    name: "Streamclips Germany",
+                    item: `${SITE_URL}/streamclips`
+                  },
+                  {
+                    "@type": "ListItem",
+                    position: 3,
+                    name: clip.title,
+                    item: `${SITE_URL}${clipDetailPath(clip)}`
+                  }
                 ]
               }}
             />
@@ -278,7 +290,13 @@ export function ClipDetailPage() {
             {clip.awards.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {clip.awards.map((a) => (
-                  <AwardChip key={a.key} emoji={a.emoji} label={a.displayName} color={a.color} count={a.count} />
+                  <AwardChip
+                    key={a.key}
+                    emoji={a.emoji}
+                    label={a.displayName}
+                    color={a.color}
+                    count={a.count}
+                  />
                 ))}
               </div>
             )}
@@ -348,7 +366,11 @@ function ReportBlock({ clipId }: { clipId: string }) {
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="text-xs text-slate-500 hover:text-red-300">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-xs text-slate-500 hover:text-red-300"
+      >
         Clip melden
       </button>
     );
@@ -374,7 +396,10 @@ function ReportBlock({ clipId }: { clipId: string }) {
 
   return (
     <div className="space-y-2 rounded-2xl border border-white/10 bg-white/5 p-4">
-      <label htmlFor="report-reason" className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+      <label
+        htmlFor="report-reason"
+        className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+      >
         Clip melden
       </label>
       <textarea
@@ -388,7 +413,12 @@ function ReportBlock({ clipId }: { clipId: string }) {
       />
       {error && <p className="text-xs text-red-300">{error}</p>}
       <div className="flex gap-2">
-        <button type="button" onClick={send} disabled={busy} className="btn-sm bg-red-500/80 hover:bg-red-500">
+        <button
+          type="button"
+          onClick={send}
+          disabled={busy}
+          className="btn-sm bg-red-500/80 hover:bg-red-500"
+        >
           {busy ? "Sende…" : "Melden"}
         </button>
         <button type="button" onClick={() => setOpen(false)} className="btn-outline btn-sm">

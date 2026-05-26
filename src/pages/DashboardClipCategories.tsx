@@ -46,7 +46,9 @@ function CategoriesManager() {
       .then(setCats)
       .catch((err: unknown) => {
         console.error(err);
-        setError(err instanceof ApiError ? err.message : "Kategorien konnten nicht geladen werden.");
+        setError(
+          err instanceof ApiError ? err.message : "Kategorien konnten nicht geladen werden."
+        );
       });
   }, []);
 
@@ -57,7 +59,9 @@ function CategoriesManager() {
   async function change(id: string, section: ClipSection) {
     try {
       const updated = await adminSetCategorySection(id, section);
-      setCats((prev) => prev?.map((c) => (c.id === id ? { ...c, section: updated.section } : c)) ?? null);
+      setCats(
+        (prev) => prev?.map((c) => (c.id === id ? { ...c, section: updated.section } : c)) ?? null
+      );
     } catch (err: unknown) {
       console.error(err);
       setError(err instanceof ApiError ? err.message : "Sektion konnte nicht gesetzt werden.");
@@ -70,7 +74,8 @@ function CategoriesManager() {
       {cats === null && !error && <p className="text-sm text-slate-400">Lade…</p>}
       {cats !== null && cats.length === 0 && (
         <p className="text-sm text-slate-500">
-          Noch keine Kategorien — sie entstehen automatisch, sobald Clips mit Twitch-Kategorie eingereicht werden.
+          Noch keine Kategorien — sie entstehen automatisch, sobald Clips mit Twitch-Kategorie
+          eingereicht werden.
         </p>
       )}
 
@@ -83,7 +88,14 @@ function CategoriesManager() {
               className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 p-3"
             >
               <div className="flex min-w-0 items-center gap-3">
-                {art && <img src={art} alt="" className="h-10 w-8 shrink-0 rounded object-cover" loading="lazy" />}
+                {art && (
+                  <img
+                    src={art}
+                    alt=""
+                    className="h-10 w-8 shrink-0 rounded object-cover"
+                    loading="lazy"
+                  />
+                )}
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-slate-50">{cat.name}</p>
                   <p className="text-xs text-slate-500">{cat.clipCount} Clip(s)</p>
@@ -96,7 +108,9 @@ function CategoriesManager() {
                 aria-label={`Sektion für ${cat.name}`}
               >
                 {SECTIONS.map((s) => (
-                  <option key={s.key} value={s.key}>{s.label}</option>
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                  </option>
                 ))}
               </select>
             </li>

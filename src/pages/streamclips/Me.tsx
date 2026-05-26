@@ -32,7 +32,9 @@ export function MyClipsPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    getMe().then(setMe).catch(() => setMe(null));
+    getMe()
+      .then(setMe)
+      .catch(() => setMe(null));
   }, []);
 
   React.useEffect(() => {
@@ -55,7 +57,9 @@ export function MyClipsPage() {
             </p>
             <h1 className="text-2xl font-semibold text-slate-50 sm:text-3xl">Meine Clips</h1>
           </div>
-          <Link to={Routes.Streamclips.Submit} className={TWITCH_BTN}>Clip einreichen</Link>
+          <Link to={Routes.Streamclips.Submit} className={TWITCH_BTN}>
+            Clip einreichen
+          </Link>
         </header>
 
         <StreamclipsNav />
@@ -64,7 +68,9 @@ export function MyClipsPage() {
 
         {me === null && (
           <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
-            <p className="text-sm text-slate-300">Melde dich mit Twitch an, um deine Clips zu sehen.</p>
+            <p className="text-sm text-slate-300">
+              Melde dich mit Twitch an, um deine Clips zu sehen.
+            </p>
             <button type="button" onClick={() => loginToTwitch()} className={TWITCH_BTN}>
               Mit Twitch anmelden
             </button>
@@ -78,7 +84,9 @@ export function MyClipsPage() {
             {clips !== null && clips.length === 0 && (
               <p className="text-sm text-slate-500">
                 Du hast noch keine Clips eingereicht.{" "}
-                <Link to={Routes.Streamclips.Submit} className="text-[#bf94ff] hover:underline">Jetzt loslegen →</Link>
+                <Link to={Routes.Streamclips.Submit} className="text-[#bf94ff] hover:underline">
+                  Jetzt loslegen →
+                </Link>
               </p>
             )}
             <ul className="space-y-3">
@@ -92,20 +100,31 @@ export function MyClipsPage() {
                       className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 transition hover:border-[#9146FF]/40"
                     >
                       {thumb && (
-                        <img src={thumb} alt="" className="h-14 w-24 shrink-0 rounded-lg object-cover" loading="lazy" />
+                        <img
+                          src={thumb}
+                          alt=""
+                          className="h-14 w-24 shrink-0 rounded-lg object-cover"
+                          loading="lazy"
+                        />
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <span className={`rounded-full px-2 py-0.5 ${badge.className}`}>{badge.label}</span>
+                          <span className={`rounded-full px-2 py-0.5 ${badge.className}`}>
+                            {badge.label}
+                          </span>
                           <span className="text-slate-500">{formatDate(clip.createdAt)}</span>
                         </div>
-                        <p className="mt-1 truncate text-sm font-semibold text-slate-50">{clip.title}</p>
+                        <p className="mt-1 truncate text-sm font-semibold text-slate-50">
+                          {clip.title}
+                        </p>
                         <div className="mt-1 flex items-center gap-2">
                           <StarRating value={Math.round(clip.avgScore ?? 0)} readOnly size="sm" />
                           <span className="text-xs text-slate-500">{clip.ratingCount} Stimmen</span>
                         </div>
                         {clip.status === "rejected" && clip.rejectionReason && (
-                          <p className="mt-1 text-xs text-red-300/80">Grund: {clip.rejectionReason}</p>
+                          <p className="mt-1 text-xs text-red-300/80">
+                            Grund: {clip.rejectionReason}
+                          </p>
                         )}
                       </div>
                     </Link>

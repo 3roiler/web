@@ -22,7 +22,7 @@ const SLUG_ID_RE = /^([a-z0-9][a-z0-9-]{0,118}?)-([0-9a-f]{8})$/i;
 
 /** Erste 8 Hex-Zeichen der UUID — Disambiguator in der Slug-URL. */
 export function shortidFromId(id: string): string {
-  return id.replace(/-/g, '').slice(0, 8).toLowerCase();
+  return id.replace(/-/g, "").slice(0, 8).toLowerCase();
 }
 
 /**
@@ -40,8 +40,8 @@ export function clipDetailPath(clip: { id: string; slug?: string | null }): stri
 }
 
 export type ParsedClipPathId =
-  | { kind: 'uuid'; uuid: string }
-  | { kind: 'shortid'; slug: string; shortid: string }
+  | { kind: "uuid"; uuid: string }
+  | { kind: "shortid"; slug: string; shortid: string }
   | null;
 
 /**
@@ -52,29 +52,29 @@ export type ParsedClipPathId =
  * Funktionen synchron.
  */
 export function slugifyTitle(title: string | null | undefined): string {
-  let s = (title ?? '').toLowerCase();
+  let s = (title ?? "").toLowerCase();
   // Single-char Substitutionen via `replaceAll` (Sonar S7781) — kein Regex
   // nötig und liest sich klarer als `/ä/g`.
-  s = s.replaceAll('ä', 'ae').replaceAll('ö', 'oe').replaceAll('ü', 'ue').replaceAll('ß', 'ss');
-  s = s.replaceAll('ç', 'c').replaceAll('ñ', 'n');
+  s = s.replaceAll("ä", "ae").replaceAll("ö", "oe").replaceAll("ü", "ue").replaceAll("ß", "ss");
+  s = s.replaceAll("ç", "c").replaceAll("ñ", "n");
   // Diakritika gleicher Grundvokale in einem Schritt — hier muss Regex sein
   // (Character Class).
-  s = s.replace(/[éèêë]/g, 'e');
-  s = s.replace(/[áàâãå]/g, 'a');
-  s = s.replace(/[óòôõø]/g, 'o');
-  s = s.replace(/[úùûü]/g, 'u');
-  s = s.replace(/[íìîï]/g, 'i');
-  s = s.replace(/[^a-z0-9]+/g, '-');
+  s = s.replace(/[éèêë]/g, "e");
+  s = s.replace(/[áàâãå]/g, "a");
+  s = s.replace(/[óòôõø]/g, "o");
+  s = s.replace(/[úùûü]/g, "u");
+  s = s.replace(/[íìîï]/g, "i");
+  s = s.replace(/[^a-z0-9]+/g, "-");
   // Leading/trailing dashes ohne Regex trimmen (Sonar S5852). `codePointAt`
   // statt `charCodeAt` (Sonar S7758) — für ASCII identisch, aber Unicode-
   // korrekt; `'-'` ist Code Point 0x2D = 45.
-  const dashCp = 0x2D;
+  const dashCp = 0x2d;
   let start = 0;
   while (start < s.length && s.codePointAt(start) === dashCp) start++;
   let end = s.length;
   while (end > start && s.codePointAt(end - 1) === dashCp) end--;
   s = s.slice(start, end).slice(0, 100);
-  return s || 'clip';
+  return s || "clip";
 }
 
 /**
@@ -111,14 +111,14 @@ export function awardHubPath(awardKey: string | null | undefined): string | null
  */
 export function parseClipPathId(raw: string | undefined | null): ParsedClipPathId {
   if (!raw) return null;
-  if (UUID_RE.test(raw)) return { kind: 'uuid', uuid: raw.toLowerCase() };
+  if (UUID_RE.test(raw)) return { kind: "uuid", uuid: raw.toLowerCase() };
   const match = SLUG_ID_RE.exec(raw);
   if (match) {
-    return { kind: 'shortid', slug: match[1].toLowerCase(), shortid: match[2].toLowerCase() };
+    return { kind: "shortid", slug: match[1].toLowerCase(), shortid: match[2].toLowerCase() };
   }
   // Toleranz: nur eine 8-Hex-shortid ohne Slug-Prefix („/clip/-a1b2c3d4"
   // oder „/clip/a1b2c3d4") akzeptieren, damit copy-paste aus Logs nicht
   // direkt auf 404 läuft.
-  if (SHORTID_RE.test(raw)) return { kind: 'shortid', slug: '', shortid: raw.toLowerCase() };
+  if (SHORTID_RE.test(raw)) return { kind: "shortid", slug: "", shortid: raw.toLowerCase() };
   return null;
 }

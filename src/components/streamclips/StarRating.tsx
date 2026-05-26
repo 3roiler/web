@@ -24,7 +24,11 @@ export function StarRating({ value, onChange, readOnly = false, size = "md" }: S
   const shown = hover || value;
 
   return (
-    <div className={`inline-flex items-center gap-1 ${SIZE_CLASS[size]}`} role="group" aria-label="Bewertung">
+    <div
+      className={`inline-flex items-center gap-1 ${SIZE_CLASS[size]}`}
+      role="group"
+      aria-label="Bewertung"
+    >
       {[1, 2, 3, 4, 5].map((star) => {
         const filled = star <= shown;
         const cls = filled ? "text-amber-300" : "text-slate-600";

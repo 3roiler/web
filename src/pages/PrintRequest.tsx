@@ -52,7 +52,9 @@ export function PrintRequestPage() {
   if (me === undefined) {
     return (
       <main className="min-h-screen bg-slate-950 pt-24 pb-12">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-16 pt-6 text-sm text-slate-400">Lade…</div>
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-16 pt-6 text-sm text-slate-400">
+          Lade…
+        </div>
       </main>
     );
   }
@@ -64,7 +66,9 @@ export function PrintRequestPage() {
           <p className="text-sm text-slate-400">
             Du musst angemeldet sein, um eine Druckanfrage zu stellen.
           </p>
-          <Link to={Routes.Home} className="btn-outline btn-sm">Zur Startseite</Link>
+          <Link to={Routes.Home} className="btn-outline btn-sm">
+            Zur Startseite
+          </Link>
         </div>
       </main>
     );
@@ -82,7 +86,9 @@ export function PrintRequestPage() {
             Druckanfragen sind nur für eingeladene Nutzer freigeschaltet. Frag den Betreiber, falls
             du Zugriff brauchst.
           </p>
-          <Link to={Routes.Home} className="btn-outline btn-sm">Zur Startseite</Link>
+          <Link to={Routes.Home} className="btn-outline btn-sm">
+            Zur Startseite
+          </Link>
         </div>
       </main>
     );
@@ -186,9 +192,15 @@ function RequestForm({ onCreated }: RequestFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-5 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6"
+    >
       <div>
-        <label htmlFor="pr-title" className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <label
+          htmlFor="pr-title"
+          className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+        >
           Titel
         </label>
         <input
@@ -203,7 +215,10 @@ function RequestForm({ onCreated }: RequestFormProps) {
       </div>
 
       <div>
-        <label htmlFor="pr-description" className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <label
+          htmlFor="pr-description"
+          className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+        >
           Beschreibung (optional)
         </label>
         <textarea
@@ -252,7 +267,13 @@ function RequestForm({ onCreated }: RequestFormProps) {
             <p className="text-xs text-slate-500">
               Max. {formatBytes(STL_MAX_BYTES)}. ASCII oder Binary STL.
               {stlFile && (
-                <> · Ausgewählt: <span className="text-slate-300">{stlFile.name} ({formatBytes(stlFile.size)})</span></>
+                <>
+                  {" "}
+                  · Ausgewählt:{" "}
+                  <span className="text-slate-300">
+                    {stlFile.name} ({formatBytes(stlFile.size)})
+                  </span>
+                </>
               )}
             </p>
           </div>
@@ -265,7 +286,9 @@ function RequestForm({ onCreated }: RequestFormProps) {
               placeholder="https://www.printables.com/model/…"
               className="block w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
             />
-            <p className="text-xs text-slate-500">Thingiverse, Printables, GitHub, dein Cloud-Drive — Hauptsache http(s).</p>
+            <p className="text-xs text-slate-500">
+              Thingiverse, Printables, GitHub, dein Cloud-Drive — Hauptsache http(s).
+            </p>
           </div>
         )}
       </div>

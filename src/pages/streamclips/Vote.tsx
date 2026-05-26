@@ -39,9 +39,15 @@ export function VotePage() {
   const [votedCount, setVotedCount] = React.useState(0);
 
   React.useEffect(() => {
-    getMe().then(setMe).catch(() => setMe(null));
-    getAwards().then(setAwards).catch(() => undefined);
-    getSections().then(setSections).catch(() => undefined);
+    getMe()
+      .then(setMe)
+      .catch(() => setMe(null));
+    getAwards()
+      .then(setAwards)
+      .catch(() => undefined);
+    getSections()
+      .then(setSections)
+      .catch(() => undefined);
   }, []);
 
   const loadNext = React.useCallback(async () => {
@@ -112,16 +118,18 @@ export function VotePage() {
   }, [me, busy, clip, submit]);
 
   if (me === undefined) {
-    return <Shell><p className="text-sm text-slate-400">Lade…</p></Shell>;
+    return (
+      <Shell>
+        <p className="text-sm text-slate-400">Lade…</p>
+      </Shell>
+    );
   }
 
   if (!me) {
     return (
       <Shell>
         <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
-          <p className="text-sm text-slate-300">
-            Melde dich mit Twitch an, um Clips zu bewerten.
-          </p>
+          <p className="text-sm text-slate-300">Melde dich mit Twitch an, um Clips zu bewerten.</p>
           <button type="button" onClick={() => loginToTwitch()} className={TWITCH_BTN}>
             Mit Twitch anmelden
           </button>
@@ -134,7 +142,8 @@ export function VotePage() {
     <Shell>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-slate-400">
-          Heute bewertet: <span className="font-semibold text-cyan-300 tabular-nums">{votedCount}</span>
+          Heute bewertet:{" "}
+          <span className="font-semibold text-cyan-300 tabular-nums">{votedCount}</span>
         </p>
         <SectionFilter sections={sections} value={section} onChange={setSection} />
       </div>
@@ -149,11 +158,17 @@ export function VotePage() {
           </p>
           <div className="mt-4 flex justify-center gap-2">
             {section && (
-              <button type="button" onClick={() => setSection(undefined)} className="btn-outline btn-sm">
+              <button
+                type="button"
+                onClick={() => setSection(undefined)}
+                className="btn-outline btn-sm"
+              >
                 Alle Sektionen
               </button>
             )}
-            <Link to={Routes.Streamclips.Leaderboard} className="btn btn-sm">Zum Leaderboard</Link>
+            <Link to={Routes.Streamclips.Leaderboard} className="btn btn-sm">
+              Zum Leaderboard
+            </Link>
           </div>
         </div>
       )}
@@ -174,12 +189,16 @@ export function VotePage() {
           <div className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/5 py-5">
             <p className="text-xs uppercase tracking-wider text-slate-400">Deine Wertung</p>
             <StarRating value={score} onChange={setScore} size="lg" />
-            <p className="text-xs text-slate-500">Tasten 1–5 · S zum Überspringen · Enter zum Bewerten</p>
+            <p className="text-xs text-slate-500">
+              Tasten 1–5 · S zum Überspringen · Enter zum Bewerten
+            </p>
           </div>
 
           {awards.length > 0 && (
             <div>
-              <p className="mb-2 text-xs uppercase tracking-wider text-slate-400">Passt das? (optional)</p>
+              <p className="mb-2 text-xs uppercase tracking-wider text-slate-400">
+                Passt das? (optional)
+              </p>
               <div className="flex flex-wrap gap-2">
                 {awards.map((a) => (
                   <AwardChip
@@ -198,10 +217,20 @@ export function VotePage() {
           {error && <p className="text-sm text-red-300">{error}</p>}
 
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => submit(true)} disabled={busy} className="btn-outline">
+            <button
+              type="button"
+              onClick={() => submit(true)}
+              disabled={busy}
+              className="btn-outline"
+            >
               Überspringen
             </button>
-            <button type="button" onClick={() => submit(false)} disabled={busy} className={`${TWITCH_BTN} flex-1`}>
+            <button
+              type="button"
+              onClick={() => submit(false)}
+              disabled={busy}
+              className={`${TWITCH_BTN} flex-1`}
+            >
               {busy ? "Speichere…" : "Bewerten & weiter"}
             </button>
           </div>
@@ -248,7 +277,9 @@ function SectionFilter({ sections, value, onChange }: SectionFilterProps) {
     >
       <option value="">Alle Sektionen</option>
       {sections.map((s) => (
-        <option key={s.key} value={s.key}>{s.label}</option>
+        <option key={s.key} value={s.key}>
+          {s.label}
+        </option>
       ))}
     </select>
   );

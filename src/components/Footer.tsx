@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { Routes } from '../config/routes';
+import { Link } from "react-router-dom";
+import { Routes } from "../config/routes";
 
 /**
  * Footer in vier Blöcken: Brand · Navigation · Rechtliches · Verbindung.
@@ -26,8 +26,8 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-3 text-xs leading-relaxed text-slate-500">
-              Platform- und Backend-Engineering von Paul Wechselberger.
-              Pragmatisch, dokumentiert, zuverlässig.
+              Platform- und Backend-Engineering von Paul Wechselberger. Pragmatisch, dokumentiert,
+              zuverlässig.
             </p>
           </div>
 
@@ -37,12 +37,36 @@ export function Footer() {
               Navigation
             </p>
             <ul className="mt-3 space-y-2 text-xs text-slate-400">
-              <li><a href="/#top" className="transition hover:text-cyan-300">Start</a></li>
-              <li><a href="/#skills" className="transition hover:text-cyan-300">Stack</a></li>
-              <li><a href="/#projects" className="transition hover:text-cyan-300">Projekte</a></li>
-              <li><Link to={Routes.Blog} className="transition hover:text-cyan-300">Blog</Link></li>
-              <li><Link to={Routes.Streamclips.Home} className="transition hover:text-cyan-300">Streamclips</Link></li>
-              <li><a href="/#contact" className="transition hover:text-cyan-300">Kontakt</a></li>
+              <li>
+                <a href="/#top" className="transition hover:text-cyan-300">
+                  Start
+                </a>
+              </li>
+              <li>
+                <a href="/#skills" className="transition hover:text-cyan-300">
+                  Stack
+                </a>
+              </li>
+              <li>
+                <a href="/#projects" className="transition hover:text-cyan-300">
+                  Projekte
+                </a>
+              </li>
+              <li>
+                <Link to={Routes.Blog} className="transition hover:text-cyan-300">
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <Link to={Routes.Streamclips.Home} className="transition hover:text-cyan-300">
+                  Streamclips
+                </Link>
+              </li>
+              <li>
+                <a href="/#contact" className="transition hover:text-cyan-300">
+                  Kontakt
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -136,14 +160,24 @@ export function Footer() {
         <div className="flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 text-xs text-slate-500 sm:flex-row">
           <p>© {year} broiler.dev · Paul Wechselberger</p>
           <div className="flex items-center gap-4">
-            <a href={Routes.External.Sonarcloud} target="_blank" rel="noopener" aria-label="SonarCloud">
+            <a
+              href={Routes.External.Sonarcloud}
+              target="_blank"
+              rel="noopener"
+              aria-label="SonarCloud"
+            >
               <img
                 src="https://sonarcloud.io/images/project_badges/sonarcloud-light.svg"
                 alt="SonarCloud"
                 className="h-5 opacity-80 transition hover:opacity-100"
               />
             </a>
-            <a href={Routes.External.DigitalOcean} target="_blank" rel="noopener" aria-label="DigitalOcean">
+            <a
+              href={Routes.External.DigitalOcean}
+              target="_blank"
+              rel="noopener"
+              aria-label="DigitalOcean"
+            >
               <img
                 src="https://web-platforms.sfo2.cdn.digitaloceanspaces.com/WWW/Badge%201.svg"
                 alt="DigitalOcean Referral Badge"

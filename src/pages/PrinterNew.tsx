@@ -15,9 +15,8 @@ export function PrinterNewPage() {
       title="Neuer Drucker"
       description={
         <>
-          Registriere einen 3D-Drucker. Nach dem Anlegen wird der einmalige
-          Agent-Token angezeigt — diesen musst du auf deinem Drucker-Host in
-          der Agent-Config hinterlegen.
+          Registriere einen 3D-Drucker. Nach dem Anlegen wird der einmalige Agent-Token angezeigt —
+          diesen musst du auf deinem Drucker-Host in der Agent-Config hinterlegen.
         </>
       }
     >
@@ -32,7 +31,9 @@ function PrinterNewForm() {
   const [model, setModel] = React.useState("Anycubic Kobra 3 V2");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [created, setCreated] = React.useState<{ printer: PrinterWithRole; token: string } | null>(null);
+  const [created, setCreated] = React.useState<{ printer: PrinterWithRole; token: string } | null>(
+    null
+  );
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -76,7 +77,10 @@ function PrinterNewForm() {
     <form onSubmit={handleSubmit} className="max-w-xl space-y-6">
       <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
         <div>
-          <label htmlFor="printer-name" className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <label
+            htmlFor="printer-name"
+            className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+          >
             Name
           </label>
           <input
@@ -91,7 +95,10 @@ function PrinterNewForm() {
           />
         </div>
         <div>
-          <label htmlFor="printer-model" className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <label
+            htmlFor="printer-model"
+            className="block text-xs font-semibold uppercase tracking-wider text-slate-400"
+          >
             Modell
           </label>
           <input
@@ -144,13 +151,11 @@ function TokenReveal({ token, onContinue }: TokenRevealProps) {
   return (
     <div className="max-w-2xl space-y-6">
       <div className="rounded-2xl border border-amber-400/40 bg-amber-500/10 p-6">
-        <p className="text-sm font-semibold text-amber-200">
-          Einmalig sichtbarer Agent-Token
-        </p>
+        <p className="text-sm font-semibold text-amber-200">Einmalig sichtbarer Agent-Token</p>
         <p className="mt-2 text-xs text-amber-100/80">
-          Kopiere den Token jetzt und hinterlege ihn in der Agent-Config auf dem
-          Drucker-Host. Nach dem Verlassen dieser Seite ist er nicht mehr
-          abrufbar — du musst ihn ggf. rotieren und neu verteilen.
+          Kopiere den Token jetzt und hinterlege ihn in der Agent-Config auf dem Drucker-Host. Nach
+          dem Verlassen dieser Seite ist er nicht mehr abrufbar — du musst ihn ggf. rotieren und neu
+          verteilen.
         </p>
       </div>
 

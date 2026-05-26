@@ -56,41 +56,74 @@ interface NavGroup {
  */
 const NAV_GROUPS: NavGroup[] = [
   {
-    items: [
-      { label: "Übersicht", to: Routes.Dashboard.Home, permission: "dashboard.view" }
-    ]
+    items: [{ label: "Übersicht", to: Routes.Dashboard.Home, permission: "dashboard.view" }]
   },
   {
     label: "Inhalte",
     items: [
-      { label: "Blog", to: Routes.Dashboard.Blog, permission: "dashboard.blog", prefixes: ["/dashboard/blog"] },
+      {
+        label: "Blog",
+        to: Routes.Dashboard.Blog,
+        permission: "dashboard.blog",
+        prefixes: ["/dashboard/blog"]
+      },
       // Streamclips-Moderation. `dashboard.clips` schaltet den Bereich frei;
       // die Award-/Report-Unterseiten teilen sich denselben prefix.
-      { label: "Clips", to: Routes.Dashboard.Clips, permission: "dashboard.clips", prefixes: ["/dashboard/clips"] }
+      {
+        label: "Clips",
+        to: Routes.Dashboard.Clips,
+        permission: "dashboard.clips",
+        prefixes: ["/dashboard/clips"]
+      }
     ]
   },
   {
     label: "Community",
     items: [
       { label: "Nutzer", to: Routes.Dashboard.Users, permission: "dashboard.users" },
-      { label: "Gruppen", to: Routes.Dashboard.Groups, permission: "dashboard.groups", prefixes: ["/dashboard/groups"] }
+      {
+        label: "Gruppen",
+        to: Routes.Dashboard.Groups,
+        permission: "dashboard.groups",
+        prefixes: ["/dashboard/groups"]
+      }
     ]
   },
   {
     label: "3D-Druck",
     items: [
-      { label: "Drucker", to: Routes.Dashboard.Printers, permission: "dashboard.printers", prefixes: ["/dashboard/printers"] },
-      { label: "G-Code", to: Routes.Dashboard.Gcode, permission: "dashboard.printers", prefixes: ["/dashboard/gcode"] },
+      {
+        label: "Drucker",
+        to: Routes.Dashboard.Printers,
+        permission: "dashboard.printers",
+        prefixes: ["/dashboard/printers"]
+      },
+      {
+        label: "G-Code",
+        to: Routes.Dashboard.Gcode,
+        permission: "dashboard.printers",
+        prefixes: ["/dashboard/gcode"]
+      },
       // Editor sitzt direkt neben der Liste — der häufigste Einstieg ist
       // „schnell etwas editieren", nicht „die Library anschauen". Die
       // Listenseite besitzt weiterhin Löschen / Per-File-Ansicht.
       { label: "Editor", to: Routes.Dashboard.GcodeNew, permission: "dashboard.printers" },
-      { label: "STL", to: Routes.Dashboard.Stl, permission: "dashboard.printers", prefixes: ["/dashboard/stl"] },
+      {
+        label: "STL",
+        to: Routes.Dashboard.Stl,
+        permission: "dashboard.printers",
+        prefixes: ["/dashboard/stl"]
+      },
       // Druckanfragen erscheinen sowohl für Anfrager (`print.request`) als
       // auch für Moderatoren (`print.moderate`) — der Backend-Filter
       // entscheidet was sie sehen. Wir gaten hier auf das schwächere
       // Recht, damit jeder Anfrager den Eintrag findet.
-      { label: "Druckanfragen", to: Routes.Dashboard.PrintRequests, permission: "print.request", prefixes: ["/dashboard/druckanfragen"] }
+      {
+        label: "Druckanfragen",
+        to: Routes.Dashboard.PrintRequests,
+        permission: "print.request",
+        prefixes: ["/dashboard/druckanfragen"]
+      }
     ]
   },
   {
@@ -118,10 +151,7 @@ export function hasPermission(me: User | null | undefined, permission: string): 
   if (!me?.permissions) return false;
   if (me.permissions.includes(permission)) return true;
   if (me.permissions.includes("admin.manage")) return true;
-  if (
-    permission === "dashboard.view" &&
-    me.permissions.includes("print.request")
-  ) {
+  if (permission === "dashboard.view" && me.permissions.includes("print.request")) {
     return true;
   }
   return false;
@@ -177,12 +207,10 @@ export function DashboardLayout({
   }
 
   // Pro Gruppe nur sichtbare Items behalten; leere Gruppen fallen raus.
-  const visibleGroups = NAV_GROUPS
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => hasPermission(me, item.permission))
-    }))
-    .filter((group) => group.items.length > 0);
+  const visibleGroups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => hasPermission(me, item.permission))
+  })).filter((group) => group.items.length > 0);
 
   return (
     <main className="min-h-screen bg-slate-950 pt-20 pb-12 sm:pt-24 sm:pb-16" id="top">
@@ -201,7 +229,9 @@ export function DashboardLayout({
               {title}
             </h1>
             {description && (
-              <div className="mt-2 max-w-2xl text-xs text-slate-400 sm:mt-3 sm:text-sm">{description}</div>
+              <div className="mt-2 max-w-2xl text-xs text-slate-400 sm:mt-3 sm:text-sm">
+                {description}
+              </div>
             )}
           </div>
           {actions && <div className="flex flex-wrap gap-2">{actions}</div>}

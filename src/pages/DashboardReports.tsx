@@ -65,31 +65,46 @@ function ReportsList() {
       {rows?.map((report) => {
         const thumb = safeHttpUrl(report.clipThumbnailUrl);
         return (
-        <div key={report.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div className="flex gap-3">
-            {thumb && (
-              <img src={thumb} alt="" className="h-14 w-24 shrink-0 rounded-lg object-cover" loading="lazy" />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-slate-500">{formatDate(report.createdAt)} · {report.reporterName}</p>
-              <Link
-                to={Routes.Streamclips.ClipDetail.replace(":id", report.clipId)}
-                className="truncate text-sm font-semibold text-slate-50 hover:text-[#bf94ff]"
+          <div key={report.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="flex gap-3">
+              {thumb && (
+                <img
+                  src={thumb}
+                  alt=""
+                  className="h-14 w-24 shrink-0 rounded-lg object-cover"
+                  loading="lazy"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-slate-500">
+                  {formatDate(report.createdAt)} · {report.reporterName}
+                </p>
+                <Link
+                  to={Routes.Streamclips.ClipDetail.replace(":id", report.clipId)}
+                  className="truncate text-sm font-semibold text-slate-50 hover:text-[#bf94ff]"
+                >
+                  {report.clipTitle}
+                </Link>
+                <p className="mt-1 text-sm text-slate-300">„{report.reason}"</p>
+              </div>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => resolve(report.id, "resolved")}
+                className="btn-sm bg-emerald-500/80 hover:bg-emerald-500"
               >
-                {report.clipTitle}
-              </Link>
-              <p className="mt-1 text-sm text-slate-300">„{report.reason}"</p>
+                Erledigt
+              </button>
+              <button
+                type="button"
+                onClick={() => resolve(report.id, "dismissed")}
+                className="btn-outline btn-sm"
+              >
+                Verwerfen
+              </button>
             </div>
           </div>
-          <div className="mt-3 flex gap-2">
-            <button type="button" onClick={() => resolve(report.id, "resolved")} className="btn-sm bg-emerald-500/80 hover:bg-emerald-500">
-              Erledigt
-            </button>
-            <button type="button" onClick={() => resolve(report.id, "dismissed")} className="btn-outline btn-sm">
-              Verwerfen
-            </button>
-          </div>
-        </div>
         );
       })}
 

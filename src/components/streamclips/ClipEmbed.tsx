@@ -42,15 +42,15 @@ export function ClipEmbed({
   const params = new URLSearchParams({
     clip: clipId,
     parent,
-    autoplay: autoplay || seekToSeconds !== null ? 'true' : 'false'
+    autoplay: autoplay || seekToSeconds !== null ? "true" : "false"
   });
   if (seekToSeconds !== null && Number.isFinite(seekToSeconds) && seekToSeconds > 0) {
-    params.set('time', `${Math.floor(seekToSeconds)}s`);
+    params.set("time", `${Math.floor(seekToSeconds)}s`);
   }
   const src = `https://clips.twitch.tv/embed?${params.toString()}`;
   // Key kombiniert clipId + seekNonce, damit ein erneuter Klick auf
   // dieselbe Sekunde den iframe neu mountet (sonst kein Seek).
-  const iframeKey = `${clipId}:${seekToSeconds ?? 'none'}:${seekNonce}`;
+  const iframeKey = `${clipId}:${seekToSeconds ?? "none"}:${seekNonce}`;
 
   return (
     <div

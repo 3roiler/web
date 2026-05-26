@@ -15,13 +15,15 @@ import { Routes, navigateTo } from "../config/routes";
 function GithubCallbackPage() {
   React.useEffect(() => {
     const params = new URLSearchParams(globalThis.location.search);
-    const code = params.get('code');
-    const state = params.get('state');
+    const code = params.get("code");
+    const state = params.get("state");
 
     if (code && state) {
-      authenticateGithub(code, state).then(() => {
+      authenticateGithub(code, state)
+        .then(() => {
           navigateTo(Routes.Home);
-        }).catch((error: unknown) => {
+        })
+        .catch((error: unknown) => {
           console.error(error);
           navigateTo(Routes.Callback.Error);
         });
@@ -50,13 +52,15 @@ function GithubCallbackPage() {
 function TwitchCallbackPage() {
   React.useEffect(() => {
     const params = new URLSearchParams(globalThis.location.search);
-    const code = params.get('code');
-    const state = params.get('state');
+    const code = params.get("code");
+    const state = params.get("state");
 
     if (code && state) {
-      authenticateTwitch(code, state).then(() => {
+      authenticateTwitch(code, state)
+        .then(() => {
           navigateTo(Routes.Streamclips.Vote);
-        }).catch((error: unknown) => {
+        })
+        .catch((error: unknown) => {
           console.error(error);
           navigateTo(Routes.Callback.Error);
         });
@@ -79,34 +83,35 @@ interface CountdownProps {
 }
 
 function Countdown({ seconds, onComplete }: CountdownProps) {
-    const [timeLeft, setTimeLeft] = React.useState(seconds);
+  const [timeLeft, setTimeLeft] = React.useState(seconds);
 
-    React.useEffect(() => {
-        if (timeLeft <= 0) {
-            onComplete();
-            return;
-        }
+  React.useEffect(() => {
+    if (timeLeft <= 0) {
+      onComplete();
+      return;
+    }
 
-        const timerId = setInterval(() => {
-            setTimeLeft((prev) => prev - 1);
-        }, 1000);
+    const timerId = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
 
-        return () => clearInterval(timerId);
-    }, [timeLeft, onComplete]);
+    return () => clearInterval(timerId);
+  }, [timeLeft, onComplete]);
 
-    return <span>{timeLeft}</span>;
+  return <span>{timeLeft}</span>;
 }
 
 function AuthErrorPage() {
-    return (
-        <main className="min-h-screen text-center flex items-center justify-center text-red-200">
-            <p>
-                Authentifizierung fehlgeschlagen. Bitte versuchen Sie es später erneut.
-                <br></br>
-                Sie werden in <Countdown seconds={5} onComplete={() => navigateTo(Routes.Home)} /> Sekunden zurück zur Startseite geleitet.
-            </p>
-        </main>
-    );
+  return (
+    <main className="min-h-screen text-center flex items-center justify-center text-red-200">
+      <p>
+        Authentifizierung fehlgeschlagen. Bitte versuchen Sie es später erneut.
+        <br></br>
+        Sie werden in <Countdown seconds={5} onComplete={() => navigateTo(Routes.Home)} /> Sekunden
+        zurück zur Startseite geleitet.
+      </p>
+    </main>
+  );
 }
 
 export { GithubCallbackPage, TwitchCallbackPage, AuthErrorPage };

@@ -1,8 +1,8 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { loginToGithub, loginToTwitch, logout, getMe, User } from '../services';
-import { Routes } from '../config/routes';
-import { safeHttpUrl } from '../lib/url';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { loginToGithub, loginToTwitch, logout, getMe, User } from "../services";
+import { Routes } from "../config/routes";
+import { safeHttpUrl } from "../lib/url";
 
 /**
  * Top-Nav. Drei Bereichs-Dropdowns (Start, Blog, Streamclips) plus
@@ -49,49 +49,49 @@ interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: 'Start',
-    to: '/',
-    isActive: (p) => p === '/',
+    label: "Start",
+    to: "/",
+    isActive: (p) => p === "/",
     items: [
-      { label: 'Übersicht', to: '/' },
+      { label: "Übersicht", to: "/" },
       // Anchor-Items: existieren nur in Home, daher Dropdown-Eintrag
       // nur auf `/` zeigen. Sonst landet der Klick auf einem leeren
       // Hash und der HashScroll-Helper findet kein Element.
-      { label: 'Stack', to: '/#skills', onlyOnPath: '/' },
-      { label: 'Projekte', to: '/#projects', onlyOnPath: '/' },
-      { label: 'Kontakt', to: '/#contact', onlyOnPath: '/' }
+      { label: "Stack", to: "/#skills", onlyOnPath: "/" },
+      { label: "Projekte", to: "/#projects", onlyOnPath: "/" },
+      { label: "Kontakt", to: "/#contact", onlyOnPath: "/" }
     ]
   },
   {
-    label: 'Blog',
+    label: "Blog",
     to: Routes.Blog,
-    isActive: (p) => p.startsWith('/blog'),
+    isActive: (p) => p.startsWith("/blog"),
     items: [
-      { label: 'Alle Beiträge', to: Routes.Blog },
+      { label: "Alle Beiträge", to: Routes.Blog },
       // RSS ist ein API-Endpunkt; per `href` damit der Browser ihn als
       // Feed öffnet statt React-Router den Pfad als unbekannte Route
       // behandelt.
-      { label: 'RSS-Feed', href: '/blog/rss.xml' }
+      { label: "RSS-Feed", href: "/blog/rss.xml" }
     ]
   },
   {
-    label: 'Streamclips',
+    label: "Streamclips",
     to: Routes.Streamclips.Home,
-    isActive: (p) => p.startsWith('/streamclips'),
+    isActive: (p) => p.startsWith("/streamclips"),
     items: [
-      { label: 'Übersicht', to: Routes.Streamclips.Home },
-      { label: 'Top-Clips', to: Routes.Streamclips.Leaderboard },
-      { label: 'Top-Einreicher', to: Routes.Streamclips.Contributors },
+      { label: "Übersicht", to: Routes.Streamclips.Home },
+      { label: "Top-Clips", to: Routes.Streamclips.Leaderboard },
+      { label: "Top-Einreicher", to: Routes.Streamclips.Contributors },
       // RSS-Feed analog zum Blog — externer Pfad (Caddy → API), daher
       // `href` statt `to`; das `NavItemLink`-Rendering setzt automatisch
       // `target="_blank" rel="external"`, damit `ViewTransitions` nicht
       // interceptet.
-      { label: 'RSS-Feed', href: '/streamclips/rss.xml' },
+      { label: "RSS-Feed", href: "/streamclips/rss.xml" },
       // Auth-/Permission-gegated — der User sieht im Dropdown nichts,
       // wozu er ohnehin nicht klicken könnte.
-      { label: 'Clip einreichen', to: Routes.Streamclips.Submit, permission: 'clips.submit' },
-      { label: 'Clips bewerten', to: Routes.Streamclips.Vote, authRequired: true },
-      { label: 'Meine Clips', to: Routes.Streamclips.Me, authRequired: true }
+      { label: "Clip einreichen", to: Routes.Streamclips.Submit, permission: "clips.submit" },
+      { label: "Clips bewerten", to: Routes.Streamclips.Vote, authRequired: true },
+      { label: "Meine Clips", to: Routes.Streamclips.Me, authRequired: true }
     ]
   }
 ];
@@ -102,15 +102,15 @@ const NAV_GROUPS: NavGroup[] = [
  * → „Übersicht"). So bleibt der Indikator auf Home stabil.
  */
 const ANCHOR_TO_ITEM_TO: Record<string, string> = {
-  top: '/',
-  about: '/',
-  skills: '/#skills',
-  projects: '/#projects',
-  contact: '/#contact'
+  top: "/",
+  about: "/",
+  skills: "/#skills",
+  projects: "/#projects",
+  contact: "/#contact"
 };
 
 /** IDs, die der Scroll-Tracker auf der Home-Page mitliest. */
-const HOME_ANCHOR_IDS = ['top', 'about', 'skills', 'projects', 'contact'];
+const HOME_ANCHOR_IDS = ["top", "about", "skills", "projects", "contact"];
 
 /**
  * Filtert Sub-Items basierend auf Auth/Permission/Pfad und entfernt
@@ -122,23 +122,28 @@ function visibleItems(items: NavSubItem[], user: User | null, pathname: string):
     if (item.authRequired && !user) return false;
     if (item.permission) {
       const perms = user?.permissions ?? [];
-      if (!perms.includes(item.permission) && !perms.includes('admin.manage')) return false;
+      if (!perms.includes(item.permission) && !perms.includes("admin.manage")) return false;
     }
     return true;
   });
 }
 
 /** True, wenn das Sub-Item bei der aktuellen Location als aktiv gilt. */
-function isItemActive(item: NavSubItem, pathname: string, hash: string, activeAnchor: string | null): boolean {
+function isItemActive(
+  item: NavSubItem,
+  pathname: string,
+  hash: string,
+  activeAnchor: string | null
+): boolean {
   if (!item.to) return false;
   // Hash-Item (z. B. `/#skills`): nur auf `/` und wenn der Anchor passt.
-  if (item.to.includes('#')) {
-    if (pathname !== '/') return false;
+  if (item.to.includes("#")) {
+    if (pathname !== "/") return false;
     if (activeAnchor) {
       return ANCHOR_TO_ITEM_TO[activeAnchor] === item.to;
     }
-    if (item.to === '/') {
-      return hash === '' || hash === '#top';
+    if (item.to === "/") {
+      return hash === "" || hash === "#top";
     }
     return item.to === `/${hash}`;
   }
@@ -185,19 +190,21 @@ export function Header() {
   React.useEffect(() => () => cancelClose(), [cancelClose]);
 
   const canSeeDashboard = Boolean(
-    user?.permissions?.some((p) => p === 'dashboard.view' || p === 'admin.manage')
+    user?.permissions?.some((p) => p === "dashboard.view" || p === "admin.manage")
   );
   const canSeePrintRequest = Boolean(
     user?.permissions?.some(
-      (p) => p === 'print.request' || p === 'print.moderate' || p === 'admin.manage'
+      (p) => p === "print.request" || p === "print.moderate" || p === "admin.manage"
     )
   );
 
   React.useEffect(() => {
-    getMe().then((fetchedUser) => {
-      setUser(fetchedUser);
-      setAvatarBroken(false);
-    }).catch(() => setUser(null));
+    getMe()
+      .then((fetchedUser) => {
+        setUser(fetchedUser);
+        setAvatarBroken(false);
+      })
+      .catch(() => setUser(null));
   }, []);
 
   // Drawer & Dropdowns nach SPA-Navigation schließen.
@@ -212,7 +219,7 @@ export function Header() {
   React.useEffect(() => {
     if (!mobileOpen) return;
     const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
     };
@@ -221,14 +228,14 @@ export function Header() {
   // Active-Section-Tracking auf der Startseite — pixel-genau über
   // `scroll`-Listener (siehe original Implementation für Begründung).
   React.useEffect(() => {
-    if (location.pathname !== '/') {
+    if (location.pathname !== "/") {
       setActiveAnchor(null);
       return;
     }
     const TRIGGER_OFFSET = 120;
-    const elements = HOME_ANCHOR_IDS
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => el !== null);
+    const elements = HOME_ANCHOR_IDS.map((id) => document.getElementById(id)).filter(
+      (el): el is HTMLElement => el !== null
+    );
     if (elements.length === 0) return;
     let raf = 0;
     const pickActive = () => {
@@ -247,12 +254,12 @@ export function Header() {
       raf = requestAnimationFrame(pickActive);
     };
     pickActive();
-    globalThis.addEventListener('scroll', onScroll, { passive: true });
-    globalThis.addEventListener('resize', onScroll);
+    globalThis.addEventListener("scroll", onScroll, { passive: true });
+    globalThis.addEventListener("resize", onScroll);
     return () => {
       if (raf) cancelAnimationFrame(raf);
-      globalThis.removeEventListener('scroll', onScroll);
-      globalThis.removeEventListener('resize', onScroll);
+      globalThis.removeEventListener("scroll", onScroll);
+      globalThis.removeEventListener("resize", onScroll);
     };
   }, [location.pathname]);
 
@@ -267,22 +274,22 @@ export function Header() {
       setAccountOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setOpenGroup(null);
         setAccountOpen(false);
       }
     };
-    document.addEventListener('mousedown', onPointer);
-    document.addEventListener('keydown', onKey);
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener('mousedown', onPointer);
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
     };
   }, [openGroup, accountOpen]);
 
-  const displayName = user?.displayName || user?.display_name || user?.name || '';
+  const displayName = user?.displayName || user?.display_name || user?.name || "";
   const avatarUrl = safeHttpUrl(user?.avatarUrl);
-  const initial = displayName.slice(0, 1).toUpperCase() || '?';
+  const initial = displayName.slice(0, 1).toUpperCase() || "?";
 
   const handleLogout = () => {
     setAccountOpen(false);
@@ -298,7 +305,11 @@ export function Header() {
         <Link
           to="/"
           className="group flex items-center gap-2 shrink-0"
-          onClick={() => { setMobileOpen(false); setAccountOpen(false); setOpenGroup(null); }}
+          onClick={() => {
+            setMobileOpen(false);
+            setAccountOpen(false);
+            setOpenGroup(null);
+          }}
         >
           <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,.7)] transition-transform group-hover:scale-125" />
           <span className="text-base font-semibold tracking-tight text-slate-100 group-hover:text-cyan-300 transition-colors">
@@ -359,7 +370,7 @@ export function Header() {
           type="button"
           onClick={() => setMobileOpen((o) => !o)}
           className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
-          aria-label={mobileOpen ? 'Menü schließen' : 'Menü öffnen'}
+          aria-label={mobileOpen ? "Menü schließen" : "Menü öffnen"}
           aria-expanded={mobileOpen}
           aria-controls="mobile-menu"
         >
@@ -371,7 +382,9 @@ export function Header() {
       <div
         id="mobile-menu"
         className={`md:hidden overflow-hidden border-t border-white/10 bg-slate-950/95 backdrop-blur-md transition-[max-height,opacity] duration-200 ${
-          mobileOpen ? 'max-h-[85vh] overflow-y-auto opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
+          mobileOpen
+            ? "max-h-[85vh] overflow-y-auto opacity-100"
+            : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >
         <ul className="flex flex-col gap-1 px-2 py-3">
@@ -384,9 +397,7 @@ export function Header() {
               hash={location.hash}
               activeAnchor={activeAnchor}
               expanded={mobileExpanded === group.label}
-              onToggle={() =>
-                setMobileExpanded((g) => (g === group.label ? null : group.label))
-              }
+              onToggle={() => setMobileExpanded((g) => (g === group.label ? null : group.label))}
             />
           ))}
           {(canSeePrintRequest || canSeeDashboard) && (
@@ -394,12 +405,16 @@ export function Header() {
           )}
           {canSeePrintRequest && (
             <li>
-              <Link to={Routes.PrintRequest} className="mobile-nav-link">Druckanfrage</Link>
+              <Link to={Routes.PrintRequest} className="mobile-nav-link">
+                Druckanfrage
+              </Link>
             </li>
           )}
           {canSeeDashboard && (
             <li>
-              <Link to={Routes.Dashboard.Home} className="mobile-nav-link">Dashboard</Link>
+              <Link to={Routes.Dashboard.Home} className="mobile-nav-link">
+                Dashboard
+              </Link>
             </li>
           )}
         </ul>
@@ -443,16 +458,12 @@ function DesktopGroup(props: DesktopGroupProps) {
   const hasItems = items.length > 0;
 
   return (
-    <li
-      className="relative"
-      onMouseEnter={onOpen}
-      onFocus={onOpen}
-    >
+    <li className="relative" onMouseEnter={onOpen} onFocus={onOpen}>
       <div className="flex items-center">
         <Link
           to={group.to}
-          className={`nav-link ${groupActive ? 'is-active' : ''}`}
-          aria-current={groupActive ? 'page' : undefined}
+          className={`nav-link ${groupActive ? "is-active" : ""}`}
+          aria-current={groupActive ? "page" : undefined}
         >
           {group.label}
         </Link>
@@ -497,10 +508,15 @@ function DesktopGroup(props: DesktopGroupProps) {
 }
 
 function NavItemLink({ item, active }: { item: NavSubItem; active: boolean }) {
-  const className = `menu-item ${active ? 'text-cyan-300' : ''}`;
+  const className = `menu-item ${active ? "text-cyan-300" : ""}`;
   if (item.to) {
     return (
-      <Link to={item.to} className={className} role="menuitem" aria-current={active ? 'page' : undefined}>
+      <Link
+        to={item.to}
+        className={className}
+        role="menuitem"
+        aria-current={active ? "page" : undefined}
+      >
         {item.label}
       </Link>
     );
@@ -536,7 +552,15 @@ interface MobileGroupProps {
   onToggle: () => void;
 }
 
-function MobileGroup({ group, user, pathname, hash, activeAnchor, expanded, onToggle }: MobileGroupProps) {
+function MobileGroup({
+  group,
+  user,
+  pathname,
+  hash,
+  activeAnchor,
+  expanded,
+  onToggle
+}: MobileGroupProps) {
   const items = visibleItems(group.items, user, pathname);
   const groupActive = group.isActive(pathname);
   const hasItems = items.length > 0;
@@ -546,8 +570,8 @@ function MobileGroup({ group, user, pathname, hash, activeAnchor, expanded, onTo
       <div className="flex items-center">
         <Link
           to={group.to}
-          className={`mobile-nav-link flex-1 ${groupActive ? 'is-active' : ''}`}
-          aria-current={groupActive ? 'page' : undefined}
+          className={`mobile-nav-link flex-1 ${groupActive ? "is-active" : ""}`}
+          aria-current={groupActive ? "page" : undefined}
         >
           {group.label}
         </Link>
@@ -580,10 +604,10 @@ function MobileGroup({ group, user, pathname, hash, activeAnchor, expanded, onTo
 }
 
 function NavItemMobileLink({ item, active }: { item: NavSubItem; active: boolean }) {
-  const className = `mobile-nav-link text-sm ${active ? 'text-cyan-300' : ''}`;
+  const className = `mobile-nav-link text-sm ${active ? "text-cyan-300" : ""}`;
   if (item.to) {
     return (
-      <Link to={item.to} className={className} aria-current={active ? 'page' : undefined}>
+      <Link to={item.to} className={className} aria-current={active ? "page" : undefined}>
         {item.label}
       </Link>
     );
@@ -591,12 +615,7 @@ function NavItemMobileLink({ item, active }: { item: NavSubItem; active: boolean
   // Siehe Kommentar in `NavItemLink` — `href`-Items sind externe Ziele
   // (z. B. RSS-Endpunkt), nicht SPA-Routen.
   return (
-    <a
-      href={item.href}
-      className={className}
-      target="_blank"
-      rel="external noopener noreferrer"
-    >
+    <a href={item.href} className={className} target="_blank" rel="external noopener noreferrer">
       {item.label}
     </a>
   );
@@ -621,9 +640,18 @@ interface DesktopAccountProps {
 
 function DesktopAccount(props: DesktopAccountProps) {
   const {
-    user, displayName, avatarUrl, avatarBroken, initial,
-    open, onToggle, onClose, onAvatarError, onLogout,
-    canSeeDashboard, canSeePrintRequest
+    user,
+    displayName,
+    avatarUrl,
+    avatarBroken,
+    initial,
+    open,
+    onToggle,
+    onClose,
+    onAvatarError,
+    onLogout,
+    canSeeDashboard,
+    canSeePrintRequest
   } = props;
 
   return (
@@ -635,8 +663,8 @@ function DesktopAccount(props: DesktopAccountProps) {
         aria-expanded={open}
         className={
           user
-            ? 'inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 py-1 pl-1 pr-3 text-sm font-medium text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-500/10'
-            : 'inline-flex items-center gap-1.5 rounded-full bg-cyan-500 px-4 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-400 sm:text-sm'
+            ? "inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 py-1 pl-1 pr-3 text-sm font-medium text-slate-200 transition hover:border-cyan-400/40 hover:bg-cyan-500/10"
+            : "inline-flex items-center gap-1.5 rounded-full bg-cyan-500 px-4 py-1.5 text-xs font-semibold text-slate-950 transition hover:bg-cyan-400 sm:text-sm"
         }
       >
         {user ? (
@@ -734,7 +762,10 @@ function AccountMenuGuest({ onClose }: { onClose: () => void }) {
     <div className="p-2">
       <button
         type="button"
-        onClick={() => { onClose(); loginToGithub(); }}
+        onClick={() => {
+          onClose();
+          loginToGithub();
+        }}
         className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/5"
         role="menuitem"
       >
@@ -742,7 +773,10 @@ function AccountMenuGuest({ onClose }: { onClose: () => void }) {
       </button>
       <button
         type="button"
-        onClick={() => { onClose(); loginToTwitch(); }}
+        onClick={() => {
+          onClose();
+          loginToTwitch();
+        }}
         className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/5"
         role="menuitem"
       >
@@ -786,7 +820,10 @@ function MobileAuth(props: MobileAuthProps) {
   }
   return (
     <div className="flex flex-col gap-3">
-      <Link to={Routes.Profile} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-white/5">
+      <Link
+        to={Routes.Profile}
+        className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-white/5"
+      >
         {avatarUrl && !avatarBroken ? (
           <img
             src={avatarUrl}
@@ -819,9 +856,15 @@ function ChevronIcon({ open }: { open: boolean }) {
       viewBox="0 0 12 12"
       fill="none"
       aria-hidden="true"
-      className={`transition-transform ${open ? 'rotate-180' : ''}`}
+      className={`transition-transform ${open ? "rotate-180" : ""}`}
     >
-      <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M3 4.5L6 7.5L9 4.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -829,7 +872,12 @@ function ChevronIcon({ open }: { open: boolean }) {
 function BurgerIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M3 5h14M3 10h14M3 15h14"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -845,7 +893,7 @@ function CloseIcon() {
 function GithubIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-4 w-4">
-      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
     </svg>
   );
 }
@@ -853,7 +901,7 @@ function GithubIcon() {
 function TwitchIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-4 w-4">
-      <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/>
+      <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z" />
     </svg>
   );
 }

@@ -42,9 +42,9 @@ function estimateReadingMinutes(markdown: string): number {
 function slugify(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[äöüß]/g, (c) => ({ ä: 'ae', ö: 'oe', ü: 'ue', ß: 'ss' })[c] ?? c)
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
+    .replace(/[äöüß]/g, (c) => ({ ä: "ae", ö: "oe", ü: "ue", ß: "ss" })[c] ?? c)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
     .slice(0, 60);
 }
 
@@ -59,8 +59,7 @@ function useReadingProgress(): number {
     let raf = 0;
     const compute = () => {
       raf = 0;
-      const docHeight =
-        document.documentElement.scrollHeight - globalThis.innerHeight;
+      const docHeight = document.documentElement.scrollHeight - globalThis.innerHeight;
       setProgress(docHeight > 0 ? Math.min(1, Math.max(0, globalThis.scrollY / docHeight)) : 0);
     };
     const onScroll = () => {
@@ -68,12 +67,12 @@ function useReadingProgress(): number {
       raf = requestAnimationFrame(compute);
     };
     compute();
-    globalThis.addEventListener('scroll', onScroll, { passive: true });
-    globalThis.addEventListener('resize', onScroll);
+    globalThis.addEventListener("scroll", onScroll, { passive: true });
+    globalThis.addEventListener("resize", onScroll);
     return () => {
       if (raf) cancelAnimationFrame(raf);
-      globalThis.removeEventListener('scroll', onScroll);
-      globalThis.removeEventListener('resize', onScroll);
+      globalThis.removeEventListener("scroll", onScroll);
+      globalThis.removeEventListener("resize", onScroll);
     };
   }, []);
   return progress;
@@ -101,21 +100,21 @@ function useTableOfContents(
       setToc([]);
       return;
     }
-    const headings = articleRef.current.querySelectorAll<HTMLHeadingElement>('h2, h3');
+    const headings = articleRef.current.querySelectorAll<HTMLHeadingElement>("h2, h3");
     const seen = new Map<string, number>();
     const entries: TocEntry[] = [];
     headings.forEach((h) => {
-      const text = (h.textContent ?? '').trim();
+      const text = (h.textContent ?? "").trim();
       if (!text) return;
-      const base = slugify(text) || 'section';
+      const base = slugify(text) || "section";
       const count = seen.get(base) ?? 0;
       seen.set(base, count + 1);
       const id = count === 0 ? base : `${base}-${count + 1}`;
       h.id = id;
       // Scroll-Margin, damit `#anchor`-Sprünge nicht direkt unter dem
       // fixed Header landen — bleibt visuell freundlich.
-      h.style.scrollMarginTop = '96px';
-      entries.push({ id, text, level: h.tagName === 'H2' ? 2 : 3 });
+      h.style.scrollMarginTop = "96px";
+      entries.push({ id, text, level: h.tagName === "H2" ? 2 : 3 });
     });
     setToc(entries);
   }, [postContent, articleRef]);
@@ -152,10 +151,10 @@ function useActiveHeading(toc: TocEntry[]): string | null {
       raf = requestAnimationFrame(pick);
     };
     pick();
-    globalThis.addEventListener('scroll', onScroll, { passive: true });
+    globalThis.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       if (raf) cancelAnimationFrame(raf);
-      globalThis.removeEventListener('scroll', onScroll);
+      globalThis.removeEventListener("scroll", onScroll);
     };
   }, [toc]);
   return active;
@@ -173,9 +172,7 @@ function CodeBlock(props: React.HTMLAttributes<HTMLPreElement>) {
 
   const onCopy = async () => {
     if (!preRef.current) return;
-    const code = preRef.current.querySelector('code')?.innerText
-      ?? preRef.current.innerText
-      ?? '';
+    const code = preRef.current.querySelector("code")?.innerText ?? preRef.current.innerText ?? "";
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
@@ -195,7 +192,7 @@ function CodeBlock(props: React.HTMLAttributes<HTMLPreElement>) {
         aria-label="Code kopieren"
         className="absolute right-3 top-3 rounded-md border border-white/10 bg-slate-900/80 px-2 py-1 text-[0.65rem] font-medium uppercase tracking-wider text-slate-400 opacity-0 transition group-hover:opacity-100 hover:border-cyan-400/40 hover:text-cyan-300 focus-visible:opacity-100"
       >
-        {copied ? 'Kopiert' : 'Copy'}
+        {copied ? "Kopiert" : "Copy"}
       </button>
     </div>
   );
@@ -211,7 +208,9 @@ export function BlogPostPage() {
   const isAuthor = Boolean(user?.permissions?.includes("blog.write"));
 
   React.useEffect(() => {
-    getMe().then(setUser).catch(() => setUser(null));
+    getMe()
+      .then(setUser)
+      .catch(() => setUser(null));
   }, []);
 
   React.useEffect(() => {
@@ -227,17 +226,16 @@ export function BlogPostPage() {
   const progress = useReadingProgress();
   const toc = useTableOfContents(articleRef, post?.content ?? null);
   const activeHeading = useActiveHeading(toc);
-  const minutes = React.useMemo(
-    () => (post ? estimateReadingMinutes(post.content) : 0),
-    [post]
-  );
+  const minutes = React.useMemo(() => (post ? estimateReadingMinutes(post.content) : 0), [post]);
 
   if (error) {
     return (
       <main className="min-h-screen bg-slate-950 py-24">
         <div className="mx-auto max-w-3xl px-6 sm:px-10 lg:px-16 pt-16">
           <p className="text-sm text-red-300">{error}</p>
-          <Link to={Routes.Blog} className="btn-outline mt-8 inline-block">Zur Übersicht</Link>
+          <Link to={Routes.Blog} className="btn-outline mt-8 inline-block">
+            Zur Übersicht
+          </Link>
         </div>
       </main>
     );
@@ -286,7 +284,12 @@ export function BlogPostPage() {
           itemListElement: [
             { "@type": "ListItem", position: 1, name: "Start", item: `${SITE_URL}/` },
             { "@type": "ListItem", position: 2, name: "Blog", item: `${SITE_URL}/blog` },
-            { "@type": "ListItem", position: 3, name: post.title, item: `${SITE_URL}/blog/${post.slug}` }
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: post.title,
+              item: `${SITE_URL}/blog/${post.slug}`
+            }
           ]
         }}
       />
@@ -304,16 +307,28 @@ export function BlogPostPage() {
       </div>
 
       <div className="mx-auto max-w-6xl px-6 sm:px-10 lg:px-16 pt-16">
-        <Link to={Routes.Blog} className="text-xs text-slate-400 hover:text-cyan-300">← Zur Übersicht</Link>
+        <Link to={Routes.Blog} className="text-xs text-slate-400 hover:text-cyan-300">
+          ← Zur Übersicht
+        </Link>
 
-        <div className={toc.length >= 3 ? 'mt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_220px] lg:gap-12' : 'mt-8'}>
+        <div
+          className={
+            toc.length >= 3 ? "mt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_220px] lg:gap-12" : "mt-8"
+          }
+        >
           <article ref={articleRef} className="lg:max-w-3xl">
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
-              <time dateTime={post.publishedAt ?? post.createdAt}>{formatDate(post.publishedAt)}</time>
-              <span aria-hidden="true" className="text-slate-600">·</span>
+              <time dateTime={post.publishedAt ?? post.createdAt}>
+                {formatDate(post.publishedAt)}
+              </time>
+              <span aria-hidden="true" className="text-slate-600">
+                ·
+              </span>
               <span>{minutes} min Lesezeit</span>
               {post.publishedAt === null && (
-                <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-amber-300">Draft</span>
+                <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-amber-300">
+                  Draft
+                </span>
               )}
               {isAuthor && (
                 <Link
@@ -363,13 +378,13 @@ export function BlogPostPage() {
                   {toc.map((entry) => {
                     const active = entry.id === activeHeading;
                     return (
-                      <li key={entry.id} className={entry.level === 3 ? 'pl-3' : ''}>
+                      <li key={entry.id} className={entry.level === 3 ? "pl-3" : ""}>
                         <a
                           href={`#${entry.id}`}
                           className={
                             active
-                              ? 'block border-l-2 border-cyan-400 pl-2 text-cyan-300'
-                              : 'block border-l-2 border-transparent pl-2 text-slate-400 transition hover:border-white/20 hover:text-slate-200'
+                              ? "block border-l-2 border-cyan-400 pl-2 text-cyan-300"
+                              : "block border-l-2 border-transparent pl-2 text-slate-400 transition hover:border-white/20 hover:text-slate-200"
                           }
                         >
                           {entry.text}
