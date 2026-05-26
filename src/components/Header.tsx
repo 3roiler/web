@@ -5,76 +5,140 @@ import { Routes } from '../config/routes';
 import { safeHttpUrl } from '../lib/url';
 
 /**
- * Top-level Navi. Hash-Einträge (`/#anchor`) sind Sprungmarken auf der
- * Startseite, `to`-Einträge sind echte SPA-Routen. Dashboard/Druckanfrage
- * sind permission-gegated und leben deshalb im Avatar-Dropdown — die
- * Hauptzeile soll auf den ersten Blick lesbar bleiben.
+ * Top-Nav. Drei Bereichs-Dropdowns (Start, Blog, Streamclips) plus
+ * Account-Dropdown rechts.
+ *
+ * UX-Pattern pro Bereich:
+ *   - Top-Level ist ein RouterLink zur Bereichs-Übersicht. Klick navigiert.
+ *   - Daneben ein Chevron-Knopf: Klick toggelt das Dropdown.
+ *   - Hover/Focus auf dem Container öffnet das Dropdown ebenfalls
+ *     (Desktop, schnellere Discovery).
+ *   - Mobile: Tap auf den Bereich expandiert ein Akkordeon mit den
+ *     Sub-Items; Top-Level-Navigation auf Mobile geht über das erste
+ *     Sub-Item („Übersicht").
+ *
+ * Anchor-Items (Stack / Projekte / Kontakt) leben im Start-Dropdown
+ * und werden NUR auf `/` gezeigt — auf jeder anderen Seite gibt es
+ * keine Sections zum Scrollen. Das `HashScroll`-Helper-Komponent
+ * scrollt nach SPA-Navigation zur Anchor-Position, damit
+ * `<Link to="/#projects">` von `/blog` aus funktioniert.
  */
-interface NavLinkSpec {
+
+interface NavSubItem {
   label: string;
-  href?: string;
+  /** SPA-Pfad (Router-Link). Genau einer von `to` / `href` muss gesetzt sein. */
   to?: string;
-  /** Pfad-Präfixe, die den Eintrag als aktiv markieren (zusätzlich zu `to`). */
-  prefixes?: string[];
+  /** Externer Pfad / `<a>`-Link. */
+  href?: string;
+  /** True ⇒ Item nur wenn der User eingeloggt ist. */
+  authRequired?: boolean;
+  /** Wenn gesetzt ⇒ Item nur wenn der User diese Permission hat. */
+  permission?: string;
+  /** Wenn gesetzt ⇒ Item nur wenn pathname diesen Wert hat (z. B. nur auf `/`). */
+  onlyOnPath?: string;
 }
 
-const NAV_LINKS: NavLinkSpec[] = [
-  { label: 'Start',       href: '/#top' },
-  { label: 'Stack',       href: '/#skills' },
-  { label: 'Projekte',    href: '/#projects' },
-  { label: 'Blog',        to: Routes.Blog, prefixes: ['/blog'] },
-  { label: 'Streamclips', to: Routes.Streamclips.Home, prefixes: ['/streamclips'] },
-  { label: 'Kontakt',     href: '/#contact' }
+interface NavGroup {
+  label: string;
+  /** Pfad, zu dem der Top-Level-Link führt. */
+  to: string;
+  /** Aktiv-Check für die Gruppe — bestimmt das Active-Indicator-Verhalten. */
+  isActive: (pathname: string) => boolean;
+  items: NavSubItem[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: 'Start',
+    to: '/',
+    isActive: (p) => p === '/',
+    items: [
+      { label: 'Übersicht', to: '/' },
+      // Anchor-Items: existieren nur in Home, daher Dropdown-Eintrag
+      // nur auf `/` zeigen. Sonst landet der Klick auf einem leeren
+      // Hash und der HashScroll-Helper findet kein Element.
+      { label: 'Stack', to: '/#skills', onlyOnPath: '/' },
+      { label: 'Projekte', to: '/#projects', onlyOnPath: '/' },
+      { label: 'Kontakt', to: '/#contact', onlyOnPath: '/' }
+    ]
+  },
+  {
+    label: 'Blog',
+    to: Routes.Blog,
+    isActive: (p) => p.startsWith('/blog'),
+    items: [
+      { label: 'Alle Beiträge', to: Routes.Blog },
+      // RSS ist ein API-Endpunkt; per `href` damit der Browser ihn als
+      // Feed öffnet statt React-Router den Pfad als unbekannte Route
+      // behandelt.
+      { label: 'RSS-Feed', href: '/blog/rss.xml' }
+    ]
+  },
+  {
+    label: 'Streamclips',
+    to: Routes.Streamclips.Home,
+    isActive: (p) => p.startsWith('/streamclips'),
+    items: [
+      { label: 'Übersicht', to: Routes.Streamclips.Home },
+      { label: 'Top-Clips', to: Routes.Streamclips.Leaderboard },
+      { label: 'Top-Einreicher', to: Routes.Streamclips.Contributors },
+      // Auth-/Permission-gegated — der User sieht im Dropdown nichts,
+      // wozu er ohnehin nicht klicken könnte.
+      { label: 'Clip einreichen', to: Routes.Streamclips.Submit, permission: 'clips.submit' },
+      { label: 'Clips bewerten', to: Routes.Streamclips.Vote, authRequired: true },
+      { label: 'Meine Clips', to: Routes.Streamclips.Me, authRequired: true }
+    ]
+  }
 ];
 
 /**
  * Wenn eine Section im Viewport rückt, aber selbst kein eigener Nav-
- * Eintrag ist, ordnen wir sie einem benachbarten zu. `#about` etwa hat
- * keinen Header-Link – während der User dort scrollt soll trotzdem
- * „Start" markiert bleiben, damit der Nav nicht abrupt leer wird.
+ * Eintrag ist, ordnen wir sie einem benachbarten zu (z. B. `#about`
+ * → „Übersicht"). So bleibt der Indikator auf Home stabil.
  */
-const ANCHOR_TO_NAV_HREF: Record<string, string> = {
-  top: '/#top',
-  about: '/#top',
+const ANCHOR_TO_ITEM_TO: Record<string, string> = {
+  top: '/',
+  about: '/',
   skills: '/#skills',
   projects: '/#projects',
   contact: '/#contact'
 };
 
-/** IDs, die der IntersectionObserver beim Scrollen auf `/` mitliest. */
+/** IDs, die der Scroll-Tracker auf der Home-Page mitliest. */
 const HOME_ANCHOR_IDS = ['top', 'about', 'skills', 'projects', 'contact'];
 
 /**
- * Liefert `true` wenn der Eintrag bei der aktuellen Location als aktiv
- * gelten soll. Hash-Einträge (Anchors) sind nur auf `/` aktiv und werden
- * primär durch den vom IntersectionObserver gepflegten `activeAnchor`
- * gesteuert. Fallback ist der URL-Hash — relevant bevor der Observer
- * gemessen hat oder wenn keine Section im Sichtbereich ist (z. B. ganz
- * unten im Footer-Bereich).
+ * Filtert Sub-Items basierend auf Auth/Permission/Pfad und entfernt
+ * Items, die der aktuelle User/Pfad nicht sehen darf.
  */
-function isNavActive(
-  entry: NavLinkSpec,
-  pathname: string,
-  hash: string,
-  activeAnchor: string | null
-): boolean {
-  if (entry.to) {
-    if (pathname === entry.to) return true;
-    return entry.prefixes?.some((p) => pathname.startsWith(p)) ?? false;
-  }
-  if (entry.href && pathname === '/') {
-    if (activeAnchor) {
-      return ANCHOR_TO_NAV_HREF[activeAnchor] === entry.href;
+function visibleItems(items: NavSubItem[], user: User | null, pathname: string): NavSubItem[] {
+  return items.filter((item) => {
+    if (item.onlyOnPath && pathname !== item.onlyOnPath) return false;
+    if (item.authRequired && !user) return false;
+    if (item.permission) {
+      const perms = user?.permissions ?? [];
+      if (!perms.includes(item.permission) && !perms.includes('admin.manage')) return false;
     }
-    // Anker greifen nur, wenn der Hash 1:1 matched. Für `/#top` zählt auch
-    // der Default-Zustand (kein Hash) als aktiv, sonst hätte die Startseite
-    // beim ersten Aufruf keinen Indikator.
-    if (entry.href === '/#top') {
+    return true;
+  });
+}
+
+/** True, wenn das Sub-Item bei der aktuellen Location als aktiv gilt. */
+function isItemActive(item: NavSubItem, pathname: string, hash: string, activeAnchor: string | null): boolean {
+  if (!item.to) return false;
+  // Hash-Item (z. B. `/#skills`): nur auf `/` und wenn der Anchor passt.
+  if (item.to.includes('#')) {
+    if (pathname !== '/') return false;
+    if (activeAnchor) {
+      return ANCHOR_TO_ITEM_TO[activeAnchor] === item.to;
+    }
+    if (item.to === '/') {
       return hash === '' || hash === '#top';
     }
-    return entry.href === `/${hash}`;
+    return item.to === `/${hash}`;
   }
-  return false;
+  // Plain SPA-Pfad: exakt oder per Prefix matched.
+  return pathname === item.to;
 }
 
 export function Header() {
@@ -82,22 +146,18 @@ export function Header() {
   const [avatarBroken, setAvatarBroken] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [accountOpen, setAccountOpen] = React.useState(false);
+  /** Aktuell hover/focus-geöffnetes Desktop-Dropdown (Label) oder null. */
+  const [openGroup, setOpenGroup] = React.useState<string | null>(null);
+  /** Im Mobile-Drawer expandierte Gruppe (Label) oder null. */
+  const [mobileExpanded, setMobileExpanded] = React.useState<string | null>(null);
   const [activeAnchor, setActiveAnchor] = React.useState<string | null>(null);
   const location = useLocation();
   const accountMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const navMenuRef = React.useRef<HTMLUListElement | null>(null);
 
-  /**
-   * Zeigt den Dashboard-Eintrag, sobald der Nutzer mindestens `dashboard.view`
-   * (direkt oder via `admin.manage`) besitzt. Die einzelnen Unterbereiche
-   * (Blog / Nutzer / Gruppen) werden im Dashboard selbst weiter gefiltert.
-   */
   const canSeeDashboard = Boolean(
     user?.permissions?.some((p) => p === 'dashboard.view' || p === 'admin.manage')
   );
-
-  /** Public link to the print-request submission page. Visible to anyone
-   *  who can submit (`print.request`) or moderate (`print.moderate`,
-   *  which usually comes via `admin.manage`). */
   const canSeePrintRequest = Boolean(
     user?.permissions?.some(
       (p) => p === 'print.request' || p === 'print.moderate' || p === 'admin.manage'
@@ -105,28 +165,21 @@ export function Header() {
   );
 
   React.useEffect(() => {
-    getMe().then(fetchedUser => {
+    getMe().then((fetchedUser) => {
       setUser(fetchedUser);
       setAvatarBroken(false);
-    }).catch(() => {
-      setUser(null);
-    });
+    }).catch(() => setUser(null));
   }, []);
 
-  /**
-   * Close the mobile drawer and the account dropdown whenever we navigate
-   * to a new path/hash. Otherwise the overlays would stay open behind the
-   * new page after a click on a link inside them.
-   */
+  // Drawer & Dropdowns nach SPA-Navigation schließen.
   React.useEffect(() => {
     setMobileOpen(false);
     setAccountOpen(false);
+    setOpenGroup(null);
+    setMobileExpanded(null);
   }, [location.pathname, location.hash]);
 
-  /**
-   * Lock background scroll while the drawer is open so the user can't
-   * accidentally scroll the underlying page when swiping the menu.
-   */
+  // Mobile-Drawer-Scrolllock.
   React.useEffect(() => {
     if (!mobileOpen) return;
     const previous = document.body.style.overflow;
@@ -136,38 +189,19 @@ export function Header() {
     };
   }, [mobileOpen]);
 
-  /**
-   * Active-Section-Tracking auf der Startseite. Beim Scrollen schauen
-   * wir, welche Section gerade unter der „Trigger-Linie" hängt (= ein
-   * Stück unter dem fixed Header). Die UNTERSTE Section, deren Oberkante
-   * diese Linie schon passiert hat, ist die, in der der User aktuell
-   * liest — also setzen wir die aktiv.
-   *
-   * Implementation per `scroll`-Listener (RAF-getaktet) statt
-   * IntersectionObserver: der Observer signalisiert nur „X% sichtbar",
-   * was bei zwei sich überlappenden Sections nicht ausreicht, um die
-   * jeweils richtige zu picken. Ein direkter `getBoundingClientRect()`-
-   * Sweep über fünf DOM-Knoten kostet praktisch nichts und ist explizit
-   * lesbar.
-   */
+  // Active-Section-Tracking auf der Startseite — pixel-genau über
+  // `scroll`-Listener (siehe original Implementation für Begründung).
   React.useEffect(() => {
     if (location.pathname !== '/') {
       setActiveAnchor(null);
       return;
     }
-    // px unter dem fixed Header, ab denen eine Section als „eingerollt"
-    // gilt. Etwas über der reinen Header-Höhe (~64 px), damit der
-    // Indikator nicht schon umspringt, wenn die nächste Section nur
-    // einen Pixel unter den Header rutscht.
     const TRIGGER_OFFSET = 120;
-
     const elements = HOME_ANCHOR_IDS
       .map((id) => document.getElementById(id))
       .filter((el): el is HTMLElement => el !== null);
     if (elements.length === 0) return;
-
     let raf = 0;
-
     const pickActive = () => {
       raf = 0;
       let current: string | null = null;
@@ -175,22 +209,14 @@ export function Header() {
         const top = el.getBoundingClientRect().top;
         if (top <= TRIGGER_OFFSET) {
           current = el.id;
-        } else {
-          // Sections sind im DOM von oben nach unten — sobald eine noch
-          // nicht unter die Triggerlinie gescrollt ist, ist auch keine
-          // dahinter relevant.
-          break;
-        }
+        } else break;
       }
       setActiveAnchor(current);
     };
-
     const onScroll = () => {
       if (raf) return;
       raf = requestAnimationFrame(pickActive);
     };
-
-    // Initial pick (Page-Load mit ggf. bestehendem scrollY)
     pickActive();
     globalThis.addEventListener('scroll', onScroll, { passive: true });
     globalThis.addEventListener('resize', onScroll);
@@ -201,20 +227,21 @@ export function Header() {
     };
   }, [location.pathname]);
 
-  /**
-   * Outside-click + Escape schließen das Account-Dropdown. Wir hängen die
-   * Listener nur ein, wenn das Menü offen ist — spart in 99 % der Zeit
-   * einen Document-Listener, der gar nichts zu tun hätte.
-   */
+  // Outside-Click + Escape schließen Dropdowns.
   React.useEffect(() => {
-    if (!accountOpen) return;
+    if (!openGroup && !accountOpen) return;
     const onPointer = (event: MouseEvent) => {
-      if (!accountMenuRef.current) return;
-      if (accountMenuRef.current.contains(event.target as Node)) return;
+      const target = event.target as Node;
+      if (accountMenuRef.current?.contains(target)) return;
+      if (navMenuRef.current?.contains(target)) return;
+      setOpenGroup(null);
       setAccountOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setAccountOpen(false);
+      if (event.key === 'Escape') {
+        setOpenGroup(null);
+        setAccountOpen(false);
+      }
     };
     document.addEventListener('mousedown', onPointer);
     document.addEventListener('keydown', onKey);
@@ -222,7 +249,7 @@ export function Header() {
       document.removeEventListener('mousedown', onPointer);
       document.removeEventListener('keydown', onKey);
     };
-  }, [accountOpen]);
+  }, [openGroup, accountOpen]);
 
   const displayName = user?.displayName || user?.display_name || user?.name || '';
   const avatarUrl = safeHttpUrl(user?.avatarUrl);
@@ -233,17 +260,6 @@ export function Header() {
     logout().then(() => setUser(null));
   };
 
-  /** Renders one nav entry — RouterLink for SPA paths, anchor otherwise. */
-  function renderNavEntry(entry: NavLinkSpec, baseClass: string) {
-    const active = isNavActive(entry, location.pathname, location.hash, activeAnchor);
-    const className = active ? `${baseClass} is-active` : baseClass;
-    const aria = active ? 'page' : undefined;
-    if (entry.to) {
-      return <Link to={entry.to} className={className} aria-current={aria}>{entry.label}</Link>;
-    }
-    return <a href={entry.href} className={className} aria-current={aria}>{entry.label}</a>;
-  }
-
   return (
     <nav
       className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-md"
@@ -253,7 +269,7 @@ export function Header() {
         <Link
           to="/"
           className="group flex items-center gap-2 shrink-0"
-          onClick={() => { setMobileOpen(false); setAccountOpen(false); }}
+          onClick={() => { setMobileOpen(false); setAccountOpen(false); setOpenGroup(null); }}
         >
           <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,.7)] transition-transform group-hover:scale-125" />
           <span className="text-base font-semibold tracking-tight text-slate-100 group-hover:text-cyan-300 transition-colors">
@@ -261,18 +277,29 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Desktop nav — collapses into the hamburger drawer below `md`.
-            Pure text links with cyan active-underline. Gated entries
-            (Dashboard / Druckanfrage) live in the account dropdown right. */}
-        <ul className="hidden md:flex items-center gap-3 lg:gap-5">
-          {NAV_LINKS.map((entry) => (
-            <li key={entry.label}>{renderNavEntry(entry, 'nav-link')}</li>
+        {/* Desktop nav — drei Bereichs-Dropdowns. Hover/Focus öffnet, Click
+            auf dem Top-Level navigiert direkt zur Bereichs-Übersicht. */}
+        <ul
+          ref={navMenuRef}
+          className="hidden md:flex items-center gap-1 lg:gap-2"
+          onMouseLeave={() => setOpenGroup(null)}
+        >
+          {NAV_GROUPS.map((group) => (
+            <DesktopGroup
+              key={group.label}
+              group={group}
+              user={user}
+              pathname={location.pathname}
+              hash={location.hash}
+              activeAnchor={activeAnchor}
+              open={openGroup === group.label}
+              onOpen={() => setOpenGroup(group.label)}
+              onClose={() => setOpenGroup(null)}
+              onToggle={() => setOpenGroup((g) => (g === group.label ? null : group.label))}
+            />
           ))}
         </ul>
 
-        {/* Right side: account/auth dropdown. Single anchor for everything
-            user-related — keeps the bar quiet, gives users one consistent
-            place to find "everything that is mine". */}
         <div className="hidden md:flex items-center gap-3" ref={accountMenuRef}>
           <DesktopAccount
             user={user}
@@ -290,7 +317,6 @@ export function Header() {
           />
         </div>
 
-        {/* Mobile hamburger. Larger hit area (40×40) than the visual icon. */}
         <button
           type="button"
           onClick={() => setMobileOpen((o) => !o)}
@@ -303,20 +329,27 @@ export function Header() {
         </button>
       </div>
 
-      {/* Mobile drawer. Rendered inside the same nav so focus order stays
-          natural and CSS `border-b` of the bar separates it visually.
-          Mobile keeps the two login buttons visible (no dropdown) because
-          there's enough vertical space and a dropdown-inside-drawer would
-          feel like double-tap UX. */}
+      {/* Mobile drawer — Akkordeon pro Bereich. */}
       <div
         id="mobile-menu"
         className={`md:hidden overflow-hidden border-t border-white/10 bg-slate-950/95 backdrop-blur-md transition-[max-height,opacity] duration-200 ${
-          mobileOpen ? 'max-h-[85vh] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
+          mobileOpen ? 'max-h-[85vh] overflow-y-auto opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
         }`}
       >
-        <ul className="flex flex-col gap-1 px-4 py-3">
-          {NAV_LINKS.map((entry) => (
-            <li key={entry.label}>{renderNavEntry(entry, 'mobile-nav-link')}</li>
+        <ul className="flex flex-col gap-1 px-2 py-3">
+          {NAV_GROUPS.map((group) => (
+            <MobileGroup
+              key={group.label}
+              group={group}
+              user={user}
+              pathname={location.pathname}
+              hash={location.hash}
+              activeAnchor={activeAnchor}
+              expanded={mobileExpanded === group.label}
+              onToggle={() =>
+                setMobileExpanded((g) => (g === group.label ? null : group.label))
+              }
+            />
           ))}
           {(canSeePrintRequest || canSeeDashboard) && (
             <li aria-hidden="true" className="my-2 border-t border-white/5" />
@@ -347,6 +380,162 @@ export function Header() {
     </nav>
   );
 }
+
+// ─── Desktop Group (Dropdown) ────────────────────────────────────────
+
+interface DesktopGroupProps {
+  group: NavGroup;
+  user: User | null;
+  pathname: string;
+  hash: string;
+  activeAnchor: string | null;
+  open: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+  onToggle: () => void;
+}
+
+function DesktopGroup(props: DesktopGroupProps) {
+  const { group, user, pathname, hash, activeAnchor, open, onOpen, onToggle } = props;
+  const items = visibleItems(group.items, user, pathname);
+  const groupActive = group.isActive(pathname);
+  // Wenn nach dem Filter keine Items mehr da sind (z. B. Start ohne
+  // Anchors auf Sub-Page), ist das Dropdown sinnlos — wir rendern den
+  // Top-Level dann als simplen Link ohne Chevron.
+  const hasItems = items.length > 0;
+
+  return (
+    <li
+      className="relative"
+      onMouseEnter={onOpen}
+      onFocus={onOpen}
+    >
+      <div className="flex items-center">
+        <Link
+          to={group.to}
+          className={`nav-link ${groupActive ? 'is-active' : ''}`}
+          aria-current={groupActive ? 'page' : undefined}
+        >
+          {group.label}
+        </Link>
+        {hasItems && (
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-haspopup="menu"
+            aria-expanded={open}
+            aria-label={`${group.label}-Untermenü`}
+            className="ml-0.5 inline-flex h-6 w-6 items-center justify-center rounded text-slate-400 transition hover:text-slate-100"
+          >
+            <ChevronIcon open={open} />
+          </button>
+        )}
+      </div>
+
+      {hasItems && open && (
+        <div
+          role="menu"
+          className="absolute left-0 top-full mt-1 w-56 origin-top-left overflow-hidden rounded-xl border border-white/10 bg-slate-900/95 shadow-xl shadow-black/40 backdrop-blur-md"
+        >
+          <div className="py-1">
+            {items.map((item) => (
+              <NavItemLink
+                key={item.label}
+                item={item}
+                active={isItemActive(item, pathname, hash, activeAnchor)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </li>
+  );
+}
+
+function NavItemLink({ item, active }: { item: NavSubItem; active: boolean }) {
+  const className = `menu-item ${active ? 'text-cyan-300' : ''}`;
+  if (item.to) {
+    return (
+      <Link to={item.to} className={className} role="menuitem" aria-current={active ? 'page' : undefined}>
+        {item.label}
+      </Link>
+    );
+  }
+  return (
+    <a href={item.href} className={className} role="menuitem">
+      {item.label}
+    </a>
+  );
+}
+
+// ─── Mobile Group (Accordion) ────────────────────────────────────────
+
+interface MobileGroupProps {
+  group: NavGroup;
+  user: User | null;
+  pathname: string;
+  hash: string;
+  activeAnchor: string | null;
+  expanded: boolean;
+  onToggle: () => void;
+}
+
+function MobileGroup({ group, user, pathname, hash, activeAnchor, expanded, onToggle }: MobileGroupProps) {
+  const items = visibleItems(group.items, user, pathname);
+  const groupActive = group.isActive(pathname);
+  const hasItems = items.length > 0;
+
+  return (
+    <li>
+      <div className="flex items-center">
+        <Link
+          to={group.to}
+          className={`mobile-nav-link flex-1 ${groupActive ? 'is-active' : ''}`}
+          aria-current={groupActive ? 'page' : undefined}
+        >
+          {group.label}
+        </Link>
+        {hasItems && (
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={expanded}
+            aria-label={`${group.label}-Untermenü`}
+            className="inline-flex h-10 w-10 items-center justify-center rounded text-slate-400"
+          >
+            <ChevronIcon open={expanded} />
+          </button>
+        )}
+      </div>
+      {hasItems && expanded && (
+        <ul className="ml-3 mb-1 border-l border-white/10 pl-2">
+          {items.map((item) => (
+            <li key={item.label}>
+              <NavItemMobileLink
+                item={item}
+                active={isItemActive(item, pathname, hash, activeAnchor)}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+function NavItemMobileLink({ item, active }: { item: NavSubItem; active: boolean }) {
+  const className = `mobile-nav-link text-sm ${active ? 'text-cyan-300' : ''}`;
+  if (item.to) {
+    return (
+      <Link to={item.to} className={className} aria-current={active ? 'page' : undefined}>
+        {item.label}
+      </Link>
+    );
+  }
+  return <a href={item.href} className={className}>{item.label}</a>;
+}
+
+// ─── Account-Dropdown (rechts) — unverändert übernommen ──────────────
 
 interface DesktopAccountProps {
   user: User | null;
