@@ -1,5 +1,24 @@
 FROM node:26-alpine AS builder
 WORKDIR /app
+
+# Build-Zeit-Env-Vars für Vite. Vite ersetzt `import.meta.env.VITE_*`
+# beim `npm run build` durch String-Literale — Runtime-Env-Vars im
+# Caddy-Image sind zu spät. ARG + ENV macht die Variablen im Builder-
+# Stage sichtbar, ohne sie ins Runtime-Image durchzureichen (kein
+# `ARG` in der finalen Caddy-Stage = Sentry-DSN landet nur im
+# gebauten JS-Bundle, nicht in der Container-Umgebung).
+#
+# DigitalOcean App Platform: in den Component-Settings → Environment
+# Variables → `VITE_SENTRY_DSN` mit Scope "Build Time" setzen. DO
+# reicht Build-Time-Vars automatisch als `--build-arg` an `docker
+# build` durch, sobald sie hier mit `ARG` deklariert sind.
+ARG VITE_SENTRY_DSN=""
+ARG VITE_SENTRY_TRACES_SAMPLE_RATE="0"
+ARG VITE_RELEASE="dev"
+ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN \
+    VITE_SENTRY_TRACES_SAMPLE_RATE=$VITE_SENTRY_TRACES_SAMPLE_RATE \
+    VITE_RELEASE=$VITE_RELEASE
+
 COPY package*.json ./
 RUN npm ci --ignore-scripts
 COPY tsconfig.json vite.config.js tailwind.config.js index.html style.css ./
